@@ -1,10 +1,12 @@
 import { UserService } from '@/modules/user/user.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { comparePassword } from 'src/common/utils/bcrypt';
+import { comparePassword, hashPassword } from 'src/common/utils/bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User as UserModel } from '@prisma/client';
 import { CredentialsDto } from './dto/credentials.dto';
+import { randomBytes } from 'crypto';
+import { SocialAuthResponseDto } from './google/social-auth-response.dto';
 
 interface UserPayload {
   userId: string;
@@ -108,5 +110,29 @@ export class AuthService {
       accessTokenExpiresAt,
       refreshTokenExpiresAt,
     };
+  }
+
+  async socialLogin(socialAuth: SocialAuthResponseDto): Promise<TokenResponse> {
+    let user = await this.userService.findByEmail(socialAuth.email);
+    if (!user) {
+      if (
+        !socialAuth?.firstName &&
+        !socialAuth?.lastName &&
+        !socialAuth?.name
+      ) {
+        throw new Error('Username required');
+      }
+      const randomBytesPassword = await hashPassword(
+        randomBytes(16).toString(),
+      );
+      user = await this.userService.create({
+        email: socialAuth.email,
+        name:
+          socialAuth?.name ||
+          `${socialAuth?.firstName} ${socialAuth?.lastName}`,
+        password: randomBytesPassword,
+      });
+    }
+    return this.generateTokens({ userId: user.id, username: user.name });
   }
 }

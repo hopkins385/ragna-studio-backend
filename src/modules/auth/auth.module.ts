@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserModule } from '../user/user.module';
 import { JwtStrategy } from './strategies/auth.jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/auth.refreshToken.strategy';
+import { AuthGoogleService } from './google/auth-google.service';
 
 const jwtFactory = {
   useFactory: (configService: ConfigService) => ({
@@ -26,6 +27,12 @@ const jwtFactory = {
     JwtModule.registerAsync(jwtFactory),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    AuthGoogleService,
+  ],
 })
 export class AuthModule {}
