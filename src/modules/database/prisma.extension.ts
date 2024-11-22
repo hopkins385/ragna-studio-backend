@@ -1,0 +1,30 @@
+import { PrismaClient } from '@prisma/client';
+import { pagination } from 'prisma-extension-pagination';
+import cuid2Extension from 'prisma-extension-cuid2';
+
+export function getExtendedPrismaClient(url: string) {
+  const extendedPrismaClient = new PrismaClient({
+    log: ['info', 'warn', 'error'], // , 'query'
+    datasources: {
+      db: {
+        url,
+      },
+    },
+  })
+    .$extends(cuid2Extension())
+    .$extends(pagination())
+    .$extends({
+      model: {
+        user: {
+          findByEmail: async (email: string) => {
+            return extendedPrismaClient.user.findFirstOrThrow({
+              where: { email },
+            });
+          },
+        },
+      },
+    });
+  return extendedPrismaClient;
+}
+
+export type ExtendedPrismaClient = ReturnType<typeof getExtendedPrismaClient>;

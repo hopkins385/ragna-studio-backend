@@ -1,0 +1,34 @@
+# Dependencies
+**/node_modules
+
+# Git
+**/.git
+**/.gitignore
+
+# Environment
+**/.env
+**/.env.*
+
+# IDE
+**/.vscode
+**/.idea
+
+# Logs and debugging
+**/npm-debug.log
+**/yarn-debug.log
+**/yarn-error.log
+
+# Testing and documentation
+**/coverage
+**/*.test.ts
+**/*.spec.ts
+**/cypress
+**/*.md
+
+# OS
+**/.DS_Store
+
+# Keep Prisma files
+!**/prisma
+!**/prisma/schema.prisma
+!**/prisma/migrations

@@ -1,0 +1,4 @@
+{
+  "adapter": "prisma",
+  "projectDescription": "This project is about managing users, teams, roles, permissions, chat messages, media, documents, workflow steps, and authentication in an organizational setting."
+}

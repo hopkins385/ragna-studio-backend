@@ -1,0 +1,15 @@
+# docker-compose.dev.yml
+services:
+  app:
+    profiles: ['prod'] # This makes app service not start by default
+    restart: no
+    ports:
+      - 3000:3000
+
+  postgres:
+    ports:
+      - ${DB_PORT}:5432
+
+  redis:
+    ports:
+      - ${REDIS_PORT}:6379

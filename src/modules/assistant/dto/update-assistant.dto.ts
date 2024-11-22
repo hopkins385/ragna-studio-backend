@@ -1,0 +1,62 @@
+import { createZodDto } from 'nestjs-zod';
+import { updateAssistantSchema } from '../schemas/update-assistant.schema';
+
+export class UpdateAssistantBody extends createZodDto(updateAssistantSchema) {}
+
+export class UpdateAssistantDto {
+  readonly teamId: string;
+  readonly llmId: string;
+  readonly assistantId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly systemPrompt: string;
+  readonly isShared: boolean | undefined;
+  readonly systemPromptTokenCount: number;
+  readonly tools: string[];
+
+  constructor(
+    teamId: string,
+    llmId: string,
+    assistantId: string,
+    title: string,
+    description: string,
+    systemPrompt: string,
+    isShared: boolean | undefined,
+    systemPromptTokenCount: number,
+    tools: string[],
+  ) {
+    this.teamId = teamId.toLowerCase();
+    this.llmId = llmId.toLowerCase();
+    this.assistantId = assistantId.toLowerCase();
+    this.title = title.toString();
+    this.description = description.toString();
+    this.systemPrompt = systemPrompt.toString();
+    this.isShared = Boolean(isShared);
+    this.systemPromptTokenCount = Number(systemPromptTokenCount);
+    this.tools = tools;
+  }
+
+  static fromInput(input: {
+    teamId: string;
+    llmId: string;
+    id: string;
+    title: string;
+    description: string;
+    systemPrompt: string;
+    isShared?: boolean | undefined;
+    systemPromptTokenCount: number;
+    tools: string[];
+  }): UpdateAssistantDto {
+    return new UpdateAssistantDto(
+      input.teamId,
+      input.llmId,
+      input.id,
+      input.title,
+      input.description,
+      input.systemPrompt,
+      input.isShared || false,
+      input.systemPromptTokenCount,
+      input.tools,
+    );
+  }
+}

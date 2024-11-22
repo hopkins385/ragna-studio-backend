@@ -1,0 +1,9 @@
+import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import { chatMessageSchema } from '@/modules/chat-message/schemas/chat-message.schema';
+import { z } from 'zod';
+
+export const createChatStreamSchema = z.object({
+  messages: z.array(chatMessageSchema),
+  model: z.string(),
+  provider: z.nativeEnum(ProviderType),
+});

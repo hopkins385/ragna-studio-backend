@@ -1,0 +1,643 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  deviceId      String?        @map("device_id")
+  email         String         @unique
+  name          String
+  firstName     String?        @map("first_name")
+  lastName      String?        @map("last_name")
+  password      String?
+  isActive      Boolean        @default(false) @map("is_active")
+  lastLoginAt   DateTime?      @map("last_login_at")
+  emailVerified DateTime?      @map("email_verified")
+  image         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  onboardedAt   DateTime?      @map("onboarded_at")
+  roles         UserRole[]
+  chats         Chat[]
+  credit        Credit[]
+  teams         TeamUser[]
+  accounts      Account[]
+  sessions      Session[]
+  tokenUsages   TokenUsage[]
+  providerAuths ProviderAuth[]
+
+  @@unique([deviceId, email])
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id        String     @id @default(cuid())
+  name      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  roleId    String    @map("role_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@index([userId, roleId], name: "user_roles_user_id_role_id_index")
+  @@map("user_roles")
+}
+
+// Authentication (NextAuth)
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@index([providerAccountId], name: "providerAccountId")
+  @@index([provider], name: "provider")
+  @@index([userId], name: "userId")
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// end of NextAuth
+
+model Organisation {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  teams       Team[]
+
+  @@map("organisations")
+}
+
+model Team {
+  id             String              @id @default(cuid())
+  organisationId String              @map("organisation_id")
+  name           String
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  deletedAt      DateTime?           @map("deleted_at")
+  users          TeamUser[]
+  assistants     Assistant[]
+  collections    Collection[]
+  medias         Media[]
+  workflows      Workflow[]
+  documents      Document[]
+  imageFolders   TextToImageFolder[]
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+
+  @@index([organisationId, name], name: "teams_organisation_id_name_index")
+  @@map("teams")
+}
+
+model TeamUser {
+  id        String    @id @default(cuid())
+  teamId    String    @map("team_id")
+  userId    String    @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([teamId, userId], name: "team_users_team_id_user_id_index")
+  @@map("team_users")
+}
+
+model Chat {
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  assistantId String        @map("assistant_id")
+  title       String
+  messages    ChatMessage[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+  assistant Assistant @relation(fields: [assistantId], references: [id])
+
+  @@index([userId, assistantId], name: "chats_user_id_assistant_id_index")
+  @@map("chats")
+}
+
+model ChatMessage {
+  id            String                  @id @default(cuid())
+  chatId        String                  @map("chat_id")
+  type          String?
+  role          chat_messages_role_enum @map("role")
+  content       String                  @db.Text
+  visionContent Json?                   @map("vision_content") @db.Json
+  tokenCount    Int                     @map("token_count")
+  createdAt     DateTime                @default(now()) @map("created_at")
+  updatedAt     DateTime                @updatedAt @map("updated_at")
+  deletedAt     DateTime?               @map("deleted_at")
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt], name: "chat_messages_chat_id_created_at_index")
+  @@map("chat_messages")
+}
+
+model Assistant {
+  id                     String          @id @default(cuid())
+  teamId                 String          @map("team_id")
+  llmId                  String          @map("llm_id")
+  title                  String
+  description            String
+  systemPrompt           String          @map("system_prompt") @db.Text
+  systemPromptTokenCount Int             @map("system_prompt_token_count")
+  isShared               Boolean         @default(false) @map("is_shared")
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+  deletedAt              DateTime?       @map("deleted_at")
+  chats                  Chat[]
+  tools                  AssistantTool[]
+  workflowSteps          WorkflowStep[]
+
+  team Team           @relation(fields: [teamId], references: [id])
+  llm  LargeLangModel @relation(fields: [llmId], references: [id])
+
+  @@index([teamId, llmId], name: "assistants_team_id_llm_id_index")
+  @@map("assistants")
+}
+
+model Tool {
+  id           String          @id @default(cuid())
+  functionId   Int             @unique @map("function_id") @db.SmallInt
+  functionName String          @map("function_name")
+  name         String
+  description  String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  deletedAt    DateTime?       @map("deleted_at")
+  assistants   AssistantTool[]
+
+  @@map("tools")
+}
+
+model AssistantTool {
+  id          String    @id @default(cuid())
+  assistantId String    @map("assistant_id")
+  toolId      String    @map("tool_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  assistant Assistant @relation(fields: [assistantId], references: [id])
+  tool      Tool      @relation(fields: [toolId], references: [id])
+
+  @@index([assistantId, toolId], name: "assistant_tools_assistant_id_tool_id_index")
+  @@map("assistant_tools")
+}
+
+model LargeLangModel {
+  id          String      @id @default(cuid())
+  apiName     String      @map("api_name")
+  displayName String      @map("display_name")
+  description String
+  provider    String
+  contextSize Int         @map("context_size")
+  maxTokens   Int         @map("max_tokens")
+  multiModal  Boolean     @default(false) @map("multi_modal")
+  hidden      Boolean     @default(false)
+  free        Boolean     @default(false)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  deletedAt   DateTime?   @map("deleted_at")
+  assistants  Assistant[]
+
+  @@index([apiName])
+  @@map("llms")
+}
+
+model Credit {
+  id        String    @id @default(cuid())
+  userId    String    @unique @map("user_id")
+  amount    Int
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("credits")
+}
+
+model TokenUsage {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  llmProvider      String    @map("llm_provider")
+  llmModel         String    @map("llm_model")
+  promptTokens     Int       @map("prompt_tokens")
+  completionTokens Int       @map("completion_tokens")
+  totalTokens      Int       @map("total_tokens")
+  cost             Int       @map("cost")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, llmProvider, llmModel], name: "token_usages_user_id_llm_provider_llm_model_index")
+  @@map("token_usages")
+}
+
+// model Subscription {
+//   id               String    @id @default(cuid())
+//   stripeId         String?
+//   stripeCustomerId String
+//   status           String?
+//   stripePriceId    String?
+//   trialEndsAt      DateTime?
+//   endsAt           DateTime?
+//   createdAt        DateTime  @default(now())
+//   updatedAt        DateTime  @updatedAt
+//   user             User      @relation(fields: [userId], references: [id])
+//   userId           String    @unique
+//
+//   @@map("subscriptions")
+// }
+
+enum chat_messages_role_enum {
+  user
+  assistant
+  system
+  tool
+}
+
+// Media
+
+model Media {
+  id         String       @id @default(cuid())
+  name       String
+  teamId     String       @map("team_id")
+  fileName   String       @map("file_name")
+  filePath   String       @map("file_path")
+  fileMime   String       @map("file_mime")
+  fileSize   Int          @map("file_size")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  deletedAt  DateTime?    @map("deleted_at")
+  mediaAbles MediaAbles[]
+  records    Record[]
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId, name], name: "medias_team_id_name_index")
+  @@map("medias")
+}
+
+// A polymorphic relationship between Media and other models
+// A Media can belong to multiple models
+// e.g. A Media might be created by a User, and is also "attached to" a Project and a Document
+model MediaAbles {
+  id            String    @id @default(cuid())
+  mediaId       String    @map("media_id")
+  mediaAbleType Int       @map("mediaable_type") @db.SmallInt
+  mediaAbleId   String    @map("mediaable_id")
+  role          String?
+  orderColumn   Int?      @map("order_column") @db.SmallInt
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId, mediaAbleType, mediaAbleId], name: "media_ables_media_id_mediaable_type_mediaable_id_index")
+  @@map("media_ables")
+}
+
+// Vector Embedding Collections
+model Collection {
+  id              String           @id @default(cuid())
+  teamId          String           @map("team_id")
+  llmId           String?          @map("model_id")
+  name            String           @map("name")
+  description     String?          @map("description")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  deletedAt       DateTime?        @map("deleted_at")
+  records         Record[]
+  collectionAbles CollectionAble[]
+
+  team Team @relation(fields: [teamId], references: [id])
+  // llm  LargeLangModel? @relation(fields: [llmId], references: [id])
+
+  @@index([teamId, name], name: "collections_team_id_name_index")
+  @@map("collections")
+}
+
+// A CollectionAble is a polymorphic relationship between Collection and other models
+// A CollectionAble can belong to multiple models
+// e.g. A CollectionAble might be "attached to" an Assistant and a User
+model CollectionAble {
+  id                 String    @id @default(cuid())
+  collectionId       String    @map("collection_id")
+  collectionAbleType Int       @map("collectionable_type") @db.SmallInt
+  collectionAbleId   String    @map("collectionable_id")
+  role               String?
+  orderColumn        Int?      @map("order_column") @db.SmallInt
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId, collectionAbleType, collectionAbleId], name: "collection_ables_index")
+  @@map("collection_ables")
+}
+
+model Record {
+  id           String    @id @default(cuid())
+  collectionId String    @map("collection_id")
+  mediaId      String?   @map("media_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  chunks       Chunk[]
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  media      Media?     @relation(fields: [mediaId], references: [id])
+
+  @@index([collectionId, mediaId], name: "records_collection_id_media_id_index")
+  @@map("records")
+}
+
+model Chunk {
+  id        String    @id @default(cuid())
+  recordId  String    @map("record_id")
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  record Record @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@map("chunks")
+}
+
+// Documents, Requirements, and Workflows
+
+model Document {
+  id            String         @id @default(cuid())
+  teamId        String         @map("team_id")
+  name          String
+  description   String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  documentItems DocumentItem[]
+  workflowSteps WorkflowStep[]
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId, name], name: "documents_team_id_name_index")
+  @@map("documents")
+}
+
+model DocumentItem {
+  id                String             @id @default(cuid())
+  documentId        String             @map("document_id")
+  orderColumn       Int                @map("order_column") @db.SmallInt
+  status            Json?
+  processingStatus  String?            @map("processing_status") // e.g. "pending", "failed", "completed"
+  type              String
+  content           String             @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+  documentItemAbles DocumentItemAble[]
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, orderColumn], name: "document_items_document_id_order_column_index")
+  @@map("document_items")
+}
+
+// A polymorphic relationship between DocumentItem and other models
+// A DocumentItem can belong to multiple models
+// e.g. A DocumentItem might be "attached to" a User as kind of a workItem
+model DocumentItemAble {
+  id             String    @id @default(cuid())
+  documentItemId String    @map("document_item_id")
+  modelType      Int       @map("model_type") @db.SmallInt
+  modelId        String    @map("model_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  documentItem DocumentItem @relation(fields: [documentItemId], references: [id], onDelete: Cascade)
+
+  @@index([documentItemId, modelType, modelId], name: "document_item_ables_index")
+  @@map("document_item_ables")
+}
+
+model Workflow {
+  id            String         @id @default(cuid())
+  teamId        String         @map("team_id")
+  name          String
+  description   String
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  workflowAbles WorkflowAble[]
+  steps         WorkflowStep[]
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId, name], name: "workflows_team_id_name_index")
+  @@map("workflows")
+}
+
+// A polymorphic relationship between Workflow and other models
+// A Workflow can belong to multiple models
+// e.g. A Workflow might be "attached to" e.g. a JobQueue
+model WorkflowAble {
+  id         String    @id @default(cuid())
+  workflowId String    @map("workflow_id")
+  modelType  Int       @map("model_type") @db.SmallInt
+  modelId    String    @map("model_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_ables")
+}
+
+model WorkflowStep {
+  id                String             @id @default(cuid())
+  workflowId        String             @map("workflow_id")
+  documentId        String?            @map("document_id")
+  assistantId       String?            @map("assistant_id")
+  inputSteps        String[]           @map("input_steps")
+  name              String
+  description       String
+  type              String
+  orderColumn       Int                @map("order_column") @db.SmallInt
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+  workflowStepAbles WorkflowStepAble[]
+
+  workflow  Workflow   @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  document  Document?  @relation(fields: [documentId], references: [id])
+  assistant Assistant? @relation(fields: [assistantId], references: [id])
+
+  @@index([workflowId, orderColumn], name: "workflow_steps_order_column_index")
+  @@map("workflow_steps")
+}
+
+// A polymorphic relationship between WorkflowStep and other models
+// A WorkflowStep can belong to multiple models
+// e.g. A WorkflowStep might be "attached to" e.g. a JobQueue
+model WorkflowStepAble {
+  id             String    @id @default(cuid())
+  workflowStepId String    @map("workflow_step_id")
+  modelType      Int       @map("model_type") @db.SmallInt
+  modelId        String    @map("model_id")
+  orderColumn    Int?      @map("order_column") @db.SmallInt
+  role           String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  workflowStep WorkflowStep @relation(fields: [workflowStepId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_step_ables")
+}
+
+// auth token for google drive, one drive, etc.
+model ProviderAuth {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  providerName          String    @map("provider_name")
+  type                  String
+  accountInfo           Json?     @map("account_info")
+  accessToken           String    @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("provider_auths")
+}
+
+enum text_to_image_run_status {
+  PENDING
+  COMPLETED
+  MODERATED
+  FAILED
+}
+
+model TextToImageFolder {
+  id              String           @id @default(cuid())
+  teamId          String           @map("team_id")
+  name            String
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  deletedAt       DateTime?        @map("deleted_at")
+  textToImageRuns TextToImageRun[]
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId])
+  @@map("text_to_image_folders")
+}
+
+model TextToImageRun {
+  id        String                   @id @default(cuid())
+  folderId  String                   @map("folder_id")
+  prompt    String
+  settings  Json?
+  status    text_to_image_run_status @default(PENDING)
+  createdAt DateTime                 @default(now()) @map("created_at")
+  updatedAt DateTime                 @updatedAt @map("updated_at")
+  deletedAt DateTime?                @map("deleted_at")
+  images    TextToImage[]
+
+  folder TextToImageFolder @relation(fields: [folderId], references: [id])
+
+  @@index([folderId])
+  @@map("text_to_image_runs")
+}
+
+model TextToImage {
+  id        String                   @id @default(cuid())
+  runId     String                   @map("run_id")
+  name      String
+  path      String                   @map("path")
+  mimeType  String                   @map("mime_type")
+  status    text_to_image_run_status @default(PENDING)
+  createdAt DateTime                 @default(now()) @map("created_at")
+  updatedAt DateTime                 @updatedAt @map("updated_at")
+  deletedAt DateTime?                @map("deleted_at")
+
+  run TextToImageRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@map("text_to_images")
+}
