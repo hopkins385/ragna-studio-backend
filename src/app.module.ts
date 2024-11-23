@@ -37,6 +37,7 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
 import { WorkflowStepModule } from './modules/workflow-step/workflow-step.module';
 import { DocumentModule } from './modules/document/document.module';
 import { DocumentItemModule } from './modules/document-item/document-item.module';
+import { OnboardModule } from './modules/onboard/onboard.module';
 
 @Module({
   imports: [
@@ -120,6 +121,8 @@ import { DocumentItemModule } from './modules/document-item/document-item.module
     DocumentModule,
 
     DocumentItemModule,
+
+    OnboardModule,
     // ,
   ],
   controllers: [ChatMessageController],

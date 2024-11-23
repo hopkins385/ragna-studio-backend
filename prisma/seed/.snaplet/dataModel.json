@@ -1977,20 +1977,6 @@
           "maxLength": null
         },
         {
-          "id": "public.documents.project_id",
-          "name": "project_id",
-          "columnName": "project_id",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
           "id": "public.documents.name",
           "name": "name",
           "columnName": "name",
@@ -2061,13 +2047,27 @@
           "maxLength": null
         },
         {
-          "name": "projects",
-          "type": "projects",
+          "id": "public.documents.team_id",
+          "name": "team_id",
+          "columnName": "team_id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "teams",
+          "type": "teams",
           "isRequired": true,
           "kind": "object",
-          "relationName": "documentsToprojects",
+          "relationName": "documentsToteams",
           "relationFromFields": [
-            "project_id"
+            "team_id"
           ],
           "relationToFields": [
             "id"
@@ -2798,180 +2798,6 @@
       "uniqueConstraints": [
         {
           "name": "organisations_pkey",
-          "fields": [
-            "id"
-          ],
-          "nullNotDistinct": false
-        }
-      ]
-    },
-    "projects": {
-      "id": "public.projects",
-      "schemaName": "public",
-      "tableName": "projects",
-      "fields": [
-        {
-          "id": "public.projects.id",
-          "name": "id",
-          "columnName": "id",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": true,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.team_id",
-          "name": "team_id",
-          "columnName": "team_id",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.name",
-          "name": "name",
-          "columnName": "name",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.description",
-          "name": "description",
-          "columnName": "description",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.created_at",
-          "name": "created_at",
-          "columnName": "created_at",
-          "type": "timestamp",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": true,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.updated_at",
-          "name": "updated_at",
-          "columnName": "updated_at",
-          "type": "timestamp",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "public.projects.deleted_at",
-          "name": "deleted_at",
-          "columnName": "deleted_at",
-          "type": "timestamp",
-          "isRequired": false,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "name": "teams",
-          "type": "teams",
-          "isRequired": true,
-          "kind": "object",
-          "relationName": "projectsToteams",
-          "relationFromFields": [
-            "team_id"
-          ],
-          "relationToFields": [
-            "id"
-          ],
-          "isList": false,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        },
-        {
-          "name": "documents",
-          "type": "documents",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "documentsToprojects",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        },
-        {
-          "name": "text_to_image_folders",
-          "type": "text_to_image_folders",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "text_to_image_foldersToprojects",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        },
-        {
-          "name": "workflows",
-          "type": "workflows",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "workflowsToprojects",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        }
-      ],
-      "uniqueConstraints": [
-        {
-          "name": "projects_pkey",
           "fields": [
             "id"
           ],
@@ -3786,6 +3612,20 @@
           "hasDefaultValue": false
         },
         {
+          "name": "documents",
+          "type": "documents",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "documentsToteams",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "medias",
           "type": "medias",
           "isRequired": false,
@@ -3800,11 +3640,11 @@
           "hasDefaultValue": false
         },
         {
-          "name": "projects",
-          "type": "projects",
+          "name": "team_users",
+          "type": "team_users",
           "isRequired": false,
           "kind": "object",
-          "relationName": "projectsToteams",
+          "relationName": "team_usersToteams",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -3814,11 +3654,25 @@
           "hasDefaultValue": false
         },
         {
-          "name": "team_users",
-          "type": "team_users",
+          "name": "text_to_image_folders",
+          "type": "text_to_image_folders",
           "isRequired": false,
           "kind": "object",
-          "relationName": "team_usersToteams",
+          "relationName": "text_to_image_foldersToteams",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "workflows",
+          "type": "workflows",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "workflowsToteams",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -3855,20 +3709,6 @@
           "sequence": false,
           "hasDefaultValue": false,
           "isId": true,
-          "maxLength": null
-        },
-        {
-          "id": "public.text_to_image_folders.project_id",
-          "name": "project_id",
-          "columnName": "project_id",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
           "maxLength": null
         },
         {
@@ -3928,13 +3768,27 @@
           "maxLength": null
         },
         {
-          "name": "projects",
-          "type": "projects",
+          "id": "public.text_to_image_folders.team_id",
+          "name": "team_id",
+          "columnName": "team_id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "teams",
+          "type": "teams",
           "isRequired": true,
           "kind": "object",
-          "relationName": "text_to_image_foldersToprojects",
+          "relationName": "text_to_image_foldersToteams",
           "relationFromFields": [
-            "project_id"
+            "team_id"
           ],
           "relationToFields": [
             "id"
@@ -5739,20 +5593,6 @@
           "maxLength": null
         },
         {
-          "id": "public.workflows.project_id",
-          "name": "project_id",
-          "columnName": "project_id",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
           "id": "public.workflows.name",
           "name": "name",
           "columnName": "name",
@@ -5823,13 +5663,27 @@
           "maxLength": null
         },
         {
-          "name": "projects",
-          "type": "projects",
+          "id": "public.workflows.team_id",
+          "name": "team_id",
+          "columnName": "team_id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "teams",
+          "type": "teams",
           "isRequired": true,
           "kind": "object",
-          "relationName": "workflowsToprojects",
+          "relationName": "workflowsToteams",
           "relationFromFields": [
-            "project_id"
+            "team_id"
           ],
           "relationToFields": [
             "id"
@@ -5886,6 +5740,12 @@
       "values": [
         {
           "name": "assistant"
+        },
+        {
+          "name": "system"
+        },
+        {
+          "name": "tool"
         },
         {
           "name": "user"

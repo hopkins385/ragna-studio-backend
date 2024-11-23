@@ -156,7 +156,7 @@ export class ChatService {
     if (!chatId || !userId) {
       return null;
     }
-    const chat = await this.chatRepository.prisma.chat.findFirst({
+    const chat = await this.chatRepository.prisma.chat.findFirstOrThrow({
       relationLoadStrategy: 'join',
       select: {
         id: true,

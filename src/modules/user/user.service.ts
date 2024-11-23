@@ -22,6 +22,22 @@ export class UserService {
     });
   }
 
+  async createWithoutPassword({
+    name,
+    email,
+  }: {
+    name: string;
+    email: string;
+  }) {
+    const exists = await this.findByEmail(email);
+    if (exists) throw new Error('Email already registered');
+
+    return this.userRepository.create({
+      name,
+      email,
+    });
+  }
+
   async findOne(id: string): Promise<Partial<UserEntity>> {
     if (!id) throw new Error('User ID is required');
 

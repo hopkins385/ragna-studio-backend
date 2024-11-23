@@ -329,8 +329,7 @@ export class ChatStreamService {
       await this.addUsage(context, result);
       //
     } catch (error) {
-      logger.error('handleToolCalls error:', JSON.stringify(error));
-      yield '';
+      return; // TODO: check if silent discard is ok
     }
   }
 

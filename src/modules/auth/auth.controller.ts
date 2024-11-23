@@ -75,13 +75,13 @@ export class AuthController {
 
   @Post('/google/callback')
   async googleCallback(@Body() body: GoogleAuthCallbackBody) {
-    const response = await this.googleService.getAccessToken(body.code);
-
-    const profile = await this.googleService.getProfileByToken(
-      response.tokens.id_token,
-    );
-
     try {
+      const response = await this.googleService.getAccessToken(body.code);
+
+      const profile = await this.googleService.getProfileByToken(
+        response.tokens.id_token,
+      );
+
       const tokens = await this.authService.socialLogin(profile);
       return tokens;
     } catch (error) {
@@ -94,7 +94,7 @@ export class AuthController {
     switch (param.provider) {
       case 'google':
         const url = await this.googleService.getAuthUrl();
-        return { data: url };
+        return { url };
         break;
       default:
         throw new UnprocessableEntityException('Invalid provider');

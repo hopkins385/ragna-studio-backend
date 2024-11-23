@@ -34,6 +34,7 @@ export class UserRepository extends BaseRepository<User> {
         firstName: true,
         lastName: true,
         email: true,
+        onboardedAt: true,
         credit: {
           select: {
             amount: true,

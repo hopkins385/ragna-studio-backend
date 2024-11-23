@@ -80,8 +80,14 @@ export class ChatController {
     if (!chatId) {
       throw new NotFoundException('Chat not found');
     }
-    const chat = await this.chatService.getChatForUser(chatId, user.id);
-    return { chat };
+
+    try {
+      const chat = await this.chatService.getChatForUser(chatId, user.id);
+      return { chat };
+    } catch (error) {
+      logger.error(error);
+      throw new NotFoundException('Chat not found');
+    }
   }
 
   @Patch(':id')

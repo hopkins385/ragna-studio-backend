@@ -40,7 +40,7 @@ export class AuthService {
     password,
   }: CredentialsDto): Promise<Partial<UserModel> | null> {
     const user = await this.userService.findByEmail(email);
-    if (!user || !user.password) return null;
+    if (!user || !user.password || !user.password.length) return null;
 
     const isValidPassword = await comparePassword(password, user.password);
     return isValidPassword ? user : null;
@@ -122,15 +122,11 @@ export class AuthService {
       ) {
         throw new Error('Username required');
       }
-      const randomBytesPassword = await hashPassword(
-        randomBytes(16).toString(),
-      );
-      user = await this.userService.create({
+      const userName =
+        socialAuth?.name ?? `${socialAuth?.firstName} ${socialAuth?.lastName}`;
+      user = await this.userService.createWithoutPassword({
         email: socialAuth.email,
-        name:
-          socialAuth?.name ||
-          `${socialAuth?.firstName} ${socialAuth?.lastName}`,
-        password: randomBytesPassword,
+        name: userName,
       });
     }
     return this.generateTokens({ userId: user.id, username: user.name });

@@ -158,17 +158,6 @@ async function seedDefaults(
     },
   ]);
 
-  // seed projects
-  const { project } = await seed.project((x) =>
-    x(1, (ctx) => ({
-      id: createId(),
-      name: 'Demo Project',
-      description: 'This is a demo project',
-      teamId: payload.firstTeamId,
-      deletedAt: null,
-    })),
-  );
-
   // seed llms
   const { largeLangModel: llm } = await seedLLMs(seed);
 
