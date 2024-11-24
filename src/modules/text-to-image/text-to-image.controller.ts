@@ -36,12 +36,12 @@ export class TextToImageController {
   @Get('folders')
   async getFolders(@ReqUser() user: UserEntity) {
     const folders = await this.textToImageService.findFolders({
-      teamId: user.teams?.[0].team.id,
+      teamId: user.firstTeamId,
     });
     if (folders.length === 0) {
       console.log('This project has no ai-image folders, creating one ... ');
       const folder = await this.textToImageService.createFolder({
-        teamId: user.teams?.[0].team.id,
+        teamId: user.firstTeamId,
         folderName: 'Default',
       });
       return { folders: [folder] };

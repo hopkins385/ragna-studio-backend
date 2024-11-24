@@ -10,5 +10,6 @@ import { WorkflowStepService } from '../workflow-step/workflow-step.service';
   imports: [MediaAbleModule, WorkflowStepModule],
   controllers: [WorkflowController],
   providers: [WorkflowRepository, WorkflowService],
+  exports: [WorkflowService],
 })
 export class WorkflowModule {}

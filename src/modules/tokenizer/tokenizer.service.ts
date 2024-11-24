@@ -3,10 +3,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { get_encoding, Tiktoken, TiktokenEncoding } from 'tiktoken';
 import { TokenizerResponse } from './interfaces/tokenizer.res';
 
-const logger = new Logger('TokenizerService');
-
 @Injectable()
 export class TokenizerService {
+  private readonly logger = new Logger(TokenizerService.name);
   private readonly model: TiktokenEncoding;
   private readonly encoder: Tiktoken;
   private readonly url: string;
@@ -35,7 +34,7 @@ export class TokenizerService {
       const { tokens, tokenCount, charCount } = data;
       return { tokens: new Uint32Array(tokens), tokenCount, charCount };
     } catch (error) {
-      logger.debug(
+      this.logger.debug(
         'Failed to get tokens from rag server, falling back to local',
       );
       return this.getTokensLocal(content);

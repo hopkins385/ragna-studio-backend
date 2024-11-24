@@ -24,10 +24,8 @@ import { ChatService } from '@/modules/chat/chat.service';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
 import { SocketService } from '../socket/socket.service';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
 
-const logger = new Logger('ChatStreamController');
+const logger = 'ChatStreamController';
 
 @Controller('chat-stream')
 export class ChatStreamController {
@@ -79,6 +77,8 @@ export class ChatStreamController {
       // @ts-ignore
       messages: this.chatService.formatChatMessages(body.messages),
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
+      maxTokens: body.maxTokens,
+      temperature: body.temperature / 100,
     });
 
     const stream = this.chatStreamService

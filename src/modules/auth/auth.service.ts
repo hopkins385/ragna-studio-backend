@@ -1,11 +1,10 @@
 import { UserService } from '@/modules/user/user.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { comparePassword, hashPassword } from 'src/common/utils/bcrypt';
+import { comparePassword } from 'src/common/utils/bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User as UserModel } from '@prisma/client';
 import { CredentialsDto } from './dto/credentials.dto';
-import { randomBytes } from 'crypto';
 import { SocialAuthResponseDto } from './google/social-auth-response.dto';
 
 interface UserPayload {
@@ -25,10 +24,10 @@ export interface TokenResponse {
   refreshTokenExpiresAt: number;
 }
 
-const logger = new Logger('AuthService');
-
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -46,7 +45,10 @@ export class AuthService {
     return isValidPassword ? user : null;
   }
 
-  async login(user: UserModel): Promise<TokenResponse | null> {
+  async createTokensForUser(user: {
+    id: string;
+    name: string;
+  }): Promise<TokenResponse | null> {
     if (!user) {
       throw new Error('User not found');
     }
@@ -59,7 +61,7 @@ export class AuthService {
     try {
       return await this.generateTokens(payload);
     } catch (error) {
-      logger.error('Error:', error);
+      this.logger.error('Error:', error);
       return null;
     }
   }
@@ -68,7 +70,7 @@ export class AuthService {
     try {
       return await this.generateTokens(payload);
     } catch (error) {
-      logger.error('Error:', error);
+      this.logger.error('Error:', error);
       return null;
     }
   }

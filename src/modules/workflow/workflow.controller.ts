@@ -25,7 +25,7 @@ export class WorkflowController {
   @Post()
   async create(@ReqUser() user: UserEntity, @Body() body: CreateWorkflowBody) {
     const payload = CreateWorkflowDto.fromInput({
-      teamId: user.teams[0].team.id,
+      teamId: user.firstTeamId,
       name: body.name,
       description: body.description,
     });
@@ -39,7 +39,7 @@ export class WorkflowController {
     @Query() query: PaginateQuery,
   ) {
     const payload = FindAllWorkflowsDto.fromInput({
-      teamId: user.teams[0].team.id,
+      teamId: user.firstTeamId,
       page: query.page,
       limit: query.limit,
     });

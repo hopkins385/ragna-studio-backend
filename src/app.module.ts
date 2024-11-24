@@ -38,6 +38,8 @@ import { WorkflowStepModule } from './modules/workflow-step/workflow-step.module
 import { DocumentModule } from './modules/document/document.module';
 import { DocumentItemModule } from './modules/document-item/document-item.module';
 import { OnboardModule } from './modules/onboard/onboard.module';
+import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-execution.module';
+import { AudioModule } from './modules/audio/audio.module';
 
 @Module({
   imports: [
@@ -54,7 +56,7 @@ import { OnboardModule } from './modules/onboard/onboard.module';
     // EventEmitter
     EventEmitterModule.forRoot(),
     // Queue
-    // QueueModule,
+    QueueModule,
     // Throttler
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -123,6 +125,10 @@ import { OnboardModule } from './modules/onboard/onboard.module';
     DocumentItemModule,
 
     OnboardModule,
+
+    AudioModule,
+
+    WorkflowExecutionModule,
     // ,
   ],
   controllers: [ChatMessageController],

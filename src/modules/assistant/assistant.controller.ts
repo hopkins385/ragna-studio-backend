@@ -51,7 +51,7 @@ export class AssistantController {
   @Get()
   async findAll(@ReqUser() user: UserEntity, @Query() query: PaginateQuery) {
     const { page, limit, searchQuery } = query;
-    const teamId = user.teams?.[0].team.id;
+    const teamId = user.firstTeamId;
 
     if (!teamId) {
       throw new NotFoundException('Team not found');

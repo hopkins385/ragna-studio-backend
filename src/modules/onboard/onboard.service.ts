@@ -5,10 +5,10 @@ import { OnboardRepository } from './repositories/onboard.repository';
 import { CreatesNewUserAction } from './actions/createsNewUserAction';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 
-const logger = new Logger('OnboardService');
-
 @Injectable()
 export class OnboardService {
+  private readonly logger = new Logger(OnboardService.name);
+
   constructor(private readonly onboardRepo: OnboardRepository) {}
 
   async onboardUser({ userId, userName, orgName }: OnboardUserDto) {
@@ -21,7 +21,7 @@ export class OnboardService {
       });
       return true;
     } catch (error) {
-      Logger.error(error);
+      this.logger.error(error);
       throw new Error('Failed to onboard user');
     }
   }

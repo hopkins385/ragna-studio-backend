@@ -5,7 +5,7 @@ export class CreateWorkflowStepDto {
   readonly description: string;
   readonly orderColumn: number;
   readonly rowCount: number;
-  readonly assistantId?: string;
+  readonly assistantId: string;
   readonly rowContents?: string[];
 
   constructor(
@@ -15,7 +15,7 @@ export class CreateWorkflowStepDto {
     description: string,
     orderColumn: number,
     rowCount: number,
-    assistantId?: string,
+    assistantId: string,
     rowContents?: string[],
   ) {
     this.workflowId = workflowId.toLowerCase();
@@ -35,7 +35,7 @@ export class CreateWorkflowStepDto {
     description: string;
     orderColumn: number;
     rowCount: number;
-    assistantId?: string;
+    assistantId: string;
     rowContents?: string[];
   }): CreateWorkflowStepDto {
     return new CreateWorkflowStepDto(

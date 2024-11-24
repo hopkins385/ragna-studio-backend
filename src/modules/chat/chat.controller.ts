@@ -7,7 +7,6 @@ import {
   Patch,
   Param,
   Delete,
-  HttpStatus,
   NotFoundException,
   Logger,
   Query,
@@ -15,18 +14,17 @@ import {
 import { ChatService } from './chat.service';
 import { CreateChatBody } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
-import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { FindAssistantDto } from '../assistant/dto/find-assistant.dto';
 import { AssistantService } from '../assistant/assistant.service';
 import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
-import { PaginateBody, PaginateQuery } from '@/common/dto/paginate.dto';
-
-const logger = new Logger('ChatController');
+import { PaginateQuery } from '@/common/dto/paginate.dto';
 
 @Controller('chat')
 export class ChatController {
+  private readonly logger = new Logger(ChatController.name);
+
   constructor(
     private readonly chatService: ChatService,
     private readonly assistantService: AssistantService,
@@ -70,6 +68,12 @@ export class ChatController {
       throw new NotFoundException('Assistant not found');
     }
 
+    // access policy
+    const canAccess = this.chatService.canCreateChatPolicy(user, assistant);
+    if (!canAccess) {
+      throw new NotFoundException('Assistant not found');
+    }
+
     const chat = await this.chatService.create(assistantId, user.id);
     return { chat };
   }
@@ -85,17 +89,13 @@ export class ChatController {
       const chat = await this.chatService.getChatForUser(chatId, user.id);
       return { chat };
     } catch (error) {
-      logger.error(error);
+      this.logger.error(error);
       throw new NotFoundException('Chat not found');
     }
   }
 
   @Patch(':id')
   async update(@Param() param: IdParam, @Body() updateChatDto: UpdateChatDto) {
-    const { id: chatId } = param;
-    if (!chatId) {
-      throw new NotFoundException('Chat not found');
-    }
     throw new Error('Not implemented');
   }
 
@@ -115,16 +115,29 @@ export class ChatController {
       throw new NotFoundException('Chat not found');
     }
 
+    // access policy
+    if (chat.userId !== user.id) {
+      throw new NotFoundException('Chat not found');
+    }
+
     await this.chatService.softDelete(chatId, user.id);
 
     return { status: 'ok' };
   }
 
   @Delete(':id/messages')
-  async deleteMessages(@Param() param: IdParam): Promise<{ status: string }> {
+  async deleteMessages(
+    @Param() param: IdParam,
+    @ReqUser() user: UserEntity,
+  ): Promise<{ status: string }> {
     const { id: chatId } = param;
     const chat = await this.chatService.getFirst(chatId);
     if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    // access policy
+    if (chat.userId !== user.id) {
       throw new NotFoundException('Chat not found');
     }
 

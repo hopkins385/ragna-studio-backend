@@ -13,15 +13,16 @@ import {
   UpsertChatMessages,
 } from './interfaces/chat-upsert.interface';
 import { ChatEntity } from './entities/chat.entity';
+import { UserEntity } from '../user/entities/user.entity';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
 }
 
-const logger = new Logger('ChatService');
-
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
   constructor(
     private readonly tokenizerService: TokenizerService,
     private readonly chatRepository: ChatRepository,
@@ -353,7 +354,7 @@ export class ChatService {
 
       return res[0];
     } catch (error) {
-      logger.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -399,7 +400,7 @@ export class ChatService {
 
       return res[0];
     } catch (error) {
-      logger.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -476,6 +477,47 @@ export class ChatService {
     });
   }
 
+  // POLICIES
+
+  // POLICIES
+
+  canCreateChatPolicy(user: UserEntity, assistant: any): boolean {
+    const { firstTeamId: userTeamId } = user;
+    const {
+      team: { id: assistantTeamId },
+    } = assistant;
+
+    if (assistantTeamId !== userTeamId) {
+      return false;
+    }
+
+    return true;
+  }
+
+  canClearMessagesPolicy(user: UserEntity, chat: any) {
+    const { id: userId } = user;
+    const { userId: chatUserId } = chat;
+
+    // check if the user is the owner of the chat
+    if (chatUserId !== userId) {
+      return false;
+    }
+
+    return true;
+  }
+
+  canDeletePolicy(user: UserEntity, chat: any) {
+    const { id: userId } = user;
+    const { userId: chatUserId } = chat;
+
+    // check if the user is the owner of the chat
+    if (chatUserId !== userId) {
+      return false;
+    }
+
+    return true;
+  }
+
   // UTILITIES
 
   getHistory(
@@ -508,7 +550,7 @@ export class ChatService {
   getLastChatMessage(messages: any[]) {
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage) {
-      logger.error('No last message');
+      this.logger.error('No last message');
       throw new Error('No last message');
     }
     return lastMessage;

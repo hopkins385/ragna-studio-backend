@@ -6,13 +6,33 @@ export class CreateChatStreamDto {
   model: string;
   messages: CoreMessage[];
   functionIds: number[];
+  maxTokens: number;
+  temperature: number;
+
+  constructor(
+    provider: ProviderType,
+    model: string,
+    messages: CoreMessage[],
+    functionIds: number[],
+    maxTokens: number,
+    temperature: number,
+  ) {
+    this.provider = provider;
+    this.model = model;
+    this.messages = messages;
+    this.functionIds = functionIds;
+    this.maxTokens = maxTokens;
+    this.temperature = temperature;
+  }
 
   static fromInput(input: CreateChatStreamDto): CreateChatStreamDto {
-    const dto = new CreateChatStreamDto();
-    dto.provider = input.provider;
-    dto.model = input.model;
-    dto.messages = input.messages;
-    dto.functionIds = input.functionIds;
-    return dto;
+    return new CreateChatStreamDto(
+      input.provider,
+      input.model,
+      input.messages,
+      input.functionIds,
+      input.maxTokens,
+      input.temperature,
+    );
   }
 }

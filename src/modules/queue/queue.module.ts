@@ -16,6 +16,12 @@ import { LLM_CONFIGS } from 'src/common/types/llm.types';
         },
       }),
     }),
+    BullModule.registerFlowProducer({
+      name: 'workflow',
+    }),
+    BullModule.registerQueue({
+      name: 'workflow-row-completed',
+    }),
     ...LLM_CONFIGS.map((config) =>
       BullModule.registerQueue({
         name: `${config.provider}-${config.model}`,
@@ -29,5 +35,6 @@ import { LLM_CONFIGS } from 'src/common/types/llm.types';
       }),
     ),
   ],
+  exports: [BullModule],
 })
 export class QueueModule {}

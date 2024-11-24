@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Param,
   Post,
-  Query,
   Req,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -21,9 +20,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { CredentialsDto } from './dto/credentials.dto';
 import { UseZodGuard } from 'nestjs-zod';
-import { SocialAuthResponseDto } from './google/social-auth-response.dto';
 import { AuthGoogleService } from './google/auth-google.service';
-import { SocialLoginBody } from './google/social-login-body.dto';
 import { SocialAuthProviderParam } from './google/social-auth-provider.param';
 import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
 
@@ -39,9 +36,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @UseZodGuard('body', CredentialsDto)
-  async login(@ReqUser() user: UserEntity): Promise<TokenResponse> {
+  async login(@Req() req: Request): Promise<TokenResponse> {
     try {
-      const tokens = await this.authService.login(user);
+      // @ts-ignore
+      const authUser = { id: req.user.id, name: req.user.name }; // TODO: fix typing
+      const tokens = await this.authService.createTokensForUser(authUser);
       if (!tokens) {
         throw new Error('Failed to generate tokens');
       }

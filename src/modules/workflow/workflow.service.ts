@@ -11,10 +11,10 @@ import { MediaAblesResponseDto } from '../media-able/dto/media-able-response.dto
 import { CreateWorkflowStepDto } from '../workflow-step/dto/create-workflow-step.dto';
 import { WorkflowStepService } from '../workflow-step/workflow-step.service';
 
-const logger = new Logger('WorkflowService');
-
 @Injectable()
 export class WorkflowService {
+  private readonly logger = new Logger(WorkflowService.name);
+
   constructor(
     private readonly workflowRepo: WorkflowRepository,
     private readonly workflowStepService: WorkflowStepService,
@@ -22,6 +22,15 @@ export class WorkflowService {
   ) {}
 
   async create(payload: CreateWorkflowDto) {
+    const assistant = await this.workflowRepo.prisma.assistant.findFirst({
+      where: {
+        teamId: payload.teamId,
+        deletedAt: null,
+      },
+    });
+    if (!assistant) {
+      throw new Error('Team has no assistants');
+    }
     const workflow = await this.workflowRepo.prisma.workflow.create({
       data: {
         teamId: payload.teamId,
@@ -34,6 +43,7 @@ export class WorkflowService {
     // create the first step for the workflow
     const stepPayload = CreateWorkflowStepDto.fromInput({
       workflowId: workflow.id,
+      assistantId: assistant.id,
       teamId: payload.teamId,
       name: 'Input',
       description: 'Input for the Workflow',
@@ -112,7 +122,7 @@ export class WorkflowService {
 
     const newStepsCountLimit = 5;
     if (newStepsCount > newStepsCountLimit) {
-      logger.warn(`The file has more than ${newStepsCountLimit} columns`);
+      this.logger.warn(`The file has more than ${newStepsCountLimit} columns`);
       newStepsCount = newStepsCountLimit;
     }
 
@@ -135,7 +145,7 @@ export class WorkflowService {
 
     const newRowsCountLimit = 20;
     if (newRowsCount > newRowsCountLimit) {
-      logger.warn(`The file has more than ${newRowsCountLimit} rows`);
+      this.logger.warn(`The file has more than ${newRowsCountLimit} rows`);
       newRowsCount = newRowsCountLimit;
     }
 

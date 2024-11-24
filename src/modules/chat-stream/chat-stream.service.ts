@@ -16,12 +16,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
 import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
-import { VisionImageUrlContent } from '@/modules/chat-message/interfaces/vision-image.interface';
-import { ChatMessage } from '@/modules/chat-message/interfaces/chat-message.interface';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
 import { ChatToolService } from '@/modules/chat-tool/chat-tool.service';
-import { StreamPayloadDto } from './dto/stream-payload.dto';
 import { ProviderType } from '../ai-model/enums/provider.enum';
 
 interface StreamContext {
@@ -39,10 +36,9 @@ export interface ToolInfoData {
   toolInfo: any;
 }
 
-const logger = new Logger('ChatStreamService');
-
 @Injectable()
 export class ChatStreamService {
+  private readonly logger = new Logger(ChatStreamService.name);
   private readonly maxToolRecursions = 3;
 
   constructor(
@@ -57,27 +53,6 @@ export class ChatStreamService {
     payload: CreateChatStreamDto,
     signal: AbortSignal,
   ) {
-    /*const model = this.aiModelFactory
-      .setConfig({
-        provider: payload.provider,
-        model: payload.model,
-      })
-      .getModel();
-
-    const context: StreamContext = {
-      model,
-      chat,
-      isCancelled: false,
-      chunks: [],
-      subscriber: null,
-      toolCallRecursion: 0,
-      usage: [],
-    };
-
-    const stream = this.generateStream(signal, context, payload);
-
-    return stream;*/
-
     return new Observable((subscriber: Subscriber<MessageEvent>) => {
       const model = this.aiModelFactory
         .setConfig({
@@ -259,7 +234,7 @@ export class ChatStreamService {
 
     // Ensure toolResults is not empty to avoid infinite loop
     if (!toolResults || toolResults.length === 0) {
-      logger.warn('No tool results, exiting generator.');
+      this.logger.warn('No tool results, exiting generator.');
       return;
     }
 
@@ -279,8 +254,6 @@ export class ChatStreamService {
         maxSteps: 1,
         maxRetries: 3,
       });
-
-      //TODO: track token usage for tools
 
       const toolName = toolResults[0]?.toolName || '';
       this.onToolEndCall(
@@ -327,9 +300,13 @@ export class ChatStreamService {
 
       // usage
       await this.addUsage(context, result);
+
       //
     } catch (error) {
       return; // TODO: check if silent discard is ok
+    } finally {
+      // usage
+      // await this.addUsage(context, result);
     }
   }
 
@@ -396,9 +373,10 @@ export class ChatStreamService {
       settings: isPreview
         ? {}
         : {
-            //system: payload.systemPrompt,
+            // system: payload.systemPrompt,
             tools: availableTools,
-            // maxTokens: payload.maxTokens,
+            maxTokens: payload.maxTokens,
+            temperature: payload.temperature,
           },
     };
   }

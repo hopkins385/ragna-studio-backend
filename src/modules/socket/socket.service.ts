@@ -4,10 +4,9 @@ import { JwtService } from '@nestjs/jwt';
 import { EmitEventDto } from './dto/emit-event.dto';
 import axios from 'axios';
 
-const logger = new Logger('SocketService');
-
 @Injectable()
 export class SocketService {
+  private readonly logger = new Logger(SocketService.name);
   private readonly socketServerUrl: string;
   private readonly socketAppId: string;
   private jwtToken: string;
@@ -51,7 +50,7 @@ export class SocketService {
         throw new Error('Failed to emit event');
       }
     } catch (error) {
-      logger.error(
+      this.logger.error(
         'Failed to emit event:',
         payload.event,
         'to room:',

@@ -6,10 +6,9 @@ import {
 } from './interfaces/emedding.interface';
 import { ConfigService } from '@nestjs/config';
 
-const logger = new Logger('EmbeddingService');
-
 @Injectable()
 export class EmbeddingService {
+  private readonly logger = new Logger(EmbeddingService.name);
   private readonly embedFileUrl: string;
   private readonly searchVectorUrl: string;
 
@@ -42,7 +41,7 @@ export class EmbeddingService {
 
       return (await response.json()) as RagDocument[];
     } catch (error) {
-      logger.error('Error embedding file:', error);
+      this.logger.error('Error embedding file:', error);
       throw new Error('Sorry this service is currently unavailable');
     }
   }
@@ -57,7 +56,7 @@ export class EmbeddingService {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      logger.error('Error deleting embeddings:', error);
+      this.logger.error('Error deleting embeddings:', error);
       throw new Error('Sorry this service is currently unavailable');
     }
   }
@@ -78,7 +77,7 @@ export class EmbeddingService {
 
       return (await response.json()) as SearchResultDocument[];
     } catch (error) {
-      logger.error('Error searching documents:', error);
+      this.logger.error('Error searching documents:', error);
       throw new Error('Sorry this service is currently unavailable');
     }
   }
