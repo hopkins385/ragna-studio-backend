@@ -44,6 +44,16 @@ export abstract class AssistantBaseProcessor extends WorkerHost {
     return this.handleJobStatus(job, 'failed');
   }
 
+  protected async handleJob(job: Job<any, any, string>) {
+    const { name, data } = job;
+    switch (name) {
+      case 'workflow-job':
+        return await this.assistantJobService.processWorkflowJob(data);
+      default:
+        throw new Error(`Unknown job name: ${name}`);
+    }
+  }
+
   protected async handleJobStatus(job: Job, status: DocumentProcessingStatus) {
     const { name, data } = job;
     switch (name) {
@@ -54,16 +64,6 @@ export abstract class AssistantBaseProcessor extends WorkerHost {
         );
         return result;
         break;
-      default:
-        throw new Error(`Unknown job name: ${name}`);
-    }
-  }
-
-  protected async handleJob(job: Job<any, any, string>) {
-    const { name, data } = job;
-    switch (name) {
-      case 'workflow-job':
-        return await this.assistantJobService.processWorkflowJob(data);
       default:
         throw new Error(`Unknown job name: ${name}`);
     }

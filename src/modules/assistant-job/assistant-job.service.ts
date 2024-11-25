@@ -1,13 +1,15 @@
+import { AssistantToolService } from './../assistant-tool/assistant-tool.service';
+import { WorkflowExecutionEventDto } from '@/modules/workflow-execution/dto/workflow-execution-event.dto';
 import { Injectable, Logger } from '@nestjs/common';
 import { CoreMessage, generateText } from 'ai';
-import { AiModelFactory } from '../ai-model/factories/ai-model.factory';
-import { DocumentItemService } from '../document-item/document-item.service';
+import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
+import { DocumentItemService } from '@/modules/document-item/document-item.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AssistantJobDto } from './dto/assistant-job.dto';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
-import { WorkflowEvent } from '../workflow/enums/workflow-event.enum';
-import { DocumentProcessingStatus } from '../document-item/interfaces/processing-status.interface';
+import { WorkflowEvent } from '@/modules/workflow/enums/workflow-event.enum';
+import { DocumentProcessingStatus } from '@/modules/document-item/interfaces/processing-status.interface';
 
 @Injectable()
 export class AssistantJobService {
@@ -117,11 +119,17 @@ export class AssistantJobService {
       })
       .getModel();
 
+    // const tools = this.chatToolService.getTools(
+    //   payload.functionIds,
+    //   this.toolStartCallback(context),
+    // );
+
     const { text, usage } = await generateText({
       model,
       maxTokens: 1000,
       temperature,
       messages,
+      // tools:
     });
 
     const update = await this.documentItemService.update({
@@ -166,13 +174,21 @@ export class AssistantJobService {
       status,
     );
 
+    const workflowExecutionEventData = WorkflowExecutionEventDto.fromInput({
+      userId,
+      workflowId,
+    });
+
     switch (status) {
       case 'pending':
-        this.event.emit(WorkflowEvent.CELL_ACTIVE, { userId, workflowId });
+        this.event.emit(WorkflowEvent.CELL_ACTIVE, workflowExecutionEventData);
         break;
       case 'failed':
       case 'completed':
-        this.event.emit(WorkflowEvent.CELL_COMPLETED, { userId, workflowId });
+        this.event.emit(
+          WorkflowEvent.CELL_COMPLETED,
+          workflowExecutionEventData,
+        );
         break;
       default:
         this.logger.error(`Invalid job status: ${status}`);

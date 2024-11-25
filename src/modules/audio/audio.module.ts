@@ -11,6 +11,6 @@ import { AudioProcessor } from './processors/transpile-audio.processor';
     }),
   ],
   controllers: [AudioController],
-  providers: [AudioService, AudioProcessor],
+  providers: [AudioService], //  AudioProcessor
 })
 export class AudioModule {}
