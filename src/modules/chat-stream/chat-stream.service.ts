@@ -138,7 +138,7 @@ export class ChatStreamService {
     );
 
     try {
-      const initialResult = await streamText({
+      const initialResult = streamText({
         abortSignal: signal,
         model: context.model,
         messages: payload.messages,
@@ -244,7 +244,7 @@ export class ChatStreamService {
     ];
 
     try {
-      const result = await streamText({
+      const result = streamText({
         abortSignal: signal,
         model: context.model,
         // system: payload.systemPrompt,

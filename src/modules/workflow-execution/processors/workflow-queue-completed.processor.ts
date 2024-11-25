@@ -28,6 +28,12 @@ export class WorkflowQueueCompletedProcessor extends WorkerHost {
     };
   }
 
+  @OnWorkerEvent('ready')
+  onReady() {
+    this.logger.log('Worker ready');
+  }
+
+  /*
   @OnWorkerEvent('active')
   onActive(job: Job<WorkflowCompletionData>) {
     this.logger.log(`Job started with data ${job.data}`);
@@ -37,4 +43,5 @@ export class WorkflowQueueCompletedProcessor extends WorkerHost {
   onCompleted(job: Job<WorkflowCompletionData>) {
     this.logger.log(`Job completed with result ${job.returnvalue}`);
   }
+  */
 }

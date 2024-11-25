@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AssistantJobService } from './assistant-job.service';
 import { DocumentItemModule } from '../document-item/document-item.module';
-import { AnthropicClaudeSonnetProcessor } from './processors/anthropic-claude.processor';
-import { AnthropicClaudeSonnetLatestProcessor } from './processors/anthropic-claude-latest.processor';
+import {
+  AnthropicClaudeSonnetLatestProcessor,
+  AnthropicClaudeSonnetProcessor,
+  GroqLlamaVisionProcessor,
+  MistralLargeProcessor,
+  OpenaiGpt4oMiniProcessor,
+  OpenaiGpt4oProcessor,
+} from './processors/ai-models.processor';
 
 @Module({
   imports: [DocumentItemModule],
@@ -11,6 +17,10 @@ import { AnthropicClaudeSonnetLatestProcessor } from './processors/anthropic-cla
     // processors
     AnthropicClaudeSonnetProcessor,
     AnthropicClaudeSonnetLatestProcessor,
+    GroqLlamaVisionProcessor,
+    MistralLargeProcessor,
+    OpenaiGpt4oProcessor,
+    OpenaiGpt4oMiniProcessor,
   ],
 })
 export class AssistantJobModule {}

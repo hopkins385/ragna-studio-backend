@@ -1,3 +1,5 @@
+import { LLM_MODEL } from '@/modules/llm/enums/llm-model.enum';
+
 /**
  * Workflow workers
  */
@@ -10,63 +12,48 @@ const claudeReqPerMin = 4 * 1000;
 
 export const workflowProcessors = [
   {
-    name: 'groq-llama-3.2-11b-vision-preview',
+    name: LLM_MODEL.LLAMA_3_2_11B_LATEST,
+    title: 'GroqLlamaVision',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: groqReqPerMin, duration: rateLimitDuration },
     },
   },
   {
-    name: 'groq-llama-3.1-70b-versatile',
-    options: {
-      concurrency: workerConcurrency,
-      limiter: { max: groqReqPerMin, duration: rateLimitDuration },
-    },
-  },
-  {
-    name: 'groq-mixtral-8x7b-32768',
-    options: {
-      concurrency: workerConcurrency,
-      limiter: { max: groqReqPerMin, duration: rateLimitDuration },
-    },
-  },
-  {
-    name: 'mistral-mistral-large-latest',
+    name: LLM_MODEL.MISTRAL_LATEST,
+    title: 'MistralLarge',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: mistralReqPerMin, duration: rateLimitDuration },
     },
   },
   {
-    name: 'openai-gpt-4o',
+    name: LLM_MODEL.GPT_4O,
+    title: 'OpenaiGpt4o',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: openaiReqPerMin, duration: rateLimitDuration },
     },
   },
   {
-    name: 'openai-gpt-4o-mini',
+    name: LLM_MODEL.GPT_4O_MINI,
+    title: 'OpenaiGpt4oMini',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: openaiReqPerMin, duration: rateLimitDuration },
     },
   },
   {
-    name: 'anthropic-claude-3-5-sonnet-latest',
+    name: LLM_MODEL.SONNET_LATEST,
+    title: 'AnthropicClaudeSonnetLatest',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: claudeReqPerMin, duration: rateLimitDuration },
     },
   },
   {
-    name: 'anthropic-claude-3-5-sonnet-20240620',
-    options: {
-      concurrency: workerConcurrency,
-      limiter: { max: claudeReqPerMin, duration: rateLimitDuration },
-    },
-  },
-  {
-    name: 'anthropic-claude-3-opus-20240229',
+    name: LLM_MODEL.SONNET_20240620,
+    title: 'AnthropicClaudeSonnet',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: claudeReqPerMin, duration: rateLimitDuration },

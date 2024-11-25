@@ -1,7 +1,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LLM_CONFIGS } from 'src/common/types/llm.types';
+import { workflowProcessors } from '../assistant-job/processors/assistant-processor.config';
 
 @Module({
   imports: [
@@ -22,9 +22,9 @@ import { LLM_CONFIGS } from 'src/common/types/llm.types';
     BullModule.registerQueue({
       name: 'workflow-row-completed',
     }),
-    ...LLM_CONFIGS.map((config) =>
+    ...workflowProcessors.map((p) =>
       BullModule.registerQueue({
-        name: `${config.provider}-${config.model}`,
+        name: p.name,
         defaultJobOptions: {
           attempts: 3,
           backoff: {
