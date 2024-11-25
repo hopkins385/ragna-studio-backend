@@ -223,6 +223,7 @@ export class WorkflowService {
       select: {
         id: true,
         name: true,
+        description: true,
         teamId: true,
       },
     });

@@ -17,6 +17,7 @@ import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { FindAllWorkflowsDto } from './dto/find-all-workflows.dto';
 import { CreateWorkflowBody } from './dto/create-workflow-body.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
+import { UpdateWorkflowBody } from './dto/update-workflow-body.dto';
 
 @Controller('workflow')
 export class WorkflowController {
@@ -58,6 +59,17 @@ export class WorkflowController {
   @Get(':id/full')
   async findFull(@Param() param: IdParam) {
     const workflow = await this.workflowService.findFirstWithSteps(param.id);
+    return { workflow };
+  }
+
+  @Patch(':id')
+  async update(@Param() param: IdParam, @Body() body: UpdateWorkflowBody) {
+    const payload = UpdateWorkflowDto.fromInput({
+      workflowId: param.id,
+      name: body.name,
+      description: body.description,
+    });
+    const workflow = await this.workflowService.update(payload);
     return { workflow };
   }
 }
