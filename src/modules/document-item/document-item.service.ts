@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DocumentItemRepository } from './repositories/document-item.repository';
 import { CreateDocumentItemDto } from './dto/create-document-item.dto';
 import { UpdateDocumentItemDto } from './dto/update-document-item.dto';
+import { DocumentProcessingStatus } from './interfaces/processing-status.interface';
 
 @Injectable()
 export class DocumentItemService {
@@ -95,7 +96,7 @@ export class DocumentItemService {
 
   updateProcessingStatus(
     documentItemId: string,
-    processingStatus: 'pending' | 'completed' | 'failed',
+    processingStatus: DocumentProcessingStatus,
   ) {
     return this.docItemRepo.prisma.documentItem.update({
       where: {

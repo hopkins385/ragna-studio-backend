@@ -40,6 +40,7 @@ import { DocumentItemModule } from './modules/document-item/document-item.module
 import { OnboardModule } from './modules/onboard/onboard.module';
 import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-execution.module';
 import { AudioModule } from './modules/audio/audio.module';
+import { AssistantJobModule } from './modules/assistant-job/assistant-job.module';
 
 @Module({
   imports: [
@@ -129,6 +130,8 @@ import { AudioModule } from './modules/audio/audio.module';
     AudioModule,
 
     WorkflowExecutionModule,
+
+    AssistantJobModule,
     // ,
   ],
   controllers: [ChatMessageController],

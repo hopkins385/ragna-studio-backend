@@ -10,6 +10,8 @@ import { DocumentService } from '../document/document.service';
 import { CreateDocumentDto } from '../document/dto/create-document.dto';
 import { CreateDocumentItemDto } from '../document-item/dto/create-document-item.dto';
 import { CreateWorkflowItemDto } from './dto/create-workflow-item.dto';
+import { UpdateWorkflowItemDto } from './dto/update-workflow-item.dto';
+import { UpdateDocumentItemDto } from '../document-item/dto/update-document-item.dto';
 
 @Injectable()
 export class WorkflowStepService {
@@ -194,6 +196,15 @@ export class WorkflowStepService {
       },
       data,
     });
+  }
+
+  updateItem(payload: UpdateWorkflowItemDto) {
+    const updatePayload = UpdateDocumentItemDto.fromInput({
+      documentItemId: payload.itemId,
+      content: payload.itemContent,
+    });
+
+    return this.documentItemService.update(updatePayload);
   }
 
   updateAssistant(payload: UpdateWorkflowStepAssistantDto) {

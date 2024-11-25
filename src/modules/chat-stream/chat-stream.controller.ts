@@ -25,10 +25,9 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
 import { SocketService } from '../socket/socket.service';
 
-const logger = 'ChatStreamController';
-
 @Controller('chat-stream')
 export class ChatStreamController {
+  private readonly logger = new Logger(ChatStreamController.name);
   private readonly SSE_TIMEOUT = 240000; // 240 seconds (4 minutes)
 
   constructor(
@@ -92,7 +91,7 @@ export class ChatStreamController {
         }),
         catchError((error) => {
           // Handle stream errors
-          logger.error('Stream error:', error);
+          this.logger.error('Stream error:', error);
           throw new HttpException(
             'Stream closed unexpectedly',
             HttpStatus.INTERNAL_SERVER_ERROR,

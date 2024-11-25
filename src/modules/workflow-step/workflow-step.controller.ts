@@ -17,6 +17,9 @@ import { CreateWorkflowRowBody } from './dto/create-workflow-row-body.dts';
 import { CreateWorkflowItemDto } from './dto/create-workflow-item.dto';
 import { UpdateWorkflowStepBody } from './dto/update-workflow-step-body.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
+import { UpdateWorkflowItemDto } from './dto/update-workflow-item.dto';
+import { UpdateWorkflowItemBody } from './dto/update-workflow-item-body.dto';
+import { UpdateWorkflowItemParams } from './dto/update-workflow-item-params.dto';
 
 @Controller('workflow-step')
 export class WorkflowStepController {
@@ -78,6 +81,23 @@ export class WorkflowStepController {
     });
 
     const step = await this.workflowStepService.update(payload);
+
+    return { step };
+  }
+
+  @Patch(':stepId/item/:itemId')
+  async updateItem(
+    @ReqUser() user: UserEntity,
+    @Param() params: UpdateWorkflowItemParams,
+    @Body() body: UpdateWorkflowItemBody,
+  ) {
+    const payload = UpdateWorkflowItemDto.fromInput({
+      workflowStepId: params.stepId,
+      itemId: params.itemId,
+      itemContent: body.itemContent,
+    });
+
+    const step = await this.workflowStepService.updateItem(payload);
 
     return { step };
   }
