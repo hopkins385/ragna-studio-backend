@@ -8,6 +8,7 @@ import {
   Query,
   Res,
   StreamableFile,
+  NotFoundException,
 } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
@@ -60,8 +61,12 @@ export class WorkflowController {
 
   @Get(':id/full')
   async findFull(@Param() param: IdParam) {
-    const workflow = await this.workflowService.findFirstWithSteps(param.id);
-    return { workflow };
+    try {
+      const workflow = await this.workflowService.findFirstWithSteps(param.id);
+      return { workflow };
+    } catch (error) {
+      throw new NotFoundException('Workflow not found');
+    }
   }
 
   @Patch(':id')
@@ -71,8 +76,13 @@ export class WorkflowController {
       name: body.name,
       description: body.description,
     });
-    const workflow = await this.workflowService.update(payload);
-    return { workflow };
+
+    try {
+      const workflow = await this.workflowService.update(payload);
+      return { workflow };
+    } catch (error) {
+      throw new NotFoundException('Workflow not found');
+    }
   }
 
   @Get(':id/export')
@@ -80,8 +90,12 @@ export class WorkflowController {
     @Param() param: IdParam,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const buffer = await this.workflowService.export(param.id, 'xlsx');
-    const file = new StreamableFile(buffer);
-    return file;
+    try {
+      const buffer = await this.workflowService.export(param.id, 'xlsx');
+      const file = new StreamableFile(buffer);
+      return file;
+    } catch (error) {
+      throw new NotFoundException('Workflow not found');
+    }
   }
 }

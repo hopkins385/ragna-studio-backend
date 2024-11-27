@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Query,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { TextToImageService } from './text-to-image.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
@@ -25,38 +27,50 @@ export class TextToImageController {
 
   @Post()
   async generateImages(@ReqUser() user: UserEntity, @Body() body: FluxProBody) {
-    const imageUrls = await this.textToImageService.generateFluxProImages(
-      user,
-      body,
-    );
-
-    return { imageUrls };
+    try {
+      const imageUrls = await this.textToImageService.generateFluxProImages(
+        user,
+        body,
+      );
+      return { imageUrls };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to generate images');
+    }
   }
 
   @Get('folders')
   async getFolders(@ReqUser() user: UserEntity) {
-    const folders = await this.textToImageService.findFolders({
-      teamId: user.firstTeamId,
-    });
-    if (folders.length === 0) {
-      console.log('This project has no ai-image folders, creating one ... ');
-      const folder = await this.textToImageService.createFolder({
+    try {
+      const folders = await this.textToImageService.findFolders({
         teamId: user.firstTeamId,
-        folderName: 'Default',
       });
-      return { folders: [folder] };
+      if (folders.length === 0) {
+        console.log('This project has no ai-image folders, creating one ... ');
+        const folder = await this.textToImageService.createFolder({
+          teamId: user.firstTeamId,
+          folderName: 'Default',
+        });
+        return { folders: [folder] };
+      }
+      return { folders };
+    } catch (error) {
+      throw new NotFoundException('Folders not found');
     }
-    return { folders };
   }
 
   @Get(':folderId')
   async getFolderImagesRuns(@Param() param: FolderIdParam) {
     const folderId = param.folderId;
     const showDeleted = false; // TODO: Implement this
-    const runs = await this.textToImageService.getFolderImagesRuns(folderId, {
-      showDeleted,
-    });
-    return { runs };
+
+    try {
+      const runs = await this.textToImageService.getFolderImagesRuns(folderId, {
+        showDeleted,
+      });
+      return { runs };
+    } catch (error) {
+      throw new NotFoundException('Folder not found');
+    }
   }
 
   @Get(':folderId/paginated')
@@ -66,40 +80,64 @@ export class TextToImageController {
   ) {
     const folderId = param.folderId;
     const showDeleted = false; // TODO: Implement this
-    const [runs, meta] =
-      await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
-        showDeleted,
-        page: query.page,
-      });
-    return { runs, meta };
+
+    try {
+      const [runs, meta] =
+        await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
+          showDeleted,
+          page: query.page,
+        });
+      return { runs, meta };
+    } catch (error) {
+      throw new NotFoundException('Folder not found');
+    }
   }
 
   @Get('random')
   async getRandomImagesPaginated(@Query() query: PaginateQuery) {
-    const runs = await this.textToImageService.getRandomImagesPaginated({
-      page: query.page,
-    });
-    return { runs };
+    try {
+      const runs = await this.textToImageService.getRandomImagesPaginated({
+        page: query.page,
+      });
+      return { runs };
+    } catch (error) {
+      throw new NotFoundException('Folder not found');
+    }
   }
 
   @Delete(':runId')
   async deleteRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-    const res = await this.textToImageService.softDeleteRun(runId);
-    return { success: true, runId };
+
+    try {
+      const res = await this.textToImageService.softDeleteRun(runId);
+      return { success: true, runId };
+    } catch (error) {
+      throw new NotFoundException('Run not found');
+    }
   }
 
   @Patch(':runId/toggle-hide')
   async toggleHideRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-    const res = await this.textToImageService.toggleSoftDeleteRun(runId);
-    return { success: true, runId };
+
+    try {
+      const res = await this.textToImageService.toggleSoftDeleteRun(runId);
+      return { success: true, runId };
+    } catch (error) {
+      throw new NotFoundException('Run not found');
+    }
   }
 
   @Patch(':runId/undelete')
   async unDeleteRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-    const res = await this.textToImageService.unDeleteRun(runId);
-    return { success: true, runId };
+
+    try {
+      const res = await this.textToImageService.unDeleteRun(runId);
+      return { success: true, runId };
+    } catch (error) {
+      throw new NotFoundException('Run not found');
+    }
   }
 }

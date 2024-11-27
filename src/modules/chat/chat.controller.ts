@@ -42,40 +42,59 @@ export class ChatController {
       limit,
       searchQuery,
     });
-    const [chats, meta] = await this.chatService.getAllForUserPaginate(payload);
-    return { chats, meta };
+
+    try {
+      const [chats, meta] =
+        await this.chatService.getAllForUserPaginate(payload);
+      return { chats, meta };
+    } catch (error) {
+      throw new NotFoundException('Chats not found');
+    }
   }
 
   @Get('all')
   async all(@ReqUser() user: UserEntity) {
-    const chats = await this.chatService.getAllForUser(user.id);
-    return { chats };
+    try {
+      const chats = await this.chatService.getAllForUser(user.id);
+      return { chats };
+    } catch (error) {
+      throw new NotFoundException('Chats not found');
+    }
   }
 
   @Get('latest')
   async findLatest(@ReqUser() user: UserEntity) {
-    const chat = await this.chatService.getRecentForUser(user.id);
-    return { chat };
+    try {
+      const chat = await this.chatService.getRecentForUser(user.id);
+      return { chat };
+    } catch (error) {
+      throw new NotFoundException('Chat not found');
+    }
   }
 
   @Post()
   async create(@ReqUser() user: UserEntity, @Body() body: CreateChatBody) {
     const { assistantId } = body;
     const payload = FindAssistantDto.fromInput({ id: assistantId });
-    const assistant = await this.assistantService.findFirst(payload);
 
-    if (!assistant) {
+    try {
+      const assistant = await this.assistantService.findFirst(payload);
+
+      if (!assistant) {
+        throw new Error('Assistant not found');
+      }
+
+      // access policy
+      const canAccess = this.chatService.canCreateChatPolicy(user, assistant);
+      if (!canAccess) {
+        throw new Error('Assistant not found');
+      }
+
+      const chat = await this.chatService.create(assistantId, user.id);
+      return { chat };
+    } catch (error) {
       throw new NotFoundException('Assistant not found');
     }
-
-    // access policy
-    const canAccess = this.chatService.canCreateChatPolicy(user, assistant);
-    if (!canAccess) {
-      throw new NotFoundException('Assistant not found');
-    }
-
-    const chat = await this.chatService.create(assistantId, user.id);
-    return { chat };
   }
 
   @Get(':id')
@@ -108,21 +127,26 @@ export class ChatController {
     if (!chatId) {
       throw new NotFoundException('Chat not found');
     }
-    // find chat
-    const chat = await this.chatService.getFirst(chatId);
 
-    if (!chat) {
+    try {
+      // find chat
+      const chat = await this.chatService.getFirst(chatId);
+
+      if (!chat) {
+        throw new Error('Chat not found');
+      }
+
+      // access policy
+      if (chat.userId !== user.id) {
+        throw new Error('Chat not found');
+      }
+
+      await this.chatService.softDelete(chatId, user.id);
+
+      return { status: 'ok' };
+    } catch (error) {
       throw new NotFoundException('Chat not found');
     }
-
-    // access policy
-    if (chat.userId !== user.id) {
-      throw new NotFoundException('Chat not found');
-    }
-
-    await this.chatService.softDelete(chatId, user.id);
-
-    return { status: 'ok' };
   }
 
   @Delete(':id/messages')
@@ -131,18 +155,22 @@ export class ChatController {
     @ReqUser() user: UserEntity,
   ): Promise<{ status: string }> {
     const { id: chatId } = param;
-    const chat = await this.chatService.getFirst(chatId);
-    if (!chat) {
+    try {
+      const chat = await this.chatService.getFirst(chatId);
+      if (!chat) {
+        throw new Error('Chat not found');
+      }
+
+      // access policy
+      if (chat.userId !== user.id) {
+        throw new Error('Chat not found');
+      }
+
+      await this.chatService.clearMessages(chatId);
+
+      return { status: 'ok' };
+    } catch (error) {
       throw new NotFoundException('Chat not found');
     }
-
-    // access policy
-    if (chat.userId !== user.id) {
-      throw new NotFoundException('Chat not found');
-    }
-
-    await this.chatService.clearMessages(chatId);
-
-    return { status: 'ok' };
   }
 }

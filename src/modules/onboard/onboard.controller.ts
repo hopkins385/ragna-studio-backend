@@ -9,6 +9,7 @@ import {
   HttpException,
   HttpStatus,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { OnboardService } from './onboard.service';
 import { OnboardUserBody } from './dto/onboard-user-body.dto';
@@ -37,10 +38,7 @@ export class OnboardController {
       const result = await this.onboardService.onboardUser(payload);
       return { success: result };
     } catch (error: any) {
-      throw new HttpException(
-        'Failed to onboard user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Error onboarding user');
     }
   }
 }

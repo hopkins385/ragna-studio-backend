@@ -1,4 +1,9 @@
-import { Controller, Post, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { WorkflowExecutionService } from './workflow-execution.service';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
@@ -16,11 +21,15 @@ export class WorkflowExecutionController {
     @Param() param: IdParam,
   ) {
     const { id: workflowId } = param;
-    const jobNodes = await this.workflowExecutionService.executeWorkflow(
-      user.id,
-      workflowId.toLowerCase(),
-    );
 
-    return { success: true };
+    try {
+      const jobNodes = await this.workflowExecutionService.executeWorkflow(
+        user.id,
+        workflowId.toLowerCase(),
+      );
+      return { success: true };
+    } catch (error) {
+      throw new InternalServerErrorException('Error executing workflow');
+    }
   }
 }

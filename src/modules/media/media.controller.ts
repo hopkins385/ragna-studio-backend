@@ -7,6 +7,8 @@ import {
   Delete,
   Query,
   HttpCode,
+  NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
@@ -34,8 +36,13 @@ export class MediaController {
       id: model.id,
       type: model.type,
     });
-    const medias = await this.mediaService.findAllFor(mediaAbleDto);
-    return { medias };
+
+    try {
+      const medias = await this.mediaService.findAllFor(mediaAbleDto);
+      return { medias };
+    } catch (error) {
+      throw new NotFoundException('Media not found');
+    }
   }
 
   @Post('for/paginate')
@@ -49,17 +56,26 @@ export class MediaController {
       id: model.id,
       type: model.type,
     });
-    const [medias, meta] = await this.mediaService.paginateFindAllFor(
-      mediaAbleDto,
-      query.page,
-      query.limit,
-    );
-    return { medias, meta };
+
+    try {
+      const [medias, meta] = await this.mediaService.paginateFindAllFor(
+        mediaAbleDto,
+        query.page,
+        query.limit,
+      );
+      return { medias, meta };
+    } catch (error) {
+      throw new NotFoundException('Media not found');
+    }
   }
 
   @Delete(':id')
   async remove(@ReqUser() user: UserEntity, @Param() param: IdParam) {
-    await this.mediaService.delete({ userId: user.id, mediaId: param.id });
-    return { status: 'ok' };
+    try {
+      await this.mediaService.delete({ userId: user.id, mediaId: param.id });
+      return { status: 'ok' };
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting media');
+    }
   }
 }

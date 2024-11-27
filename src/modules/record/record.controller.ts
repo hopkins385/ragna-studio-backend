@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { RecordService } from './record.service';
 import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
@@ -29,8 +30,12 @@ export class RecordController {
       teamId,
     });
 
-    const record = await this.recordService.create(payload);
-    return { record };
+    try {
+      const record = await this.recordService.create(payload);
+      return { record };
+    } catch (error) {
+      throw new NotFoundException('Record not found');
+    }
   }
 
   @Get(':id')
@@ -46,24 +51,15 @@ export class RecordController {
       teamId,
     });
 
-    const [records, meta] = await this.recordService.findAllPaginated(
-      payload,
-      query.page,
-      query.limit,
-    );
-
-    return { records, meta };
+    try {
+      const [records, meta] = await this.recordService.findAllPaginated(
+        payload,
+        query.page,
+        query.limit,
+      );
+      return { records, meta };
+    } catch (error) {
+      throw new NotFoundException('Records not found');
+    }
   }
-
-  @Get()
-  findAll() {}
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {}
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() body: any) {}
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {}
 }

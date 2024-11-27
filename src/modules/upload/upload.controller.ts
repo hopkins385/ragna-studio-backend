@@ -1,4 +1,9 @@
-import { Controller, Post, Req } from '@nestjs/common';
+import {
+  Controller,
+  InternalServerErrorException,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { Request, Response } from 'express';
 import { ReqUser } from '../user/decorators/user.decorator';
@@ -10,6 +15,10 @@ export class UploadController {
 
   @Post()
   async uploadFile(@ReqUser() user: UserEntity, @Req() req: Request) {
-    return await this.uploadService.uploadFiles(req, user);
+    try {
+      return await this.uploadService.uploadFiles(req, user);
+    } catch (error) {
+      throw new InternalServerErrorException('Error uploading file');
+    }
   }
 }

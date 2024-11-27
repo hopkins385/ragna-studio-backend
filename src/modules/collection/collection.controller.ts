@@ -10,6 +10,7 @@ import {
   NotFoundException,
   HttpCode,
   HttpStatus,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CollectionService } from './collection.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
@@ -32,15 +33,19 @@ export class CollectionController {
     @Body() body: CreateCollectionBody,
   ) {
     const userTeamId = user.teams[0].team.id;
-    const collection = await this.collectionService.createCollection(
-      CreateCollectionDto.fromInput({
-        teamId: userTeamId,
-        name: body.name,
-        description: body.description,
-      }),
-    );
 
-    return { collection };
+    try {
+      const collection = await this.collectionService.createCollection(
+        CreateCollectionDto.fromInput({
+          teamId: userTeamId,
+          name: body.name,
+          description: body.description,
+        }),
+      );
+      return { collection };
+    } catch (error) {
+      throw new NotFoundException('Collection not found');
+    }
   }
 
   @Get()
@@ -49,20 +54,26 @@ export class CollectionController {
     @Query() query: PaginateQuery,
   ) {
     const userTeamId = user.teams[0].team.id;
-    const [collections, meta] = await this.collectionService.findAllPaginated(
-      userTeamId,
-      +query.page,
-    );
-
-    return { collections, meta };
+    try {
+      const [collections, meta] = await this.collectionService.findAllPaginated(
+        userTeamId,
+        +query.page,
+      );
+      return { collections, meta };
+    } catch (error) {
+      throw new NotFoundException('Collections not found');
+    }
   }
 
   @Get('all')
   async findAll(@ReqUser() user: UserEntity) {
     const userTeamId = user.teams[0].team.id;
-    const collections = await this.collectionService.findAll(userTeamId);
-
-    return { collections };
+    try {
+      const collections = await this.collectionService.findAll(userTeamId);
+      return { collections };
+    } catch (error) {
+      throw new NotFoundException('Collections not found');
+    }
   }
 
   @Post('for')
@@ -73,9 +84,12 @@ export class CollectionController {
       type: body.model.type,
     });
 
-    const collections = await this.collectionService.findAllFor(payload);
-
-    return { collections };
+    try {
+      const collections = await this.collectionService.findAllFor(payload);
+      return { collections };
+    } catch (error) {
+      throw new NotFoundException('Collections not found');
+    }
   }
 
   @Get(':id')
@@ -83,12 +97,15 @@ export class CollectionController {
     const userTeamId = user.teams[0].team.id;
     const collectionId = param.id;
 
-    const collection = await this.collectionService.findFirst(
-      userTeamId,
-      collectionId,
-    );
-
-    return { collection };
+    try {
+      const collection = await this.collectionService.findFirst(
+        userTeamId,
+        collectionId,
+      );
+      return { collection };
+    } catch (error) {
+      throw new NotFoundException('Collection not found');
+    }
   }
 
   @Patch(':id')
@@ -109,17 +126,20 @@ export class CollectionController {
       throw new NotFoundException('Collection not found');
     }
 
-    const collectionUpdated = await this.collectionService.update(
-      userTeamId,
-      collectionId,
-      CreateCollectionDto.fromInput({
-        teamId: userTeamId,
-        name: body.name,
-        description: body.description,
-      }),
-    );
-
-    return { collection: collectionUpdated };
+    try {
+      const collectionUpdated = await this.collectionService.update(
+        userTeamId,
+        collectionId,
+        CreateCollectionDto.fromInput({
+          teamId: userTeamId,
+          name: body.name,
+          description: body.description,
+        }),
+      );
+      return { collection: collectionUpdated };
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating collection');
+    }
   }
 
   @Delete(':id')
@@ -127,11 +147,14 @@ export class CollectionController {
     const userTeamId = user.teams[0].team.id;
     const collectionId = param.id;
 
-    const result = await this.collectionService.delete(
-      userTeamId,
-      collectionId,
-    );
-
-    return { status: 'ok' };
+    try {
+      const result = await this.collectionService.delete(
+        userTeamId,
+        collectionId,
+      );
+      return { status: 'ok' };
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting collection');
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { SocketService } from './socket.service';
-import { Controller, Post } from '@nestjs/common';
+import { Controller, InternalServerErrorException, Post } from '@nestjs/common';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 
@@ -9,10 +9,14 @@ export class SocketController {
 
   @Post('user-auth')
   async createAuthToken(@ReqUser() { id, roles }: UserEntity) {
-    const token = await this.socketService.createAuthToken({
-      userId: id,
-      roles,
-    });
-    return { token };
+    try {
+      const token = await this.socketService.createAuthToken({
+        userId: id,
+        roles,
+      });
+      return { token };
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating auth token');
+    }
   }
 }

@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Controller,
   Headers,
+  InternalServerErrorException,
   Post,
   RawBodyRequest,
   Req,
@@ -26,6 +27,10 @@ export class StripeController {
       throw new BadRequestException('Missing stripe-signature header');
     }
 
-    return this.stripeService.handleWebhook(signature, req.rawBody);
+    try {
+      return this.stripeService.handleWebhook(signature, req.rawBody);
+    } catch (error) {
+      throw new InternalServerErrorException('Error handling webhook');
+    }
   }
 }

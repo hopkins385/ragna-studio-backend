@@ -82,5 +82,7 @@ export class UserService {
     return new UserEntity(user as any); // TODO: fix types
   }
 
-  remove(id: string) {}
+  async remove(id: string) {
+    throw new Error('Not implemented');
+  }
 }

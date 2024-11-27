@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, InternalServerErrorException } from '@nestjs/common';
 import { AssistantToolService } from './assistant-tool.service';
 
 @Controller('assistant-tool')
@@ -7,7 +7,11 @@ export class AssistantToolController {
 
   @Get('tools')
   async getAllTools() {
-    const tools = await this.assistantToolService.findAll();
-    return { tools };
+    try {
+      const tools = await this.assistantToolService.findAll();
+      return { tools };
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching tools');
+    }
   }
 }

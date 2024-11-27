@@ -1,6 +1,6 @@
 import { ReqUser } from './../user/decorators/user.decorator';
 import { UserService } from './../user/user.service';
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 
@@ -19,7 +19,11 @@ export class AccountController {
   @Get()
   async find(@ReqUser() user: UserEntity) {
     const { id: userId } = user;
-    const accountData = await this.userService.findOne(userId);
-    return accountData;
+    try {
+      const accountData = await this.userService.findOne(userId);
+      return accountData;
+    } catch (error) {
+      throw new NotFoundException('Account not found');
+    }
   }
 }

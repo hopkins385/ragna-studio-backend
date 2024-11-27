@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { WorkflowStepService } from './workflow-step.service';
 import { CreateWorkflowStepDto } from './dto/create-workflow-step.dto';
@@ -44,8 +45,13 @@ export class WorkflowStepController {
       rowCount: body.rowCount,
       assistantId: body.assistantId,
     });
-    const step = await this.workflowStepService.create(payload);
-    return { step };
+
+    try {
+      const step = await this.workflowStepService.create(payload);
+      return { step };
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating workflow');
+    }
   }
 
   @Post('row')
@@ -66,10 +72,15 @@ export class WorkflowStepController {
       workflowItemsDtos.push(dto);
     }
 
-    const row = await this.workflowStepService.createRow(
-      body.workflowId,
-      workflowItemsDtos,
-    );
+    try {
+      const row = await this.workflowStepService.createRow(
+        body.workflowId,
+        workflowItemsDtos,
+      );
+      return { row };
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating workflow row');
+    }
   }
 
   @Patch(':id')
@@ -85,8 +96,12 @@ export class WorkflowStepController {
       orderColumn: body.orderColumn,
     });
 
-    const step = await this.workflowStepService.update(payload);
-    return { step };
+    try {
+      const step = await this.workflowStepService.update(payload);
+      return { step };
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating workflow step');
+    }
   }
 
   @Patch(':id/assistant')
@@ -99,8 +114,16 @@ export class WorkflowStepController {
       workflowStepId: param.id,
       assistantId: body.assistantId,
     });
-    const step = await this.workflowStepService.updateAssistant(updatePayload);
-    return { step };
+
+    try {
+      const step =
+        await this.workflowStepService.updateAssistant(updatePayload);
+      return { step };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error updating workflow step assistant',
+      );
+    }
   }
 
   @Patch(':id/input-steps')
@@ -109,11 +132,17 @@ export class WorkflowStepController {
     @Param() param: IdParam,
     @Body() body: UpdateWorkflowStepIdsBody,
   ) {
-    const steps = this.workflowStepService.updateInputSteps(
-      param.id,
-      body.inputStepIds,
-    );
-    return { steps };
+    try {
+      const steps = await this.workflowStepService.updateInputSteps(
+        param.id,
+        body.inputStepIds,
+      );
+      return { steps };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error updating workflow step assistant',
+      );
+    }
   }
 
   @Patch(':stepId/item/:itemId')
@@ -128,13 +157,21 @@ export class WorkflowStepController {
       itemContent: body.itemContent,
     });
 
-    const step = await this.workflowStepService.updateItem(payload);
-    return { step };
+    try {
+      const step = await this.workflowStepService.updateItem(payload);
+      return { step };
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating workflow item');
+    }
   }
 
   @Delete(':id')
   async remove(@Param() param: IdParam) {
-    const step = await this.workflowStepService.delete(param.id);
-    return { step };
+    try {
+      const step = await this.workflowStepService.delete(param.id);
+      return { step };
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting workflow step');
+    }
   }
 }

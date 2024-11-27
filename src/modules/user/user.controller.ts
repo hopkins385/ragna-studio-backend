@@ -9,6 +9,8 @@ import {
   UseGuards,
   Session,
   ForbiddenException,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -28,38 +30,56 @@ export class UserController {
 
   @Post()
   @Roles(Role.ADMIN)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    try {
+      return await this.userService.create(createUserDto);
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating user');
+    }
   }
 
   @Get()
   @Roles(Role.ADMIN)
   async findAll() {
-    // await new Promise((resolve) => setTimeout(resolve, 2000));
-    const [users, meta] = await this.userService.findAllPaginated();
-
-    return { users, meta };
+    try {
+      const [users, meta] = await this.userService.findAllPaginated();
+      return { users, meta };
+    } catch (error) {
+      throw new NotFoundException('Users not found');
+    }
   }
 
   @Get(':id')
   @Roles(Role.ADMIN)
-  findOne(@Param() { id }: IdParam) {
-    return this.userService.findOne(id);
+  async findOne(@Param() { id }: IdParam) {
+    try {
+      return await this.userService.findOne(id);
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  update(@Param() { id }: IdParam, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  async update(@Param() { id }: IdParam, @Body() updateUserDto: UpdateUserDto) {
+    try {
+      return await this.userService.update(id, updateUserDto);
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating user');
+    }
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  remove(@Param() { id }: IdParam, @ReqUser() user: UserEntity) {
+  async remove(@Param() { id }: IdParam, @ReqUser() user: UserEntity) {
     // current logged in user cannot delete themselves
     if (id === user.id) {
       throw new ForbiddenException('You cannot delete yourself');
     }
-    return this.userService.remove(id);
+    try {
+      return await this.userService.remove(id);
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting user');
+    }
   }
 }

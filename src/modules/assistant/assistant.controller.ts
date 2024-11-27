@@ -8,6 +8,7 @@ import {
   Delete,
   NotFoundException,
   Query,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AssistantService } from './assistant.service';
 import {
@@ -45,7 +46,11 @@ export class AssistantController {
       systemPromptTokenCount: body.systemPromptTokenCount,
       tools: body.tools,
     });
-    return await this.assistantService.create(payload);
+    try {
+      return await this.assistantService.create(payload);
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating assistant');
+    }
   }
 
   @Get()
@@ -57,16 +62,20 @@ export class AssistantController {
       throw new NotFoundException('Team not found');
     }
 
-    const [assistants, meta] = await this.assistantService.findAll(
-      FindAllAssistantsDto.fromInput({
-        teamId,
-        page,
-        limit,
-        searchQuery,
-      }),
-    );
+    try {
+      const [assistants, meta] = await this.assistantService.findAll(
+        FindAllAssistantsDto.fromInput({
+          teamId,
+          page,
+          limit,
+          searchQuery,
+        }),
+      );
 
-    return { assistants, meta };
+      return { assistants, meta };
+    } catch (error) {
+      throw new NotFoundException('Assistants not found');
+    }
   }
 
   @Get(':id')
@@ -77,17 +86,21 @@ export class AssistantController {
       throw new NotFoundException('Assistant not found');
     }
 
-    const assistant = await this.assistantService.findFirst(
-      FindAssistantDto.fromInput({
-        id: assistantId,
-      }),
-    );
+    try {
+      const assistant = await this.assistantService.findFirst(
+        FindAssistantDto.fromInput({
+          id: assistantId,
+        }),
+      );
 
-    if (!assistant) {
+      if (!assistant) {
+        throw new Error('Assistant not found');
+      }
+
+      return { assistant };
+    } catch (error) {
       throw new NotFoundException('Assistant not found');
     }
-
-    return { assistant };
   }
 
   @Patch(':id')
@@ -98,29 +111,33 @@ export class AssistantController {
       throw new NotFoundException('Assistant not found');
     }
 
-    const assistant = await this.assistantService.findFirst(
-      FindAssistantDto.fromInput({
-        id: assistantId,
-      }),
-    );
+    try {
+      const assistant = await this.assistantService.findFirst(
+        FindAssistantDto.fromInput({
+          id: assistantId,
+        }),
+      );
 
-    if (!assistant) {
+      if (!assistant) {
+        throw new Error('Assistant not found');
+      }
+
+      return await this.assistantService.update(
+        UpdateAssistantDto.fromInput({
+          id: assistantId,
+          teamId: body.teamId,
+          llmId: body.llmId,
+          title: body.title,
+          description: body.description,
+          systemPrompt: body.systemPrompt,
+          isShared: body.isShared,
+          systemPromptTokenCount: body.systemPromptTokenCount,
+          tools: body.tools,
+        }),
+      );
+    } catch (error) {
       throw new NotFoundException('Assistant not found');
     }
-
-    return await this.assistantService.update(
-      UpdateAssistantDto.fromInput({
-        id: assistantId,
-        teamId: body.teamId,
-        llmId: body.llmId,
-        title: body.title,
-        description: body.description,
-        systemPrompt: body.systemPrompt,
-        isShared: body.isShared,
-        systemPromptTokenCount: body.systemPromptTokenCount,
-        tools: body.tools,
-      }),
-    );
   }
 
   @Delete(':id')
@@ -131,21 +148,25 @@ export class AssistantController {
       throw new NotFoundException('Assistant not found');
     }
 
-    const assistant = await this.assistantService.findFirst(
-      FindAssistantDto.fromInput({
-        id: assistantId,
-      }),
-    );
+    try {
+      const assistant = await this.assistantService.findFirst(
+        FindAssistantDto.fromInput({
+          id: assistantId,
+        }),
+      );
 
-    if (!assistant) {
+      if (!assistant) {
+        throw new Error('Assistant not found');
+      }
+
+      return await this.assistantService.softDelete(
+        DeleteAssistantDto.fromInput({
+          id: assistantId,
+          teamId: body.teamId,
+        }),
+      );
+    } catch (error) {
       throw new NotFoundException('Assistant not found');
     }
-
-    return await this.assistantService.softDelete(
-      DeleteAssistantDto.fromInput({
-        id: assistantId,
-        teamId: body.teamId,
-      }),
-    );
   }
 }

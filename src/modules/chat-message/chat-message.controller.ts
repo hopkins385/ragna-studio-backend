@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   HttpStatus,
+  InternalServerErrorException,
   NotFoundException,
   Param,
   Post,
@@ -39,6 +40,10 @@ export class ChatMessageController {
         visionContent: body.message.visionContent,
       },
     });
-    return this.chatService.createMessage(payload);
+    try {
+      return await this.chatService.createMessage(payload);
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating message');
+    }
   }
 }

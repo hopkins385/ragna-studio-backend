@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { LlmService } from './llm.service';
 
 @Controller('llm')
@@ -7,7 +7,11 @@ export class LlmController {
 
   @Get('models')
   async getAllModels() {
-    const models = await this.llmService.getCachedModels();
-    return { models };
+    try {
+      const models = await this.llmService.getCachedModels();
+      return { models };
+    } catch (error) {
+      throw new NotFoundException('Error fetching models');
+    }
   }
 }
