@@ -9,7 +9,10 @@ import {
 } from '@nestjs/common';
 import { WorkflowStepService } from './workflow-step.service';
 import { CreateWorkflowStepDto } from './dto/create-workflow-step.dto';
-import { UpdateWorkflowStepDto } from './dto/update-workflow-step.dto';
+import {
+  UpdateWorkflowStepAssistantDto,
+  UpdateWorkflowStepDto,
+} from './dto/update-workflow-step.dto';
 import { CreateWorkflowStepBody } from './dto/create-workflow-step-body.dto';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
@@ -20,6 +23,8 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 import { UpdateWorkflowItemDto } from './dto/update-workflow-item.dto';
 import { UpdateWorkflowItemBody } from './dto/update-workflow-item-body.dto';
 import { UpdateWorkflowItemParams } from './dto/update-workflow-item-params.dto';
+import { UpdateWorkflowStepAssistantBody } from './dto/update-workflow-step-ass.dto';
+import { UpdateWorkflowStepIdsBody } from './dto/update-workflow-step-ids-body.dto';
 
 @Controller('workflow-step')
 export class WorkflowStepController {
@@ -81,8 +86,34 @@ export class WorkflowStepController {
     });
 
     const step = await this.workflowStepService.update(payload);
-
     return { step };
+  }
+
+  @Patch(':id/assistant')
+  async updateAssistant(
+    @ReqUser() user: UserEntity,
+    @Param() param: IdParam,
+    @Body() body: UpdateWorkflowStepAssistantBody,
+  ) {
+    const updatePayload = UpdateWorkflowStepAssistantDto.fromInput({
+      workflowStepId: param.id,
+      assistantId: body.assistantId,
+    });
+    const step = await this.workflowStepService.updateAssistant(updatePayload);
+    return { step };
+  }
+
+  @Patch(':id/input-steps')
+  async updateInputSteps(
+    @ReqUser() user: UserEntity,
+    @Param() param: IdParam,
+    @Body() body: UpdateWorkflowStepIdsBody,
+  ) {
+    const steps = this.workflowStepService.updateInputSteps(
+      param.id,
+      body.inputStepIds,
+    );
+    return { steps };
   }
 
   @Patch(':stepId/item/:itemId')
@@ -98,7 +129,6 @@ export class WorkflowStepController {
     });
 
     const step = await this.workflowStepService.updateItem(payload);
-
     return { step };
   }
 

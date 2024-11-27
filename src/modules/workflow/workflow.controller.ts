@@ -5,8 +5,9 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
@@ -18,6 +19,7 @@ import { FindAllWorkflowsDto } from './dto/find-all-workflows.dto';
 import { CreateWorkflowBody } from './dto/create-workflow-body.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { UpdateWorkflowBody } from './dto/update-workflow-body.dto';
+import { Response } from 'express';
 
 @Controller('workflow')
 export class WorkflowController {
@@ -71,5 +73,15 @@ export class WorkflowController {
     });
     const workflow = await this.workflowService.update(payload);
     return { workflow };
+  }
+
+  @Get(':id/export')
+  async exportWorkflow(
+    @Param() param: IdParam,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const buffer = await this.workflowService.export(param.id, 'xlsx');
+    const file = new StreamableFile(buffer);
+    return file;
   }
 }

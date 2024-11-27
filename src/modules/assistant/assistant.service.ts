@@ -162,6 +162,7 @@ export class AssistantService {
           isShared: true,
           llm: {
             select: {
+              provider: true,
               displayName: true,
             },
           },

@@ -16,6 +16,7 @@ import { getSessionConfig } from './config/session.config';
 import { ConfigService } from '@nestjs/config';
 import * as passport from 'passport';
 import { SwaggerConfig } from './config/swagger.config';
+import { HttpExceptionFilter } from './filter/http-exception.filter';
 
 const appConfig: NestApplicationOptions = {
   rawBody: true,
@@ -41,6 +42,7 @@ async function bootstrap() {
 
   // app.useGlobalPipes(new ValidationPipe(validationConfig));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  // app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

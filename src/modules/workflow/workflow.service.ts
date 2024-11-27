@@ -519,7 +519,7 @@ export class WorkflowService {
 
   async export(
     workflowId: string,
-    type: 'json' | 'xml' | 'csv' | 'xlsx' | 'pdf',
+    type: 'xlsx', // 'json' | 'xml' | 'csv' | 'xlsx' | 'pdf',
   ) {
     const workflow = await this.workflowRepo.prisma.workflow.findFirst({
       relationLoadStrategy: 'join',

@@ -245,7 +245,46 @@ export class WorkflowStepService {
     });
   }
 
-  delete(workflowStepId: string) {
+  async delete(workflowStepId: string) {
+    // we need to delete the workflow step itself but also update the inputSteps of the other steps
+    const workflow = await this.workflowStepRepo.prisma.workflowStep.findFirst({
+      where: {
+        id: workflowStepId.toLowerCase(),
+      },
+      select: {
+        workflowId: true,
+      },
+    });
+
+    const allSteps = await this.workflowStepRepo.prisma.workflowStep.findMany({
+      where: {
+        workflowId: workflow.workflowId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        inputSteps: true,
+      },
+    });
+
+    // delete for all steps the inputStep
+    const updatePromises = allSteps.map((step) => {
+      return this.workflowStepRepo.prisma.workflowStep.update({
+        where: {
+          id: step.id,
+        },
+        data: {
+          inputSteps: {
+            set: step.inputSteps.filter(
+              (id) => id !== workflowStepId.toLowerCase(),
+            ),
+          },
+        },
+      });
+    });
+
+    await Promise.all(updatePromises);
+
     return this.workflowStepRepo.prisma.workflowStep.delete({
       where: {
         id: workflowStepId.toLowerCase(),
