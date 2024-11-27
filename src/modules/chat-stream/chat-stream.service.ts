@@ -129,7 +129,7 @@ export class ChatStreamService {
     subscriber.next({
       data: { message: data },
       type: 'message',
-      id: crypto.randomUUID(),
+      id: '', //crypto.randomUUID(),
     });
   }
 
