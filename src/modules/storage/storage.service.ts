@@ -304,6 +304,23 @@ export class StorageService {
     }[mimeType];
   }
 
+  getMimeType(extension: string) {
+    return {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      md: 'text/markdown',
+      csv: 'text/csv',
+      html: 'text/html',
+      txt: 'text/plain',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+    }[extension];
+  }
+
   async deleteFile(userId: string, fileName: string) {
     const filePath = join(this.getBasePath(), userId, fileName);
     return unlink(filePath);

@@ -325,9 +325,17 @@ export class ChatService {
     */
 
   public async createMessage(payload: CreateChatMessageDto) {
-    const { tokenCount } = await this.tokenizerService.getTokens(
-      payload.message.content,
-    );
+    let tokenCount = 0;
+    try {
+      const { tokenCount: count } = await this.tokenizerService.getTokens(
+        payload.message.content,
+      );
+      tokenCount = count;
+    } catch (error) {
+      this.logger.error(error);
+      tokenCount = 0;
+    }
+
     try {
       const res = await this.chatRepository.prisma.$transaction([
         // create message

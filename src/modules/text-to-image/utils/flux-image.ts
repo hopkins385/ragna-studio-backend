@@ -22,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 
 export interface FluxProPlusInputs {
   prompt: string;
+  output_format?: 'jpeg' | 'png'; // default: jpeg
   width?: number; // default: 1024, min: 256, max: 1440, multiple of 32
   height?: number; // default: 768, min: 256, max: 1440, multiple of 32
   steps?: number; // default: 40, min: 1, max: 50

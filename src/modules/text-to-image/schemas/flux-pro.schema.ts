@@ -80,6 +80,10 @@ export const FluxProInputsSchema = z.object({
     .default(2.0)
     .optional()
     .describe('Interval parameter for guidance control.'),
+  output_format: z
+    .enum(['jpeg', 'png'])
+    .default('jpeg')
+    .describe('Output format of the generated image.'),
 });
 
 // Infer the TypeScript type from the schema

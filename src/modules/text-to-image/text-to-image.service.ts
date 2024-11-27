@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UserEntity } from '../user/entities/user.entity';
 import { FluxProInputs } from './schemas/flux-pro.schema';
 import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
@@ -25,13 +25,18 @@ interface GenImageResult {
   };
 }
 
+type GenImageExtension = 'jpeg' | 'png';
+
 @Injectable()
 export class TextToImageService {
+  private readonly logger = new Logger(TextToImageService.name);
+
   constructor(
     private readonly textToImageRepo: TextToImageRepository,
     private readonly fluxImageGenerator: FluxImageGenerator,
     private readonly storageService: StorageService,
   ) {}
+
   public async generateFluxProImages(
     user: UserEntity,
     payload: FluxProInputs,
@@ -47,7 +52,7 @@ export class TextToImageService {
       );
       return this.processImageResults(user.id, genImageResults, payload);
     } catch (error) {
-      // logger.error('Failed to generate images:', error);
+      this.logger.error('Failed to generate images:', error);
       throw new Error('Failed to generate images');
     }
   }
@@ -290,7 +295,7 @@ export class TextToImageService {
         settings: {},
       });
     } catch (error) {
-      // logger.error('Failed to create run:', error);
+      this.logger.error('Failed to create image run:', error);
       throw new Error('Failed to create run');
     }
   }
@@ -338,7 +343,7 @@ export class TextToImageService {
         genImage,
       };
     } catch (error) {
-      // logger.error(`Failed to generate image:`, error);
+      this.logger.error(`Failed to generate image:`, error);
       await this.updateRunStatus({
         runId: run.id,
         status: TextToImageRunStatus.FAILED,
@@ -365,6 +370,7 @@ export class TextToImageService {
           userId,
           folderId: payload.folderId,
           result,
+          fileExtension: payload.output_format,
         }),
       ),
     );
@@ -374,12 +380,13 @@ export class TextToImageService {
     userId: string;
     folderId: string;
     result: GenImageResult;
+    fileExtension: GenImageExtension;
   }): Promise<string> {
     const { genImage, run } = payload.result;
 
-    const fileName = `image-${genImage.id}.jpg`;
+    const fileName = `image-${genImage.id}.${payload.fileExtension}`;
     const folder = `${payload.userId}/text-to-image/${payload.folderId}`;
-    const mimeType = 'image/jpg';
+    const mimeType = this.storageService.getMimeType(payload.fileExtension);
 
     let newfileUrl: string = '';
 
@@ -406,7 +413,7 @@ export class TextToImageService {
 
       return textToImage.path;
     } catch (error) {
-      // logger.error(`Failed to process image for run ${run.id}:`, error);
+      this.logger.error(`Failed to process image for run ${run.id}:`, error);
       return '';
     }
   }
