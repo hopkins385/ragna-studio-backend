@@ -51,10 +51,7 @@ export class SocketService {
       }
     } catch (error) {
       this.logger.error(
-        'Failed to emit event:',
-        payload.event,
-        'to room:',
-        payload.room,
+        `Failed to emit event: ${payload.event} to room: ${payload.room}`,
       );
     }
   }

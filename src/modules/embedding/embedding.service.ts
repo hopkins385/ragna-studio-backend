@@ -40,8 +40,8 @@ export class EmbeddingService {
       }
 
       return (await response.json()) as RagDocument[];
-    } catch (error) {
-      this.logger.error('Error embedding file:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Sorry this service is currently unavailable');
     }
   }
@@ -55,8 +55,8 @@ export class EmbeddingService {
         method: 'DELETE',
         body: JSON.stringify(payload),
       });
-    } catch (error) {
-      this.logger.error('Error deleting embeddings:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Sorry this service is currently unavailable');
     }
   }
@@ -76,8 +76,8 @@ export class EmbeddingService {
       }
 
       return (await response.json()) as SearchResultDocument[];
-    } catch (error) {
-      this.logger.error('Error searching documents:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Sorry this service is currently unavailable');
     }
   }

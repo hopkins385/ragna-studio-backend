@@ -89,9 +89,9 @@ export class ChatStreamController {
             throw new RequestTimeoutException();
           },
         }),
-        catchError((error) => {
+        catchError((error: any) => {
           // Handle stream errors
-          this.logger.error('Stream error:', error);
+          this.logger.error(`Error: ${error?.message}`);
           throw new HttpException(
             'Stream closed unexpectedly',
             HttpStatus.INTERNAL_SERVER_ERROR,

@@ -107,8 +107,8 @@ export class ChatController {
     try {
       const chat = await this.chatService.getChatForUser(chatId, user.id);
       return { chat };
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new NotFoundException('Chat not found');
     }
   }

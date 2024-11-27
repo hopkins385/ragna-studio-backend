@@ -60,8 +60,8 @@ export class AuthService {
 
     try {
       return await this.generateTokens(payload);
-    } catch (error) {
-      this.logger.error('Error:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       return null;
     }
   }
@@ -69,8 +69,8 @@ export class AuthService {
   async refreshTokens(payload: UserPayload): Promise<TokenResponse | null> {
     try {
       return await this.generateTokens(payload);
-    } catch (error) {
-      this.logger.error('Error:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       return null;
     }
   }

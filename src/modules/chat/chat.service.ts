@@ -125,6 +125,7 @@ export class ChatService {
               title: true,
               llm: {
                 select: {
+                  provider: true,
                   displayName: true,
                 },
               },
@@ -331,8 +332,8 @@ export class ChatService {
         payload.message.content,
       );
       tokenCount = count;
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       tokenCount = 0;
     }
 
@@ -361,15 +362,24 @@ export class ChatService {
       ]);
 
       return res[0];
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
     }
   }
 
   public async createMessageAndReduceCredit(payload: CreateChatMessageDto) {
-    const { tokenCount } = await this.tokenizerService.getTokens(
-      payload.message.content,
-    );
+    let tokenCount = 0;
+
+    try {
+      const { tokenCount: count } = await this.tokenizerService.getTokens(
+        payload.message.content,
+      );
+      tokenCount = count;
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      tokenCount = 0;
+    }
+
     try {
       const res = await this.chatRepository.prisma.$transaction([
         // create message
@@ -407,8 +417,8 @@ export class ChatService {
       ]);
 
       return res[0];
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
     }
   }
 

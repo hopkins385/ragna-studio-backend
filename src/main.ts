@@ -42,7 +42,7 @@ async function bootstrap() {
 
   // app.useGlobalPipes(new ValidationPipe(validationConfig));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  // app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

@@ -92,7 +92,13 @@ export class ChatStreamService {
         }
       })();
 
-      return async () => await this.finalize(context, signal);
+      return async () => {
+        try {
+          return await this.finalize(context, signal);
+        } catch (error: any) {
+          this.logger.error(`Error: ${error?.message}`);
+        }
+      };
     });
   }
 
@@ -105,7 +111,7 @@ export class ChatStreamService {
       // TODO: token usage for incomplete messages
     }
 
-    await this.saveMessage(context.chat.id, {
+    return this.saveMessage(context.chat.id, {
       userId: context.chat.userId,
       content: context.chunks.join(''),
       role: ChatMessageRole.ASSISTANT,

@@ -20,8 +20,8 @@ export class OnboardService {
         orgName,
       });
       return true;
-    } catch (error) {
-      this.logger.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to onboard user');
     }
   }

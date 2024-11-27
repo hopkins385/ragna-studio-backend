@@ -37,7 +37,11 @@ export class TokenizerService {
       this.logger.debug(
         'Failed to get tokens from rag server, falling back to local',
       );
-      return this.getTokensLocal(content);
+      try {
+        return await this.getTokensLocal(content);
+      } catch (error) {
+        throw new Error('TokenizerService getTokens: Failed to get tokens');
+      }
     }
   }
 
@@ -46,9 +50,7 @@ export class TokenizerService {
   ): Promise<{ tokens: Uint32Array; tokenCount: number; charCount: number }> {
     return new Promise((resolve, reject) => {
       if (!content || !content.length) {
-        return reject(
-          new Error('TokenizerService getTokens: Content is empty'),
-        );
+        return reject('TokenizerService getTokens: Content is empty');
       }
 
       const tokens = this.encoder.encode(content);
@@ -62,9 +64,7 @@ export class TokenizerService {
   async detokenize(tokens: Uint32Array): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       if (!tokens || !tokens.length) {
-        return reject(
-          new Error('TokenizerService detokenize: Tokens are empty'),
-        );
+        return reject('TokenizerService detokenize: Tokens are empty');
       }
 
       const text = this.encoder.decode(tokens);

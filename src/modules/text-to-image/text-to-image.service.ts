@@ -51,8 +51,8 @@ export class TextToImageService {
         payload,
       );
       return this.processImageResults(user.id, genImageResults, payload);
-    } catch (error) {
-      this.logger.error('Failed to generate images:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to generate images');
     }
   }
@@ -294,8 +294,8 @@ export class TextToImageService {
         prompt: payload.prompt,
         settings: {},
       });
-    } catch (error) {
-      this.logger.error('Failed to create image run:', error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to create run');
     }
   }
@@ -342,8 +342,8 @@ export class TextToImageService {
         run,
         genImage,
       };
-    } catch (error) {
-      this.logger.error(`Failed to generate image:`, error);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       await this.updateRunStatus({
         runId: run.id,
         status: TextToImageRunStatus.FAILED,
@@ -412,8 +412,10 @@ export class TextToImageService {
       });
 
       return textToImage.path;
-    } catch (error) {
-      this.logger.error(`Failed to process image for run ${run.id}:`, error);
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to process image for run ${run.id}: ${error?.message}`,
+      );
       return '';
     }
   }
