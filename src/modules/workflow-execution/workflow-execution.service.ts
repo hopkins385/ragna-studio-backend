@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { WorkflowService } from '../workflow/workflow.service';
-import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
-import { FlowJob, FlowProducer, JobsOptions, Queue } from 'bullmq';
-import { AssistantJobDto } from '../assistant/dto/assistant-job.dto';
+import { WorkflowService } from '@/modules/workflow/workflow.service';
+import { InjectFlowProducer } from '@nestjs/bullmq';
+import { FlowJob, FlowProducer, JobsOptions } from 'bullmq';
+import { AssistantJobDto } from '@/modules/assistant/dto/assistant-job.dto';
 
 @Injectable()
 export class WorkflowExecutionService {
@@ -71,7 +71,7 @@ export class WorkflowExecutionService {
       });
 
       const job: FlowJob = {
-        name: 'workflow-job', //-step-' + stepIndex,
+        name: 'workflow-job',
         queueName: `${assistant.llm.provider}-${assistant.llm.apiName}`,
         data: jobData,
         opts: defaultJobOpts,
@@ -98,13 +98,6 @@ export class WorkflowExecutionService {
         row: i,
         userId: payload.userId,
         workflowId: payload.workflowId,
-        toJSON() {
-          return {
-            row: this.row,
-            userId: this.userId,
-            workflowId: this.workflowId,
-          };
-        },
       };
 
       const job: FlowJob = {

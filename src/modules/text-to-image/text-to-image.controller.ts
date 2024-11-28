@@ -9,6 +9,7 @@ import {
   Query,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { TextToImageService } from './text-to-image.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
@@ -23,6 +24,8 @@ import {
 
 @Controller('text-to-image')
 export class TextToImageController {
+  logger = new Logger(TextToImageController.name);
+
   constructor(private readonly textToImageService: TextToImageService) {}
 
   @Post()
@@ -45,7 +48,9 @@ export class TextToImageController {
         teamId: user.firstTeamId,
       });
       if (folders.length === 0) {
-        console.log('This project has no ai-image folders, creating one ... ');
+        this.logger.debug(
+          'This project has no ai-image folders, creating one ... ',
+        );
         const folder = await this.textToImageService.createFolder({
           teamId: user.firstTeamId,
           folderName: 'Default',

@@ -39,7 +39,6 @@ export class ChatStreamEventListener {
 
   @OnEvent(ChatEvent.FIRST_USERMESSAGE)
   async firstUserMessageEvent(payload: FirstUserMessageEventDto) {
-    console.log('firstUserMessageEvent', payload);
     const { userId, chatId, messageContent } = payload;
     // limit to max 1000 characters
     const firstMessage = messageContent.slice(0, 1000);

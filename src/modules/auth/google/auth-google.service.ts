@@ -10,7 +10,7 @@ export class AuthGoogleService {
     this.google = new OAuth2Client(
       this.config.get<string>('GOOGLE_CLIENT_ID'),
       this.config.get<string>('GOOGLE_CLIENT_SECRET'),
-      this.config.get<string>('GOOGLE_REDIRECT_URL'),
+      this.config.get<string>('GOOGLE_AUTH_REDIRECT_URL'),
     );
   }
 

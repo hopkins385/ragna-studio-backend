@@ -41,6 +41,8 @@ import { OnboardModule } from './modules/onboard/onboard.module';
 import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-execution.module';
 import { AudioModule } from './modules/audio/audio.module';
 import { AssistantJobModule } from './modules/assistant-job/assistant-job.module';
+import { GoogleDriveModule } from './modules/google-drive/google-drive.module';
+import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module';
 
 @Module({
   imports: [
@@ -132,6 +134,10 @@ import { AssistantJobModule } from './modules/assistant-job/assistant-job.module
     WorkflowExecutionModule,
 
     AssistantJobModule,
+
+    GoogleDriveModule,
+
+    ProviderAuthModule,
     // ,
   ],
   controllers: [ChatMessageController],
