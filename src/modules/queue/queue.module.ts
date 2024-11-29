@@ -16,6 +16,7 @@ import { workflowProcessors } from '../assistant-job/processors/assistant-proces
         },
       }),
     }),
+    // Workflow queues
     BullModule.registerFlowProducer({
       name: 'workflow',
     }),

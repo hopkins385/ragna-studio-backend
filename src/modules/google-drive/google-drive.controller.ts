@@ -8,6 +8,7 @@ import {
   Delete,
   NotFoundException,
   Query,
+  Logger,
 } from '@nestjs/common';
 import { GoogleDriveService } from './google-drive.service';
 import { ReqUser } from '../user/decorators/user.decorator';
@@ -16,6 +17,8 @@ import { GoogleDriveQuery } from './dto/google-drive-query.dto';
 
 @Controller('google-drive')
 export class GoogleDriveController {
+  private readonly logger = new Logger(GoogleDriveController.name);
+
   constructor(private readonly googleDriveService: GoogleDriveService) {}
 
   @Get('consent-url')
@@ -64,6 +67,7 @@ export class GoogleDriveController {
     @ReqUser() user: UserEntity,
     @Query() query: GoogleDriveQuery,
   ) {
+    // TODO: validation of query params
     try {
       const data = await this.googleDriveService.findData(
         { userId: user.id },
@@ -73,8 +77,9 @@ export class GoogleDriveController {
           pageToken: query.pageToken ?? '',
         },
       );
-      return { data };
-    } catch (error) {
+      return { nextPageToken: data.nextPageToken, files: data.files };
+    } catch (error: any) {
+      this.logger.error(`Failed to find data: ${error?.message}`);
       throw new NotFoundException('Resource not found');
     }
   }

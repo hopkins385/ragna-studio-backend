@@ -25,23 +25,20 @@ export class ProviderAuthService {
   }
 
   async create(payload: ProviderAuthDto) {
-    const providerAuth = await this.providerAuthRepo.prisma.providerAuth.create(
-      {
-        data: {
-          providerName: payload.providerName,
-          type: payload.type,
-          accountInfo: payload.accountInfo,
-          userId: payload.userId,
-          accessToken: payload.accessToken,
-          refreshToken: payload.refreshToken,
-          accessTokenExpiresAt: payload.accessTokenExpiresAt,
-          refreshTokenExpiresAt: payload.refreshTokenExpiresAt,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+    return this.providerAuthRepo.prisma.providerAuth.create({
+      data: {
+        providerName: payload.providerName,
+        type: payload.type,
+        accountInfo: payload.accountInfo,
+        userId: payload.userId,
+        accessToken: payload.accessToken,
+        refreshToken: payload.refreshToken,
+        accessTokenExpiresAt: payload.accessTokenExpiresAt,
+        refreshTokenExpiresAt: payload.refreshTokenExpiresAt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
-    );
-    return providerAuth;
+    });
   }
 
   async upsert(payload: ProviderAuthDto) {

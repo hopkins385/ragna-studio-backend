@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ProviderAuthService } from '../provider-auth/provider-auth.service';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +11,7 @@ import {
 
 @Injectable()
 export class GoogleDriveService {
+  private readonly logger = new Logger(GoogleDriveService.name);
   private readonly oauth2Client: OAuth2Client;
 
   constructor(
@@ -31,6 +32,7 @@ export class GoogleDriveService {
       const url = this.oauth2Client.generateAuthUrl({
         // 'online' (default) or 'offline' (gets refresh_token)
         access_type: 'offline',
+        prompt: 'consent',
         // If you only need one scope you can pass it as a string
         scope: scopes,
       });
@@ -75,10 +77,12 @@ export class GoogleDriveService {
       refreshToken: tokens.refresh_token ?? undefined,
     });
 
+    console.log('payload', payload);
+
     const res = await this.providerAuthService.upsert(payload);
 
     if (!res) {
-      throw new Error('Failed to connect Google Drive');
+      throw new Error('Failed to store tokens');
     }
 
     return true;
@@ -132,6 +136,7 @@ export class GoogleDriveService {
 
   async onTokens(tokens: any, userId: string) {
     if (tokens && tokens.access_token) {
+      this.logger.debug('Received new access token');
       // save the new access token
       const payload = ProviderAuthDto.fromInput({
         providerName: 'google',

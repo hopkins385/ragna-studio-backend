@@ -4,7 +4,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
@@ -34,6 +34,7 @@ interface BucketSettings {
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
 
   constructor(private readonly config: ConfigService) {
@@ -214,6 +215,7 @@ export class StorageService {
     // wait 1000ms
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // TODO: this should be removed and placed in a separate service
     const createMediaPayload = CreateMediaDto.fromInput({
       teamId: payload.teamId,
       name: originalFilename,
@@ -225,6 +227,46 @@ export class StorageService {
     });
 
     return createMediaPayload;
+  }
+
+  /**
+   * Uploads a buffer to a bucket
+   * @param bucket
+   * @param payload
+   */
+  async uploadBufferToBucket(
+    bucket: Bucket,
+    payload: {
+      bucketPath: string;
+      fileBuffer: Buffer;
+      fileName: string;
+      fileExtension: string;
+    },
+  ) {
+    //
+    const { bucket: theBucket, url } = this.getBucketSettings(bucket);
+    const fileMimeType = this.getMimeType(payload.fileExtension);
+
+    const putObjectCommand = new PutObjectCommand({
+      Bucket: theBucket,
+      Key: `${payload.bucketPath}/${payload.fileName}`,
+      Body: payload.fileBuffer,
+      ContentType: fileMimeType,
+      ContentLength: payload.fileBuffer.length,
+    });
+
+    await this.s3Client.send(putObjectCommand);
+
+    const newFilePath = `${url}/${payload.bucketPath}/${payload.fileName}`;
+
+    console.log('Uploaded file to bucket', newFilePath);
+
+    return {
+      fileName: payload.fileName,
+      filePath: newFilePath,
+      fileMimeType: fileMimeType,
+      fileSize: payload.fileBuffer.length,
+    };
   }
 
   async downloadFileFromBucket(path: string): Promise<Buffer> {
@@ -282,6 +324,22 @@ export class StorageService {
     await this.s3Client.send(deleteObjectCommand);
 
     return true;
+  }
+
+  // HELPERS
+
+  async downloadFileFromUrl(url: string): Promise<Buffer> {
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+      });
+      return Buffer.from(response.data);
+    } catch (error: any) {
+      this.logger.error(
+        ` Error downloading file from url: ${url}: ${error?.message}`,
+      );
+      throw error;
+    }
   }
 
   getFileExtension(mimeType: string) {

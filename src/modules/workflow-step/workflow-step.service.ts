@@ -267,8 +267,7 @@ export class WorkflowStepService {
       },
     });
 
-    // delete for all steps the inputStep
-    const updatePromises = allSteps.map((step) => {
+    const delReferences = allSteps.map((step) => {
       return this.workflowStepRepo.prisma.workflowStep.update({
         where: {
           id: step.id,
@@ -283,13 +282,19 @@ export class WorkflowStepService {
       });
     });
 
-    await Promise.all(updatePromises);
-
-    return this.workflowStepRepo.prisma.workflowStep.delete({
+    const delStep = this.workflowStepRepo.prisma.workflowStep.delete({
       where: {
         id: workflowStepId.toLowerCase(),
       },
     });
+
+    // transaction
+    const [result1, result2] = await this.workflowStepRepo.prisma.$transaction([
+      ...delReferences,
+      delStep,
+    ]);
+
+    return result2;
   }
 
   deleteAllSteps(workflowId: string) {

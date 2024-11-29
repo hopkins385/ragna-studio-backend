@@ -4,6 +4,9 @@ import { FluxProInputs } from './schemas/flux-pro.schema';
 import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
 import { StorageService } from '../storage/storage.service';
 import { TextToImageRepository } from './repositories/text-to-image.repository';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
 
 enum TextToImageRunStatus {
   PENDING = 'PENDING',
@@ -35,6 +38,8 @@ export class TextToImageService {
     private readonly textToImageRepo: TextToImageRepository,
     private readonly fluxImageGenerator: FluxImageGenerator,
     private readonly storageService: StorageService,
+    @InjectQueue('image-conversion')
+    private readonly imageConversionQueue: Queue,
   ) {}
 
   public async generateFluxProImages(
@@ -378,14 +383,14 @@ export class TextToImageService {
 
   private async processSingleImageResult(payload: {
     userId: string;
-    folderId: string;
+    folderId: string; // users can have multiple folders to separate images
     result: GenImageResult;
     fileExtension: GenImageExtension;
   }): Promise<string> {
     const { genImage, run } = payload.result;
 
     const fileName = `image-${genImage.id}.${payload.fileExtension}`;
-    const folder = `${payload.userId}/text-to-image/${payload.folderId}`;
+    const bucketFolderPath = `${payload.userId}/tti/${payload.folderId}`;
     const mimeType = this.storageService.getMimeType(payload.fileExtension);
 
     let newfileUrl: string = '';
@@ -397,7 +402,7 @@ export class TextToImageService {
             fileName,
             fileMimeType: mimeType,
             fileUrl: genImage.imgUrl,
-            bucketFolder: folder,
+            bucketFolder: bucketFolderPath,
             bucket: 'images',
           });
         newfileUrl = storagefileUrl;
@@ -410,6 +415,19 @@ export class TextToImageService {
         mimeType,
         status: this.castStatus(genImage.status),
       });
+
+      //TODO: kick off image moderation
+
+      // kick off image conversion
+      await this.imageConversionQueue.add(
+        'create-preview-images',
+        ImageConversionJobDataDto.fromInput({
+          filePathOrUrl: genImage.imgUrl,
+          bucketPath: bucketFolderPath,
+          fileName,
+          fileExtension: payload.fileExtension,
+        }),
+      );
 
       return textToImage.path;
     } catch (error: any) {
