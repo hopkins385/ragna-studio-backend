@@ -1,0 +1,28 @@
+services:
+  server:
+    deploy:
+      replicas: 1
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik_net'
+      # Common
+      - 'traefik.http.services.api-srv.loadbalancer.server.port=3000'
+      # HTTP Routers
+      - 'traefik.http.routers.api-srv.rule=Host(`api.ragna.app`)'
+      - 'traefik.http.routers.api-srv.entrypoints=https'
+      - 'traefik.http.routers.api-srv.service=api-srv'
+      - 'traefik.http.routers.api-srv.middlewares=crowdsec-bouncer@file,default@file' #,gzip@file
+      - 'traefik.http.routers.api-srv.tls=true'
+      - 'traefik.http.routers.api-srv.tls.certresolver=http'
+    networks:
+      traefik_net:
+
+  postgres:
+    networks:
+      - wgnet
+
+networks:
+  traefik_net:
+    external: true
+  wgnet:
+    external: true

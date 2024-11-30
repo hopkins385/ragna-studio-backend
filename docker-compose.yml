@@ -1,24 +1,22 @@
 # docker-compose.yml
-name: ragna-backend
+name: ragna-studio-backend
 
 volumes:
   postgres_data:
   redis_data:
 
 services:
-  app:
-    working_dir: /app
-    build:
-      context: .
-      dockerfile: Dockerfile
+  server:
+    image: ghcr.io/hopkins385/ragna-studio-backend:latest
     restart: always
+    working_dir: /app
     env_file:
       - .env
     depends_on:
       - postgres
       - redis
     networks:
-      - app-network
+      - api-network
 
   postgres:
     cpus: 4
@@ -34,7 +32,7 @@ services:
     security_opt:
       - no-new-privileges:true
     networks:
-      - app-network
+      - api-network
 
   redis:
     image: redis:7.4-alpine
@@ -42,8 +40,9 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - app-network
+      - api-network
 
 networks:
-  app-network:
+  api-network:
+    name: ragna-studio-backend-network
     driver: bridge
