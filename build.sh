@@ -21,5 +21,5 @@ docker build \
 echo "Build successful! Image: $IMAGE_NAME:$TAG"
 
 # Push to registry
-echo $CR_PAT | docker login ghcr.io -u hopkins385 --password-stdin
-docker push "$IMAGE_NAME:$TAG"
+# echo $CR_PAT | docker login ghcr.io -u hopkins385 --password-stdin
+# docker push "$IMAGE_NAME:$TAG"
