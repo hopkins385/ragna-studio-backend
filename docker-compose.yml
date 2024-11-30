@@ -21,6 +21,7 @@ services:
   postgres:
     cpus: 4
     image: postgres:17.0-alpine3.20
+    container_name: ragna-studio-backend-postgres
     restart: always
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -36,6 +37,7 @@ services:
 
   redis:
     image: redis:7.4-alpine
+    container_name: ragna-studio-backend-redis
     command: 'redis-server --save 60 1 --loglevel warning --requirepass ${REDIS_PASSWORD}'
     volumes:
       - redis_data:/data

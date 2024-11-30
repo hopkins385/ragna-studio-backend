@@ -16,6 +16,9 @@ import { workflowProcessors } from '../assistant-job/processors/assistant-proces
         },
       }),
     }),
+    BullModule.registerQueue({
+      name: 'image-conversion',
+    }),
     // Workflow queues
     BullModule.registerFlowProducer({
       name: 'workflow',

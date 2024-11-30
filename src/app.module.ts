@@ -39,7 +39,6 @@ import { DocumentModule } from './modules/document/document.module';
 import { DocumentItemModule } from './modules/document-item/document-item.module';
 import { OnboardModule } from './modules/onboard/onboard.module';
 import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-execution.module';
-import { AudioModule } from './modules/audio/audio.module';
 import { AssistantJobModule } from './modules/assistant-job/assistant-job.module';
 import { GoogleDriveModule } from './modules/google-drive/google-drive.module';
 import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module';
@@ -128,8 +127,6 @@ import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module
     DocumentItemModule,
 
     OnboardModule,
-
-    AudioModule,
 
     WorkflowExecutionModule,
 
