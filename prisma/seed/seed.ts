@@ -10,7 +10,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { createId } from '@paralleldrive/cuid2';
 import { copycat } from '@snaplet/copycat';
-import { hashPassword } from '@/common/utils/bcrypt';
+import { hashPassword } from './bcrypt';
 
 async function seedLLMs(seed: SeedClient) {
   const path = join(__dirname, 'llm_providers.json');
