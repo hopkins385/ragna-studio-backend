@@ -7,7 +7,7 @@ import { StripeModuleOptions } from '../interfaces/stripe.interface';
  */
 const stripeFactory = (config: ConfigService): StripeModuleOptions => {
   return {
-    apiKey: config.get<string>('STRIPE_API_KEY'),
+    apiKey: config.getOrThrow<string>('STRIPE_API_KEY'),
     options: {
       apiVersion: '2024-10-28.acacia',
     },

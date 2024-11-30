@@ -11,7 +11,7 @@ import { workflowProcessors } from '../assistant-job/processors/assistant-proces
       useFactory: (config: ConfigService) => ({
         connection: {
           host: config.getOrThrow<string>('REDIS_HOST'),
-          port: config.getOrThrow<number>('REDIS_PORT'),
+          port: +config.getOrThrow<number>('REDIS_PORT'),
           password: config.getOrThrow<string>('REDIS_PASSWORD'),
         },
       }),
