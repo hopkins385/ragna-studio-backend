@@ -49,7 +49,7 @@ interface LargeLangModelFrontend {
   cost: LargeLangModelCost;
 }
 
-export class LlmListResponse {
+export class LlmListResponseDto {
   llms: LargeLangModelFrontend[] = [];
 
   constructor(llmsInput: LargeLangModel[]) {

@@ -1,6 +1,6 @@
 import { Controller, Get, Logger, NotFoundException } from '@nestjs/common';
 import { LlmService } from './llm.service';
-import { LlmListResponse } from './dto/llm-list-response.dto';
+import { LlmListResponseDto } from './dto/llm-list-response.dto';
 
 @Controller('llm')
 export class LlmController {
@@ -12,7 +12,8 @@ export class LlmController {
   async getAllModels() {
     try {
       const models = await this.llmService.getCachedModels();
-      return LlmListResponse.from(models);
+      return LlmListResponseDto.from(models);
+      //
     } catch (error: any) {
       this.logger.error(
         `Error fetching models: ${error?.message}`,

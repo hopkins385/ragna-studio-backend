@@ -11,7 +11,7 @@ DOCKERFILE="Dockerfile"
 # Print status
 echo "Building $IMAGE_NAME:$TAG..."
 
-# Build with cache optimizations and platform specification
+# Build image
 docker build \
   --tag "$IMAGE_NAME:$TAG" \
   --file "$DOCKERFILE" \
