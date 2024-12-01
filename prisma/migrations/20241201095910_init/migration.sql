@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "chat_messages_role_enum" AS ENUM ('user', 'assistant');
+CREATE TYPE "chat_messages_role_enum" AS ENUM ('user', 'assistant', 'system', 'tool');
 
 -- CreateEnum
 CREATE TYPE "text_to_image_run_status" AS ENUM ('PENDING', 'COMPLETED', 'MODERATED', 'FAILED');
@@ -203,6 +203,8 @@ CREATE TABLE "llms" (
     "multi_modal" BOOLEAN NOT NULL DEFAULT false,
     "hidden" BOOLEAN NOT NULL DEFAULT false,
     "free" BOOLEAN NOT NULL DEFAULT false,
+    "features" JSON,
+    "info" JSON,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -324,22 +326,9 @@ CREATE TABLE "chunks" (
 );
 
 -- CreateTable
-CREATE TABLE "projects" (
-    "id" TEXT NOT NULL,
-    "team_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
-
-    CONSTRAINT "projects_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "documents" (
     "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
+    "team_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -381,7 +370,7 @@ CREATE TABLE "document_item_ables" (
 -- CreateTable
 CREATE TABLE "workflows" (
     "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
+    "team_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -457,7 +446,7 @@ CREATE TABLE "provider_auths" (
 -- CreateTable
 CREATE TABLE "text_to_image_folders" (
     "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
+    "team_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -574,10 +563,7 @@ CREATE INDEX "collection_ables_index" ON "collection_ables"("collection_id", "co
 CREATE INDEX "records_collection_id_media_id_index" ON "records"("collection_id", "media_id");
 
 -- CreateIndex
-CREATE INDEX "projects_team_id_name_index" ON "projects"("team_id", "name");
-
--- CreateIndex
-CREATE INDEX "documents_project_id_name_index" ON "documents"("project_id", "name");
+CREATE INDEX "documents_team_id_name_index" ON "documents"("team_id", "name");
 
 -- CreateIndex
 CREATE INDEX "document_items_document_id_order_column_index" ON "document_items"("document_id", "order_column");
@@ -586,13 +572,13 @@ CREATE INDEX "document_items_document_id_order_column_index" ON "document_items"
 CREATE INDEX "document_item_ables_index" ON "document_item_ables"("document_item_id", "model_type", "model_id");
 
 -- CreateIndex
-CREATE INDEX "workflows_project_id_name_index" ON "workflows"("project_id", "name");
+CREATE INDEX "workflows_team_id_name_index" ON "workflows"("team_id", "name");
 
 -- CreateIndex
 CREATE INDEX "workflow_steps_order_column_index" ON "workflow_steps"("workflow_id", "order_column");
 
 -- CreateIndex
-CREATE INDEX "text_to_image_folders_project_id_idx" ON "text_to_image_folders"("project_id");
+CREATE INDEX "text_to_image_folders_team_id_idx" ON "text_to_image_folders"("team_id");
 
 -- CreateIndex
 CREATE INDEX "text_to_image_runs_folder_id_idx" ON "text_to_image_runs"("folder_id");
@@ -670,10 +656,7 @@ ALTER TABLE "records" ADD CONSTRAINT "records_media_id_fkey" FOREIGN KEY ("media
 ALTER TABLE "chunks" ADD CONSTRAINT "chunks_record_id_fkey" FOREIGN KEY ("record_id") REFERENCES "records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "projects" ADD CONSTRAINT "projects_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "documents" ADD CONSTRAINT "documents_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "documents" ADD CONSTRAINT "documents_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "document_items" ADD CONSTRAINT "document_items_document_id_fkey" FOREIGN KEY ("document_id") REFERENCES "documents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -682,7 +665,7 @@ ALTER TABLE "document_items" ADD CONSTRAINT "document_items_document_id_fkey" FO
 ALTER TABLE "document_item_ables" ADD CONSTRAINT "document_item_ables_document_item_id_fkey" FOREIGN KEY ("document_item_id") REFERENCES "document_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "workflows" ADD CONSTRAINT "workflows_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "workflows" ADD CONSTRAINT "workflows_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workflow_ables" ADD CONSTRAINT "workflow_ables_workflow_id_fkey" FOREIGN KEY ("workflow_id") REFERENCES "workflows"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -703,7 +686,7 @@ ALTER TABLE "workflow_step_ables" ADD CONSTRAINT "workflow_step_ables_workflow_s
 ALTER TABLE "provider_auths" ADD CONSTRAINT "provider_auths_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "text_to_image_folders" ADD CONSTRAINT "text_to_image_folders_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "text_to_image_folders" ADD CONSTRAINT "text_to_image_folders_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "text_to_image_runs" ADD CONSTRAINT "text_to_image_runs_folder_id_fkey" FOREIGN KEY ("folder_id") REFERENCES "text_to_image_folders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

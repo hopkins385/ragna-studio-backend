@@ -6,10 +6,13 @@ import { FluxImageGenerator } from './utils/flux-image';
 import { StorageService } from '@/modules/storage/storage.service';
 import { BullModule } from '@nestjs/bullmq';
 import { ImageConversionProcessor } from './processors/image-conversion.processor';
-import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [QueueModule],
+  imports: [
+    BullModule.registerQueue({
+      name: 'image-conversion',
+    }),
+  ],
   controllers: [TextToImageController],
   providers: [
     TextToImageRepository,

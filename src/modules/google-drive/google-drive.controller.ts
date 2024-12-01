@@ -13,7 +13,8 @@ import {
 import { GoogleDriveService } from './google-drive.service';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
-import { GoogleDriveQuery } from './dto/google-drive-query.dto';
+import { GoogleDriveCodeQuery } from './dto/google-drive-code-query.dto';
+import { GoogleDriveSearchQuery } from './dto/google-drive-search-query.dto';
 
 @Controller('google-drive')
 export class GoogleDriveController {
@@ -32,13 +33,15 @@ export class GoogleDriveController {
   }
 
   @Get('callback')
-  async callback(@ReqUser() user: UserEntity, @Query('code') code: string) {
-    // TODO: validation of query params
+  async callback(
+    @ReqUser() user: UserEntity,
+    @Query() query: GoogleDriveCodeQuery,
+  ) {
     try {
       await this.googleDriveService.createAuthTokens(
         { userId: user.id },
         {
-          code,
+          code: query.code,
         },
       );
       return { status: 'Google Drive connected' };
@@ -49,7 +52,6 @@ export class GoogleDriveController {
 
   @Get('has-access')
   async hasAccess(@ReqUser() user: UserEntity) {
-    // TODO: validation of query params
     try {
       const value = await this.googleDriveService.userHasAccessToken({
         userId: user.id,
@@ -65,9 +67,8 @@ export class GoogleDriveController {
   @Get()
   async findData(
     @ReqUser() user: UserEntity,
-    @Query() query: GoogleDriveQuery,
+    @Query() query: GoogleDriveSearchQuery,
   ) {
-    // TODO: validation of query params
     try {
       const data = await this.googleDriveService.findData(
         { userId: user.id },

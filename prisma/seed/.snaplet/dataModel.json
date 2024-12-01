@@ -2305,6 +2305,34 @@
           "maxLength": null
         },
         {
+          "id": "public.llms.features",
+          "name": "features",
+          "columnName": "features",
+          "type": "json",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.llms.info",
+          "name": "info",
+          "columnName": "info",
+          "type": "json",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "assistants",
           "type": "assistants",
           "isRequired": false,

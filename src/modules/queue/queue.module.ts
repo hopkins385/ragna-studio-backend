@@ -16,28 +16,6 @@ import { workflowProcessors } from '../assistant-job/processors/assistant-proces
         },
       }),
     }),
-    BullModule.registerQueue({
-      name: 'image-conversion',
-    }),
-    // Workflow queues
-    BullModule.registerFlowProducer({
-      name: 'workflow',
-    }),
-    BullModule.registerQueue({
-      name: 'workflow-row-completed',
-    }),
-    ...workflowProcessors.map((p) =>
-      BullModule.registerQueue({
-        name: p.name,
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 1000,
-          },
-        },
-      }),
-    ),
   ],
   exports: [BullModule],
 })
