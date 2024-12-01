@@ -27,8 +27,8 @@ interface LlmProviderBase {
   region: string;
 }
 
-interface LargeLangModelSupplier extends LlmProviderBase {}
-interface LargeLangModelProvider extends LlmProviderBase {}
+interface LargeLangModelHost extends LlmProviderBase {} // Cloud provider hosting the model
+interface LargeLangModelProvider extends LlmProviderBase {} // OEM of the model
 
 /**
  * @property {number} sizeIndex - Value between 0 and 100
@@ -44,7 +44,7 @@ interface LargeLangModelFrontend {
   contextSize: number;
   maxTokens: number;
   provider: LargeLangModelProvider;
-  supplier: LargeLangModelSupplier;
+  host: LargeLangModelHost;
   capability: LargeLangModelCapabilities;
   cost: LargeLangModelCost;
 }
@@ -66,19 +66,19 @@ export class LlmListResponse {
           name: llm.provider ?? '',
           region: llm.provider?.region ?? '',
         },
-        supplier: {
-          name: llm.supplier?.name ?? '',
-          region: llm.supplier?.region ?? '',
+        host: {
+          name: llm.host?.name ?? llm.provider ?? '',
+          region: llm.host?.region ?? '',
         },
         capability: {
-          streamText: llm.capability?.streamText ?? false,
-          useTool: llm.capability?.useTool ?? false,
-          imageInput: llm.capability?.imageInput ?? false,
-          imageOutput: llm.capability?.imageOutput ?? false,
-          audioInput: llm.capability?.audioInput ?? false,
-          audioOutput: llm.capability?.audioOutput ?? false,
-          videoInput: llm.capability?.videoInput ?? false,
-          videoOutput: llm.capability?.videoOutput ?? false,
+          streamText: llm.capabilities?.streamText ?? false,
+          useTool: llm.capabilities?.useTool ?? false,
+          imageInput: llm.capabilities?.imageInput ?? false,
+          imageOutput: llm.capabilities?.imageOutput ?? false,
+          audioInput: llm.capabilities?.audioInput ?? false,
+          audioOutput: llm.capabilities?.audioOutput ?? false,
+          videoInput: llm.capabilities?.videoInput ?? false,
+          videoOutput: llm.capabilities?.videoOutput ?? false,
         },
         cost: {
           inputTokens: {

@@ -249,22 +249,21 @@ model AssistantTool {
 }
 
 model LargeLangModel {
-  id          String      @id @default(cuid())
-  apiName     String      @map("api_name")
-  displayName String      @map("display_name")
-  description String
-  provider    String
-  contextSize Int         @map("context_size")
-  maxTokens   Int         @map("max_tokens")
-  multiModal  Boolean     @default(false) @map("multi_modal")
-  hidden      Boolean     @default(false)
-  free        Boolean     @default(false)
-  features    Json?       @map("features") @db.Json
-  info        Json?       @map("info") @db.Json
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  deletedAt   DateTime?   @map("deleted_at")
-  assistants  Assistant[]
+  id           String      @id @default(cuid())
+  apiName      String      @map("api_name")
+  displayName  String      @map("display_name")
+  description  String
+  provider     String
+  contextSize  Int         @map("context_size")
+  maxTokens    Int         @map("max_tokens")
+  hidden       Boolean     @default(false)
+  free         Boolean     @default(false)
+  capabilities Json?       @map("capabilities") @db.Json
+  info         Json?       @map("info") @db.Json
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  deletedAt    DateTime?   @map("deleted_at")
+  assistants   Assistant[]
 
   @@index([apiName])
   @@map("llms")

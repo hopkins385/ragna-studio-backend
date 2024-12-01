@@ -100,9 +100,9 @@ export class AssistantService {
             apiName: true,
             displayName: true,
             contextSize: true,
-            multiModal: true,
             provider: true,
             hidden: true,
+            capabilities: true,
           },
         },
         team: {

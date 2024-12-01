@@ -26,7 +26,6 @@ async function seedLLMs(seed: SeedClient) {
       displayName: provider.displayName,
       contextSize: provider.contextSize,
       maxTokens: provider.maxTokens,
-      multiModal: provider.multiModal,
       hidden: provider.hidden,
       free: provider.free,
       deletedAt: null,
