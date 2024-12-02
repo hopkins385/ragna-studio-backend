@@ -105,7 +105,10 @@ export class ChatController {
     }
 
     try {
-      const chat = await this.chatService.getChatForUser(chatId, user.id);
+      const chat = await this.chatService.getChatForUser({
+        chatId,
+        userId: user.id,
+      });
       return { chat };
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);

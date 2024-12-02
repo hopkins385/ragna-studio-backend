@@ -253,9 +253,9 @@ export class ChatStreamService {
       const result = streamText({
         abortSignal: signal,
         model: context.model,
-        // system: payload.systemPrompt,
+        system: payload.systemPrompt,
         messages: [...payload.messages, ...toolMessages],
-        // maxTokens: payload.maxTokens,
+        maxTokens: payload.maxTokens,
         tools: availableTools,
         maxSteps: 1,
         maxRetries: 3,
@@ -379,7 +379,7 @@ export class ChatStreamService {
       settings: isPreview
         ? {}
         : {
-            // system: payload.systemPrompt,
+            system: payload.systemPrompt,
             tools: availableTools,
             maxTokens: payload.maxTokens,
             temperature: payload.temperature,

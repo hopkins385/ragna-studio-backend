@@ -151,10 +151,13 @@ export class ChatService {
       });
   }
 
-  public async getChatForUser(
-    chatId: string,
-    userId: string,
-  ): Promise<ChatEntity> {
+  public async getChatForUser({
+    chatId,
+    userId,
+  }: {
+    chatId: string;
+    userId: string;
+  }): Promise<ChatEntity> {
     if (!chatId || !userId) {
       return null;
     }
