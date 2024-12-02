@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateAssistantToolDto } from './dto/create-assistant-tool.dto';
 import { AssistantToolRepository } from './repositories/assistant-tool.repository';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class AssistantToolService {
-  constructor(private readonly assistantToolRepo: AssistantToolRepository) {}
+  private readonly logger = new Logger(AssistantToolService.name);
+
+  constructor(
+    private readonly assistantToolRepo: AssistantToolRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async create(payload: CreateAssistantToolDto) {
     const { assistantId, toolId } = payload;
@@ -60,7 +66,12 @@ export class AssistantToolService {
   }
 
   async findAll() {
-    return this.assistantToolRepo.prisma.tool.findMany({
+    const tools = await this.cacheManager.get('all-assistant-tools');
+    if (tools) {
+      this.logger.debug(`returning cached tools`);
+      return tools;
+    }
+    const allTools = await this.assistantToolRepo.prisma.tool.findMany({
       select: {
         id: true,
         name: true,
@@ -73,6 +84,12 @@ export class AssistantToolService {
         functionId: 'asc',
       },
     });
+    await this.cacheManager.set(
+      'all-assistant-tools',
+      allTools,
+      60 * 60 * 24 * 1000,
+    );
+    return allTools;
   }
 
   async findFirst(assistantId: string, toolId: string) {
