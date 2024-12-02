@@ -82,6 +82,11 @@ export class UserService {
     return new UserEntity(user as any); // TODO: fix types
   }
 
+  async updateLastLogin(id: string) {
+    if (!id) throw new Error('User ID is required');
+    return this.userRepository.update(id, { lastLoginAt: new Date() });
+  }
+
   async remove(id: string) {
     throw new Error('Not implemented');
   }

@@ -34,6 +34,10 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
+  async updateLastLogin({ userId }: { userId: string }): Promise<void> {
+    await this.userService.updateLastLogin(userId);
+  }
+
   async validateUser({
     email,
     password,

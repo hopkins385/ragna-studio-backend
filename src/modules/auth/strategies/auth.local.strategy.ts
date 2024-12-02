@@ -29,6 +29,9 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         throw new Error('User not found');
       }
 
+      // update last login
+      await this.authService.updateLastLogin({ userId: user.id });
+
       return { id: user.id, email: user.email, name: user.name }; // TODO: return full UserEntity?
     } catch (error) {
       throw new UnauthorizedException();

@@ -34,7 +34,7 @@ export class LlmService {
       return models as Partial<LargeLangModel[]>;
     }
     const freshModels = await this.getModels();
-    await this.cacheManager.set('llm-models', freshModels, 60 * 1000);
+    await this.cacheManager.set('llm-models', freshModels, 60 * 60 * 24 * 1000);
 
     return freshModels as Partial<LargeLangModel[]>;
   }
