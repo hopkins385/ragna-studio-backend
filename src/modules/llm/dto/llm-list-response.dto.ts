@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { LargeLangModel } from '@prisma/client';
 
 interface LargeLangModelCapabilities {
@@ -12,8 +11,16 @@ interface LargeLangModelCapabilities {
   videoOutput: boolean;
 }
 
+interface LargeLangModelInfos {
+  sizeIndex: number;
+  qualityIndex: number;
+  speedIndex: number;
+  contextSize: number;
+  maxTokens: number;
+}
+
 interface LargeLangModelTokenPrice {
-  quantity: number;
+  quantity: string;
   credits: number;
 }
 
@@ -38,11 +45,8 @@ interface LargeLangModelProvider extends LlmProviderBase {} // OEM of the model
 interface LargeLangModelFrontend {
   id: string;
   displayName: string;
-  sizeIndex: number;
-  qualityIndex: number;
-  speedIndex: number;
-  contextSize: number;
-  maxTokens: number;
+  description: string;
+  infos: LargeLangModelInfos;
   provider: LargeLangModelProvider;
   host: LargeLangModelHost;
   capability: LargeLangModelCapabilities;
@@ -52,23 +56,26 @@ interface LargeLangModelFrontend {
 export class LlmListResponseDto {
   llms: LargeLangModelFrontend[] = [];
 
-  constructor(llmsInput: LargeLangModel[]) {
+  constructor(llmsInput: any[]) {
     llmsInput.map((llm) => {
       this.llms.push({
         id: llm.id,
-        displayName: llm.displayName ?? 0,
-        sizeIndex: llm?.sizeIndex ?? 0,
-        qualityIndex: llm?.qualityIndex ?? 0,
-        speedIndex: llm?.speedIndex ?? 0,
-        contextSize: llm?.contextSize ?? 0,
-        maxTokens: llm?.maxTokens ?? 0,
+        displayName: llm.displayName ?? '',
+        description: llm.description ?? '',
+        infos: {
+          sizeIndex: llm.infos?.model?.sizeIndex ?? 0,
+          qualityIndex: llm.infos?.model?.qualityIndex ?? 0,
+          speedIndex: llm.infos?.model?.speedIndex ?? 0,
+          contextSize: llm.infos?.model?.contextSize ?? 0,
+          maxTokens: llm.infos?.model?.maxTokens ?? 0,
+        },
         provider: {
-          name: llm.provider ?? '',
-          region: llm.provider?.region ?? '',
+          name: llm.infos?.provider?.name ?? '',
+          region: llm.infos?.provider?.region ?? '',
         },
         host: {
-          name: llm.host?.name ?? llm.provider ?? '',
-          region: llm.host?.region ?? '',
+          name: llm.infos?.host?.name ?? '',
+          region: llm.infos?.host?.region ?? '',
         },
         capability: {
           streamText: llm.capabilities?.streamText ?? false,
@@ -82,11 +89,11 @@ export class LlmListResponseDto {
         },
         cost: {
           inputTokens: {
-            quantity: llm.cost?.inputTokens?.quantity ?? 0,
+            quantity: llm.cost?.inputTokens?.quantity ?? '',
             credits: llm.cost?.inputTokens?.credits ?? 0,
           },
           outputTokens: {
-            quantity: llm.cost?.outputTokens?.quantity ?? 0,
+            quantity: llm.cost?.outputTokens?.quantity ?? '',
             credits: llm.cost?.outputTokens?.credits ?? 0,
           },
         },
@@ -94,7 +101,7 @@ export class LlmListResponseDto {
     });
   }
 
-  static from(llms: LargeLangModel[]): LlmListResponse {
-    return new LlmListResponse(llms);
+  static from(llms: LargeLangModel[]): LlmListResponseDto {
+    return new LlmListResponseDto(llms);
   }
 }

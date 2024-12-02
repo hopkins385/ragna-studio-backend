@@ -99,7 +99,6 @@ export class AssistantService {
             id: true,
             apiName: true,
             displayName: true,
-            contextSize: true,
             provider: true,
             hidden: true,
             capabilities: true,

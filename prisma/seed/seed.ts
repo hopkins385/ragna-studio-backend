@@ -24,10 +24,10 @@ async function seedLLMs(seed: SeedClient) {
       apiName: provider.apiName,
       description: provider.description,
       displayName: provider.displayName,
-      contextSize: provider.contextSize,
-      maxTokens: provider.maxTokens,
       hidden: provider.hidden,
       free: provider.free,
+      capabilities: provider.capabilities,
+      infos: provider.infos,
       deletedAt: null,
     });
   }

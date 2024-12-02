@@ -1041,6 +1041,32 @@
     "description": "This column 'public.llms.id' likely contains unique identifiers for records related to the Learning Management System (LLMS) in the public schema of the database."
   },
   {
+    "input": "public llms provider",
+    "examples": [
+      "Google",
+      "Stripe",
+      "Facebook",
+      "Amazon",
+      "Microsoft",
+      "Twilio",
+      "Salesforce",
+      "Mailchimp",
+      "Shopify",
+      "Zoom",
+      "PayPal",
+      "Slack",
+      "HubSpot",
+      "LinkedIn",
+      "Oracle",
+      "IBM",
+      "Adobe",
+      "Twitter",
+      "Dropbox",
+      "ZoomInfo"
+    ],
+    "description": "This column is about the provider of the API that is being used in the project."
+  },
+  {
     "input": "public llms api_name",
     "examples": [
       "courses/v1/getCourseDetails",
@@ -1117,32 +1143,6 @@
       "Procurement process vendor evaluation criteria"
     ],
     "description": "This column holds the description of the item in the project, such as a user, team, role, permission, chat message, media, document, workflow step, or authentication method in an organizational setting."
-  },
-  {
-    "input": "public llms provider",
-    "examples": [
-      "Google",
-      "Stripe",
-      "Facebook",
-      "Amazon",
-      "Microsoft",
-      "Twilio",
-      "Salesforce",
-      "Mailchimp",
-      "Shopify",
-      "Zoom",
-      "PayPal",
-      "Slack",
-      "HubSpot",
-      "LinkedIn",
-      "Oracle",
-      "IBM",
-      "Adobe",
-      "Twitter",
-      "Dropbox",
-      "ZoomInfo"
-    ],
-    "description": "This column is about the provider of the API that is being used in the project."
   },
   {
     "input": "public media_ables id",

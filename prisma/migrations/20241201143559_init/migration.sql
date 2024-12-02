@@ -194,16 +194,14 @@ CREATE TABLE "assistant_tools" (
 -- CreateTable
 CREATE TABLE "llms" (
     "id" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
     "api_name" TEXT NOT NULL,
     "display_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "context_size" INTEGER NOT NULL,
-    "max_tokens" INTEGER NOT NULL,
     "hidden" BOOLEAN NOT NULL DEFAULT false,
     "free" BOOLEAN NOT NULL DEFAULT false,
     "capabilities" JSON,
-    "info" JSON,
+    "infos" JSON,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
