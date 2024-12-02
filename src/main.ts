@@ -20,7 +20,7 @@ import { HttpExceptionFilter } from './filter/http-exception.filter';
 
 const appConfig: NestApplicationOptions = {
   rawBody: true,
-  logger: ['error', 'warn', 'log'],
+  logger: ['debug', 'error', 'warn', 'log'],
   // bufferLogs: true,
   // bodyParser: false,
 };

@@ -42,6 +42,7 @@ import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-e
 import { AssistantJobModule } from './modules/assistant-job/assistant-job.module';
 import { GoogleDriveModule } from './modules/google-drive/google-drive.module';
 import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -67,6 +68,19 @@ import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module
         {
           ttl: config.get('THROTTLE_TTL', 60),
           limit: config.get('THROTTLE_LIMIT', 10),
+        },
+      ],
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          store: 'redis',
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: config.get('REDIS_PORT', 6379),
+          password: config.get('REDIS_PASSWORD', ''),
         },
       ],
     }),
