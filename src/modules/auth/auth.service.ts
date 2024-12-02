@@ -88,6 +88,7 @@ export class AuthService {
     return this.jwtService.signAsync(tokenPayload, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
+      // algorithm: 'RS256',
     });
   }
 
@@ -97,6 +98,7 @@ export class AuthService {
       {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+        // algorithm: 'RS256',
       },
     );
   }
