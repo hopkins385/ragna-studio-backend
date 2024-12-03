@@ -65,6 +65,23 @@ export class UserService {
     return [users.map((user) => new UserEntity(user as any)), meta]; // TODO: fix types
   }
 
+  async updateUserName(
+    userId: string,
+    pay: {
+      firstName: string;
+      lastName: string;
+    },
+  ) {
+    return this.userRepository.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: pay.firstName,
+        lastName: pay.lastName,
+        name: `${pay.firstName} ${pay.lastName}`,
+      },
+    });
+  }
+
   async update(
     id: string,
     updateUserDto: UpdateUserDto,

@@ -141,7 +141,7 @@ export class AssistantController {
   }
 
   @Delete(':id')
-  async delete(@Param() param: IdParam, @Body() body: DeleteAssistantBody) {
+  async delete(@ReqUser() user: UserEntity, @Param() param: IdParam) {
     const { id: assistantId } = param;
 
     if (!assistantId) {
@@ -162,7 +162,7 @@ export class AssistantController {
       return await this.assistantService.softDelete(
         DeleteAssistantDto.fromInput({
           id: assistantId,
-          teamId: body.teamId,
+          teamId: user.firstTeamId,
         }),
       );
     } catch (error) {
