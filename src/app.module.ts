@@ -43,6 +43,7 @@ import { AssistantJobModule } from './modules/assistant-job/assistant-job.module
 import { GoogleDriveModule } from './modules/google-drive/google-drive.module';
 import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { HttpClientModule } from './modules/http-client/http-client.module';
 
 @Module({
   imports: [
@@ -149,6 +150,8 @@ import { CacheModule } from '@nestjs/cache-manager';
     GoogleDriveModule,
 
     ProviderAuthModule,
+
+    HttpClientModule,
     // ,
   ],
   controllers: [ChatMessageController],

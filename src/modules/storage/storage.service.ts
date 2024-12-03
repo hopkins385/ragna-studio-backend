@@ -4,7 +4,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
@@ -21,7 +21,7 @@ import { basename, dirname, join } from 'path';
 import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
 import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
-import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 
 type Bucket = 'public' | 'images';
 
@@ -37,7 +37,11 @@ export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @Inject('HTTP_CLIENT')
+    private readonly httpClient: AxiosInstance,
+  ) {
     this.s3Client = new S3Client({
       region: this.config.get<string>('AWS_REGION', 'auto'),
       endpoint: `https://${this.config.get('CF_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
@@ -155,7 +159,7 @@ export class StorageService {
     const newfileUrl = `${url}/${bucketFolder}/${fileName}`;
 
     try {
-      const response = await axios({
+      const response = await this.httpClient({
         url: fileUrl,
         method: 'GET',
         responseType: 'stream',
@@ -259,7 +263,7 @@ export class StorageService {
 
     const newFilePath = `${url}/${payload.bucketPath}/${payload.fileName}`;
 
-    console.log('Uploaded file to bucket', newFilePath);
+    this.logger.debug(`Uploaded file to bucket, newFilePath: ${newFilePath}`);
 
     return {
       fileName: payload.fileName,
@@ -330,7 +334,7 @@ export class StorageService {
 
   async downloadFileFromUrl(url: string): Promise<Buffer> {
     try {
-      const response = await axios.get(url, {
+      const response = await this.httpClient.get(url, {
         responseType: 'arraybuffer',
       });
       return Buffer.from(response.data);

@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { EmitEventDto } from './dto/emit-event.dto';
-import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 
 @Injectable()
 export class SocketService {
@@ -14,6 +14,8 @@ export class SocketService {
   constructor(
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
+    @Inject('HTTP_CLIENT')
+    private readonly httpClient: AxiosInstance,
   ) {
     this.socketServerUrl = this.config.get<string>('SOCKET_SERVER_URL');
     this.socketAppId = this.config.get<string>('SOCKET_APP_ID', '');
@@ -38,7 +40,7 @@ export class SocketService {
 
       const route = `${this.socketServerUrl}/v1/socket/emit/${this.socketAppId}`;
 
-      const response = await axios.post(route, payload, {
+      const response = await this.httpClient.post(route, payload, {
         headers: {
           Authorization: `Bearer ${this.jwtToken}`,
           'Content-Type': 'application/json',

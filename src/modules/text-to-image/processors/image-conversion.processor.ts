@@ -1,18 +1,21 @@
 import { StorageService } from '@/modules/storage/storage.service';
-import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import sharp from 'sharp';
 import { ImageConversionJobDataDto } from '../dto/image-conversion-job-data.dto';
-import axios from 'axios';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
+import { AxiosInstance } from 'axios';
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
   private readonly logger = new Logger(ImageConversionProcessor.name);
 
-  constructor(private readonly storageService: StorageService) {
+  constructor(
+    private readonly storageService: StorageService,
+    @Inject('HTTP_CLIENT')
+    private readonly httpClient: AxiosInstance,
+  ) {
     super();
   }
 
@@ -32,7 +35,9 @@ export class ImageConversionProcessor extends WorkerHost {
       fileBuffer = await readFile(filePathOrUrl);
     }
 
-    console.log('Processing image', oldBucketPath, fileName);
+    this.logger.debug(
+      `Processing image', oldBucketPath: ${oldBucketPath}, fileName: ${fileName}`,
+    );
 
     // resize and convert to avif and webp
     const avifBuffer = await sharp(fileBuffer).resize(300).avif().toBuffer();
@@ -85,7 +90,7 @@ export class ImageConversionProcessor extends WorkerHost {
   }
 
   private async downloadFileFromUrl(url: string): Promise<Buffer> {
-    const response = await axios.get(url, {
+    const response = await this.httpClient.get(url, {
       responseType: 'arraybuffer',
     });
     return Buffer.from(response.data);
