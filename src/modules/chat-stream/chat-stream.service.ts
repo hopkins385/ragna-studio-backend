@@ -209,10 +209,11 @@ export class ChatStreamService {
             throw new Error(`Finish Error: ${JSON.stringify(result.response)}`);
           case 'length':
             // this.onStreamStopLength();
-            return;
+            break;
+          case 'stop':
+            // this.onStreamStop();
+            break;
           case 'tool-calls':
-            // usage
-            await this.addUsage('text', context, result);
             // handle tool calls
             yield* this.handleToolCalls(
               signal,
@@ -221,11 +222,12 @@ export class ChatStreamService {
               context,
               availableTools,
             );
-            return;
+            break;
           default:
             this.logger.warn(
               `[handleStream] Unknown finish reason: ${chunk.finishReason}`,
             );
+            break;
         }
       }
 
@@ -323,7 +325,10 @@ export class ChatStreamService {
             throw new Error(`Finish Error: ${JSON.stringify(result.response)}`);
           case 'length':
             // this.onStreamStopLength();
-            return;
+            break;
+          case 'stop':
+            // this.onStreamStop();
+            break;
           case 'tool-calls':
             // call itself recursively
             yield* this.handleToolCalls(
@@ -333,13 +338,12 @@ export class ChatStreamService {
               context,
               availableTools,
             );
-            return;
+            break;
           default:
-            // usage
-            // await this.addUsage('text', context, result);
             this.logger.warn(
               `[handleToolCalls] Unknown finish reason: ${chunk.finishReason}`,
             );
+            break;
         }
       }
 
