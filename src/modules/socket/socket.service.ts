@@ -19,25 +19,22 @@ export class SocketService {
   ) {
     this.socketServerUrl = this.config.get<string>('SOCKET_SERVER_URL');
     this.socketAppId = this.config.get<string>('SOCKET_APP_ID', '');
-    this.jwtToken = '';
+    this.jwtToken = this.createAuthToken({ appId: this.socketAppId });
   }
 
-  async createAuthToken(jwtPayload: any) {
-    return this.jwtService.signAsync(jwtPayload, {
+  createAuthToken(jwtPayload: any) {
+    // TODO: refactor socket jwtAuth
+    return this.jwtService.sign(jwtPayload, {
       secret: this.config.get('SOCKET_AUTH_SECRET'),
       expiresIn: this.config.get('SOCKET_AUTH_EXPIRES_IN', '1d'),
     });
   }
 
   async emitEvent(payload: EmitEventDto): Promise<void> {
-    console.info('Emitting event:', payload.event, 'to room:', payload.room);
+    this.logger.debug(
+      `Emitting event: ${payload.event} to room: ${payload.room}`,
+    );
     try {
-      // TODO: socket auth token from config
-      if (!this.jwtToken || this.jwtToken === '') {
-        const token = await this.createAuthToken({ appId: this.socketAppId });
-        this.jwtToken = token;
-      }
-
       const route = `${this.socketServerUrl}/v1/socket/emit/${this.socketAppId}`;
 
       const response = await this.httpClient.post(route, payload, {

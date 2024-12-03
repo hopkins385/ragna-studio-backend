@@ -3,26 +3,24 @@ import {
   Body,
   Controller,
   HttpCode,
-  HttpException,
   HttpStatus,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   Param,
   Post,
   Req,
-  RequestTimeoutException,
   Res,
-  Sse,
 } from '@nestjs/common';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
-import { catchError, finalize, Observable, timeout } from 'rxjs';
 import { Request, Response } from 'express';
 import { ChatService } from '@/modules/chat/chat.service';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
-import { ChatEntity } from '../chat/entities/chat.entity';
+import { ChatEntity } from '@/modules/chat/entities/chat.entity';
+import { pipeline } from 'node:stream/promises';
 
 interface StreamHandlers {
   onClose: () => void;
@@ -42,7 +40,6 @@ export class ChatStreamController {
 
   @Post(':id')
   @HttpCode(HttpStatus.OK)
-  @Sse()
   async createChatMessageStream(
     @ReqUser() user: UserEntity,
     @Req() req: Request,
@@ -62,39 +59,35 @@ export class ChatStreamController {
       throw new NotFoundException('Chat not found');
     }
 
-    const payload = await this.createChatStreamPayload(body, chat);
+    // Set stream headers
+    this.setStreamHeaders(res);
 
-    const stream = this.chatStreamService
-      .createMessageStream(chat, payload, abortController.signal)
-      .pipe(
-        timeout({
-          first: this.SSE_TIMEOUT,
-          with: () => {
-            throw new RequestTimeoutException();
-          },
-        }),
-        catchError((error: any) => {
-          this.logger.error(`Error: ${error?.message}`);
-          throw new HttpException(
-            'Stream closed unexpectedly',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-        }),
-        finalize(() => {
-          this.finalizeStream(req, res, handlers);
-        }),
-      );
+    const payload = this.createChatStreamPayload(body, chat);
 
-    return stream;
+    const readableStream = await this.chatStreamService.createMessageStream(
+      chat,
+      payload,
+      abortController.signal,
+    );
+
+    try {
+      await pipeline(readableStream, res, {
+        signal: abortController.signal,
+      });
+    } catch (error: any) {
+      if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+        this.logger.error(`Stream pipeline error: ${error?.message}`);
+        throw new InternalServerErrorException('Stream pipeline error');
+      }
+    } finally {
+      this.finalizeStream(req, res, handlers);
+    }
   }
 
-  private async createChatStreamPayload(
+  private createChatStreamPayload(
     body: CreateChatStreamBody,
     chat: ChatEntity,
-  ): Promise<CreateChatStreamDto> {
-    //
-    // TODO: RAG implementation
-    //
+  ): CreateChatStreamDto {
     return CreateChatStreamDto.fromInput({
       provider: body.provider,
       model: body.model,
@@ -113,27 +106,23 @@ export class ChatStreamController {
   ): StreamHandlers {
     const handlers = {
       onClose: () => {
+        this.logger.debug('request closed');
         abortController.abort();
       },
       onDrain: () => {
-        this.logger.error('Stream drained, which is unhandled');
-        // TODO: Handle stream draining
+        this.logger.error('drained, which is unhandled');
       },
       onError: (error: Error) => {
-        this.logger.error(`Stream error: ${error.message}`);
+        this.logger.error(`error: ${error.message}`);
         abortController.abort();
       },
     };
 
     // Setup request handlers
     req.on('close', handlers.onClose);
-    req.socket.on('close', handlers.onClose);
-
     // Setup response handlers
     res.on('drain', handlers.onDrain);
     res.on('error', handlers.onError);
-    res.socket.on('drain', handlers.onDrain);
-    res.socket.on('error', handlers.onError);
 
     return handlers;
   }
@@ -145,29 +134,16 @@ export class ChatStreamController {
   ) {
     // Cleanup all listeners
     req.off('close', handlers.onClose);
-    req.socket.off('close', handlers.onClose);
     res.off('drain', handlers.onDrain);
     res.off('error', handlers.onError);
-    res.socket.off('drain', handlers.onDrain);
-    res.socket.off('error', handlers.onError);
   }
-}
 
-/*
+  private setStreamHeaders(res: Response) {
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('X-Accel-Buffering', 'no');
-
-        const messageStream = this.chatStreamService.createMessageStream(
-      chat,
-      payload,
-      abortController.signal,
-    );
-
-    const stream = Readable.from(messageStream);
-
-    await pipeline(stream, res);
-
-    */
+    res.setHeader('X-Ragna-Stream', 'v1');
+  }
+}

@@ -1,8 +1,7 @@
 import { ChatService } from '@/modules/chat/chat.service';
-import { Injectable, Logger, MessageEvent } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ChatEntity } from '@/modules/chat/entities/chat.entity';
 import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
-import { Observable, Subscriber } from 'rxjs';
 import {
   CoreMessage,
   LanguageModelUsage,
@@ -19,16 +18,20 @@ import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-messa
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
 import { ChatToolService } from '@/modules/chat-tool/chat-tool.service';
-import { ProviderType } from '../ai-model/enums/provider.enum';
+import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import { Readable, Transform } from 'node:stream';
+import fastJson from 'fast-json-stringify';
 
 interface StreamContext {
   model: LanguageModelV1;
   chat: ChatEntity;
   isCancelled: boolean;
   chunks: string[];
-  subscriber: Subscriber<MessageEvent>;
   toolCallRecursion: number;
-  usage: LanguageModelUsage[];
+  usages: {
+    type: 'text' | 'tool';
+    tokens: LanguageModelUsage;
+  }[];
 }
 
 export interface ToolInfoData {
@@ -36,10 +39,21 @@ export interface ToolInfoData {
   toolInfo: any;
 }
 
+const stringify = fastJson({
+  title: 'Message Schema',
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+    },
+  },
+});
+
 @Injectable()
 export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
   private readonly maxToolRecursions = 3;
+  private readonly DEFAULT_STREAM_DELAY_MS = 10;
 
   constructor(
     private readonly chatService: ChatService,
@@ -48,58 +62,83 @@ export class ChatStreamService {
     private readonly event: EventEmitter2,
   ) {}
 
-  createMessageStream(
+  async createMessageStream(
     chat: ChatEntity,
     payload: CreateChatStreamDto,
     signal: AbortSignal,
-  ) {
-    return new Observable((subscriber: Subscriber<MessageEvent>) => {
-      const model = this.aiModelFactory
-        .setConfig({
-          provider: payload.provider,
-          model: payload.model,
-        })
-        .getModel();
+  ): Promise<Readable> {
+    const model = this.aiModelFactory
+      .setConfig({
+        provider: payload.provider,
+        model: payload.model,
+      })
+      .getModel();
 
-      const context: StreamContext = {
-        model,
-        chat,
-        isCancelled: false,
-        chunks: [],
-        subscriber,
-        toolCallRecursion: 0,
-        usage: [],
-      };
+    const context: StreamContext = {
+      model,
+      chat,
+      isCancelled: false,
+      chunks: [],
+      toolCallRecursion: 0,
+      usages: [],
+    };
 
-      const stream = this.generateStream(signal, context, payload);
+    //
+    // TODO: RAG implementation
+    //
 
-      (async () => {
-        try {
-          for await (const chunk of stream) {
-            if (context.isCancelled || signal.aborted) {
-              return;
-            }
+    const stream = this.generateStream(signal, context, payload);
 
-            context.chunks.push(chunk);
-            this.emitMessage(chunk, subscriber);
+    const readableStream = Readable.from(stream);
 
-            await new Promise((resolve) => setTimeout(resolve, 10));
-          }
-
-          subscriber.complete();
-        } catch (error) {
-          subscriber.error(error);
-        }
-      })();
-
-      return async () => {
-        try {
-          return await this.finalize(context, signal);
-        } catch (error: any) {
-          this.logger.error(`Error: ${error?.message}`);
-        }
-      };
+    readableStream.on('end', () => {
+      this.finalize(context, signal);
     });
+
+    readableStream.on('error', (error) => {
+      this.logger.error(`Stream error: ${error}`);
+    });
+
+    readableStream.on('close', () => {
+      this.logger.debug('Stream closed');
+    });
+
+    readableStream.on('finish', () => {
+      this.logger.debug('Stream finished');
+    });
+
+    const transform = new Transform({
+      objectMode: true,
+      async transform(chunk, encoding, callback) {
+        context.chunks.push(chunk);
+        const data = stringify({ message: chunk });
+        this.push(`event: delta\ndata: ${data}\n\n`);
+        callback();
+      },
+    });
+
+    transform.on('error', async (error: any) => {
+      if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+        this.logger.error(`Transform error: ${error}`);
+        throw error;
+      }
+      // finalize stream on abort
+      await this.finalize(context, signal);
+    });
+
+    transform.on('drain', () => {
+      this.logger.debug('[Transform stream] drain - resuming processing');
+
+      // Resume processing if transform was paused
+      if (transform.isPaused()) {
+        transform.resume();
+      }
+
+      // Signal that backpressure has been relieved
+      transform.emit('ready');
+    });
+
+    return readableStream.pipe(transform);
   }
 
   private async finalize(
@@ -118,18 +157,7 @@ export class ChatStreamService {
       timestamp: new Date(),
       isComplete: true,
       isFirstMessage: context.chat.messages.length < 2,
-      usage: context.usage,
-    });
-  }
-
-  private emitMessage(
-    data: string,
-    subscriber: Subscriber<MessageEvent>,
-  ): void {
-    subscriber.next({
-      data: { message: data },
-      type: 'message',
-      id: '', //crypto.randomUUID(),
+      usage: context.usages as any, // TODO: fix type
     });
   }
 
@@ -143,28 +171,22 @@ export class ChatStreamService {
       payload,
     );
 
-    try {
-      const initialResult = streamText({
-        abortSignal: signal,
-        model: context.model,
-        messages: payload.messages,
-        maxSteps: 1,
-        maxRetries: 3,
-        ...callSettings,
-      });
+    const initialResult = streamText({
+      abortSignal: signal,
+      model: context.model,
+      messages: payload.messages,
+      maxSteps: 1,
+      maxRetries: 3,
+      ...callSettings,
+    });
 
-      // this.logWarnings(initialResult.warnings);
-
-      yield* this.handleStream(
-        signal,
-        initialResult,
-        payload,
-        context,
-        availableTools,
-      );
-    } catch (error: any) {
-      // this.handleStreamGeneratorError(_event, error);
-    }
+    yield* this.handleStream(
+      signal,
+      initialResult,
+      payload,
+      context,
+      availableTools,
+    );
   }
 
   private async *handleStream(
@@ -189,6 +211,9 @@ export class ChatStreamService {
             // this.onStreamStopLength();
             return;
           case 'tool-calls':
+            // usage
+            await this.addUsage('text', context, result);
+            // handle tool calls
             yield* this.handleToolCalls(
               signal,
               result,
@@ -197,25 +222,42 @@ export class ChatStreamService {
               availableTools,
             );
             return;
+          default:
+            this.logger.warn(
+              `[handleStream] Unknown finish reason: ${chunk.finishReason}`,
+            );
         }
       }
 
       if (chunk.type === 'text-delta') {
         yield chunk.textDelta;
       }
+
+      await this.delayStream();
     }
 
     // usage
-    await this.addUsage(context, result);
+    await this.addUsage('text', context, result);
+  }
+
+  private async delayStream() {
+    return new Promise((resolve) => {
+      setTimeout(resolve, this.DEFAULT_STREAM_DELAY_MS);
+    });
   }
 
   private async addUsage(
+    usageType: 'text' | 'tool',
     context: StreamContext,
     result: StreamTextResult<any>,
   ): Promise<void> {
-    const usage = await result.usage;
-    console.log('Usage:', usage);
-    if (usage) context.usage.push(usage);
+    const usage = {
+      type: usageType,
+      tokens: await result.usage,
+    };
+    this.logger.debug('Usage:', usage);
+
+    if (usage) context.usages.push(usage);
   }
 
   private async *handleToolCalls(
@@ -230,8 +272,6 @@ export class ChatStreamService {
     if (context.toolCallRecursion >= this.maxToolRecursions) {
       throw new Error('Max tool recursion reached');
     }
-
-    await this.addUsage(context, initalResult);
 
     const [toolCalls, toolResults] = await Promise.all([
       initalResult.toolCalls,
@@ -249,71 +289,69 @@ export class ChatStreamService {
       { role: 'tool', content: toolResults },
     ];
 
-    try {
-      const result = streamText({
-        abortSignal: signal,
-        model: context.model,
-        system: payload.systemPrompt,
-        messages: [...payload.messages, ...toolMessages],
-        maxTokens: payload.maxTokens,
-        tools: availableTools,
-        maxSteps: 1,
-        maxRetries: 3,
-      });
+    const result = streamText({
+      abortSignal: signal,
+      model: context.model,
+      system: payload.systemPrompt,
+      messages: [...payload.messages, ...toolMessages],
+      maxTokens: payload.maxTokens,
+      tools: availableTools,
+      maxSteps: 1,
+      maxRetries: 3,
+    });
 
-      const toolName = toolResults[0]?.toolName || '';
-      this.onToolEndCall(
-        ChatToolCallEventDto.fromInput({
-          userId: context.chat.userId,
-          chatId: context.chat.id,
-          toolName,
-        }),
-      );
+    const toolName = toolResults[0]?.toolName || '';
+    this.onToolEndCall(
+      ChatToolCallEventDto.fromInput({
+        userId: context.chat.userId,
+        chatId: context.chat.id,
+        toolName,
+      }),
+    );
 
-      for await (const chunk of result.fullStream) {
-        if (signal.aborted) return;
+    for await (const chunk of result.fullStream) {
+      if (signal.aborted) return;
 
-        if (chunk.type === 'error') {
-          throw chunk.error;
-        }
+      if (chunk.type === 'error') {
+        throw chunk.error;
+      }
 
-        if (chunk.type === 'finish') {
-          switch (chunk.finishReason) {
-            case 'error':
-              throw new Error(
-                `Finish Error: ${JSON.stringify(result.response)}`,
-              );
-            case 'length':
-              // this.onStreamStopLength();
-              return;
-            case 'tool-calls':
-              // call itself recursively
-              yield* this.handleToolCalls(
-                signal,
-                result,
-                payload,
-                context,
-                availableTools,
-              );
-              return;
-          }
-        }
-
-        if (chunk.type === 'text-delta') {
-          yield chunk.textDelta;
+      if (chunk.type === 'finish') {
+        // handle finish
+        switch (chunk.finishReason) {
+          case 'error':
+            throw new Error(`Finish Error: ${JSON.stringify(result.response)}`);
+          case 'length':
+            // this.onStreamStopLength();
+            return;
+          case 'tool-calls':
+            // call itself recursively
+            yield* this.handleToolCalls(
+              signal,
+              result,
+              payload,
+              context,
+              availableTools,
+            );
+            return;
+          default:
+            // usage
+            // await this.addUsage('text', context, result);
+            this.logger.warn(
+              `[handleToolCalls] Unknown finish reason: ${chunk.finishReason}`,
+            );
         }
       }
 
-      // usage
-      await this.addUsage(context, result);
+      if (chunk.type === 'text-delta') {
+        yield chunk.textDelta;
+      }
 
-      //
-    } catch (error) {
-      return; // TODO: check if silent discard is ok
-    } finally {
-      // usage
-      // await this.addUsage(context, result);
+      await this.delayStream();
     }
+
+    // usage
+    await this.addUsage('text', context, result);
   }
 
   private async saveMessage(
@@ -328,7 +366,7 @@ export class ChatStreamService {
       usage?: LanguageModelUsage[];
     },
   ) {
-    console.log('Saving message:', messageData);
+    this.logger.debug('Saving message:', messageData);
     // Update chat title if it's the first message of the chat
     if (messageData.isFirstMessage) {
       this.event.emit(
