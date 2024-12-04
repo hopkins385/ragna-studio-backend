@@ -14,9 +14,9 @@ import {
 import { ChatService } from './chat.service';
 import { CreateChatBody } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
-import { UserEntity } from '../user/entities/user.entity';
-import { FindAssistantDto } from '../assistant/dto/find-assistant.dto';
-import { AssistantService } from '../assistant/assistant.service';
+import { UserEntity } from '@/modules/user/entities/user.entity';
+import { FindAssistantDto } from '@/modules/assistant/dto/find-assistant.dto';
+import { AssistantService } from '@/modules/assistant/assistant.service';
 import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
@@ -144,7 +144,8 @@ export class ChatController {
         throw new Error('Chat not found');
       }
 
-      await this.chatService.softDelete(chatId, user.id);
+      // await this.chatService.softDelete(chatId, user.id);
+      await this.chatService.delete(chatId, user.id);
 
       return { status: 'ok' };
     } catch (error) {

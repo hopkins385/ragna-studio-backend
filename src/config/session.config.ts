@@ -1,4 +1,4 @@
-import RedisStore from 'connect-redis';
+// import RedisStore from 'connect-redis';
 import Redis from 'ioredis';
 import { SessionOptions } from 'express-session';
 
@@ -19,13 +19,13 @@ export function getSessionConfig(isDev: boolean): SessionOptions {
   });
 
   // Initialize store.
-  const redisStore = new RedisStore({
-    client: redisClient,
-    prefix: 'session:',
-  });
+  // const redisStore = new RedisStore({
+  //   client: redisClient,
+  //   prefix: 'session:',
+  // });
 
   const sessionConfig: SessionOptions = {
-    store: redisStore,
+    // store: redisStore,
     name: isDev ? 'session-token' : '__Secure-auth.session-token',
     secret: process.env.APP_SECRET,
     resave: false,

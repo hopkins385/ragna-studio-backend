@@ -8,9 +8,10 @@ import { ConfigService } from '@nestjs/config';
 export class StripeService {
   public readonly stripe: Stripe;
   constructor(
+    private readonly config: ConfigService,
+    // private readonly subscriptionService: SubscriptionService,
     @Inject(MODULE_OPTIONS_TOKEN)
     private readonly options: StripeModuleOptions,
-    private readonly config: ConfigService,
   ) {
     this.stripe = new Stripe(this.options.apiKey, this.options.options);
   }
