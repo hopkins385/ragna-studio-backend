@@ -55,6 +55,7 @@ export class UserFavoriteService {
 
   async getAllFavorites(user: UserEntity) {
     const favorites = await this.repo.prisma.userFavorite.findMany({
+      select: { id: true, userId: true, favoriteId: true, favoriteType: true },
       where: { userId: user.id },
     });
     // fetch also the details of the favorite
@@ -64,7 +65,9 @@ export class UserFavoriteService {
     });
 
     return favorites.map((favorite, index) => ({
-      ...favorite,
+      id: favorite.id,
+      favoriteId: favorite.favoriteId,
+      favoriteType: favorite.favoriteType,
       detail: favoriteDetails[index],
     }));
   }
@@ -125,14 +128,53 @@ export class UserFavoriteService {
     teamId: string;
     favorites: UserFavorite[];
   }) {
-    return Promise.all(
-      favorites.map((favorite) =>
-        this.getFavoriteDetails(
-          teamId,
-          favorite.favoriteId,
-          favorite.favoriteType,
-        ),
-      ),
+    // Group favorites by type
+    const groupedFavorites = favorites.reduce(
+      (acc, favorite) => {
+        if (!acc[favorite.favoriteType]) {
+          acc[favorite.favoriteType] = [];
+        }
+        acc[favorite.favoriteType].push(favorite.favoriteId);
+        return acc;
+      },
+      {} as Record<string, string[]>,
     );
+
+    // Fetch all assistants in one query
+    const assistants = groupedFavorites['assistant']
+      ? await this.repo.prisma.assistant.findMany({
+          select: { id: true, title: true, description: true },
+          where: {
+            id: { in: groupedFavorites['assistant'] },
+            teamId,
+          },
+        })
+      : [];
+
+    // Fetch all workflows in one query
+    const workflows = groupedFavorites['workflow']
+      ? await this.repo.prisma.workflow.findMany({
+          select: { id: true, name: true, description: true },
+          where: {
+            id: { in: groupedFavorites['workflow'] },
+            teamId,
+          },
+        })
+      : [];
+
+    // Create lookup maps
+    const assistantMap = new Map(assistants.map((a) => [a.id, a]));
+    const workflowMap = new Map(workflows.map((w) => [w.id, w]));
+
+    // Map back to original order
+    return favorites.map((favorite) => {
+      if (favorite.favoriteType === 'assistant') {
+        return assistantMap.get(favorite.favoriteId) || null;
+      }
+      if (favorite.favoriteType === 'workflow') {
+        return workflowMap.get(favorite.favoriteId) || null;
+      }
+      return null;
+    });
   }
 }

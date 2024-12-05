@@ -46,9 +46,7 @@ export class UserFavoriteController {
   }
 
   @Get()
-  async getFavorites(
-    @ReqUser() user: UserEntity,
-  ): Promise<UserFavoritesResponse> {
+  async getFavorites(@ReqUser() user: UserEntity) {
     try {
       const favorites = await this.userFavoriteService.getAllFavorites(user);
       return { favorites };
