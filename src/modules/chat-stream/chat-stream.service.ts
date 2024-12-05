@@ -22,6 +22,8 @@ import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
 
+type LanguageModelUsageType = 'text' | 'tool';
+
 interface StreamContext {
   model: LanguageModelV1;
   chat: ChatEntity;
@@ -29,7 +31,7 @@ interface StreamContext {
   chunks: string[];
   toolCallRecursion: number;
   usages: {
-    type: 'text' | 'tool';
+    type: LanguageModelUsageType;
     tokens: LanguageModelUsage;
   }[];
 }
@@ -40,7 +42,7 @@ export interface ToolInfoData {
 }
 
 const stringify = fastJson({
-  title: 'Message Schema',
+  title: 'Chat Event Message Schema',
   type: 'object',
   properties: {
     message: {
@@ -52,7 +54,7 @@ const stringify = fastJson({
 @Injectable()
 export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
-  private readonly maxToolRecursions = 3;
+  private readonly MAX_TOOL_RECURSIONS = 3;
   private readonly DEFAULT_STREAM_DELAY_MS = 10;
 
   constructor(
@@ -65,7 +67,7 @@ export class ChatStreamService {
   async createMessageStream(
     chat: ChatEntity,
     payload: CreateChatStreamDto,
-    signal: AbortSignal,
+    abortController: AbortController,
   ): Promise<Readable> {
     const model = this.aiModelFactory
       .setConfig({
@@ -87,24 +89,36 @@ export class ChatStreamService {
     // TODO: RAG implementation
     //
 
-    const stream = this.generateStream(signal, context, payload);
+    const stream = this.generateStream(
+      abortController.signal,
+      context,
+      payload,
+    );
 
     const readableStream = Readable.from(stream);
 
     readableStream.on('end', () => {
-      this.finalize(context, signal);
+      this.logger.debug('[ReadableStream] ended');
+      this.finalize(context, abortController.signal);
     });
 
-    readableStream.on('error', (error) => {
-      this.logger.error(`Stream error: ${error}`);
+    readableStream.on('error', async (error: any) => {
+      // if AbortError, finalize
+      if (error?.name === 'AbortError') {
+        this.logger.debug('[ReadableStream] aborted');
+        return;
+      }
+      this.logger.error(`[ReadableStream] error: ${error?.message}`);
+      // await this.finalize(context, abortController.signal); // TODO: finalize?
+      abortController.abort();
     });
 
     readableStream.on('close', () => {
-      this.logger.debug('Stream closed');
+      this.logger.debug('[ReadableStream] closed');
     });
 
     readableStream.on('finish', () => {
-      this.logger.debug('Stream finished');
+      this.logger.debug('[ReadableStream] finished');
     });
 
     const transform = new Transform({
@@ -119,11 +133,17 @@ export class ChatStreamService {
 
     transform.on('error', async (error: any) => {
       if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-        this.logger.error(`Transform error: ${error}`);
-        throw error;
+        this.logger.error(
+          `[Transform stream] error: ${error?.message}, Aborted: ${abortController.signal.aborted}`,
+        );
+        return;
       }
-      // finalize stream on abort
-      await this.finalize(context, signal);
+
+      this.logger.debug(
+        `[Transform stream] error: ${error?.message}; code: ${error?.code}; name: ${error?.name}; Aborted: ${abortController.signal.aborted}`,
+      );
+      await this.finalize(context, abortController.signal);
+      abortController.abort();
     });
 
     transform.on('drain', () => {
@@ -138,6 +158,10 @@ export class ChatStreamService {
       transform.emit('ready');
     });
 
+    transform.on('close', () => {
+      this.logger.debug('[Transform stream] close');
+    });
+
     return readableStream.pipe(transform);
   }
 
@@ -148,6 +172,7 @@ export class ChatStreamService {
     context.isCancelled = true;
     if (signal.aborted) {
       // TODO: token usage for incomplete messages
+      this.logger.debug(`[finalize] aborted: ${signal.aborted}`);
     }
 
     return this.saveMessage(context.chat.id, {
@@ -170,6 +195,8 @@ export class ChatStreamService {
       context,
       payload,
     );
+
+    this.logger.debug(`[generateStream] payload: ${JSON.stringify(payload)}`);
 
     const initialResult = streamText({
       abortSignal: signal,
@@ -200,6 +227,7 @@ export class ChatStreamService {
       if (signal.aborted) return;
 
       if (chunk.type === 'error') {
+        this.logger.debug('[handleStream] chunk error:', chunk.error);
         throw chunk.error;
       }
 
@@ -242,26 +270,6 @@ export class ChatStreamService {
     await this.addUsage('text', context, result);
   }
 
-  private async delayStream() {
-    return new Promise((resolve) => {
-      setTimeout(resolve, this.DEFAULT_STREAM_DELAY_MS);
-    });
-  }
-
-  private async addUsage(
-    usageType: 'text' | 'tool',
-    context: StreamContext,
-    result: StreamTextResult<any>,
-  ): Promise<void> {
-    const usage = {
-      type: usageType,
-      tokens: await result.usage,
-    };
-    this.logger.debug('Usage:', usage);
-
-    if (usage) context.usages.push(usage);
-  }
-
   private async *handleToolCalls(
     signal: AbortSignal,
     initalResult: StreamTextResult<any>,
@@ -271,7 +279,7 @@ export class ChatStreamService {
   ): AsyncGenerator<any, void, any> {
     context.toolCallRecursion++;
     // Prevent infinite loop
-    if (context.toolCallRecursion >= this.maxToolRecursions) {
+    if (context.toolCallRecursion >= this.MAX_TOOL_RECURSIONS) {
       throw new Error('Max tool recursion reached');
     }
 
@@ -315,6 +323,7 @@ export class ChatStreamService {
       if (signal.aborted) return;
 
       if (chunk.type === 'error') {
+        this.logger.debug('[handleToolCalls] chunk error:', chunk.error);
         throw chunk.error;
       }
 
@@ -395,6 +404,26 @@ export class ChatStreamService {
   }
 
   // UTILS
+
+  private async delayStream() {
+    return new Promise((resolve) => {
+      setTimeout(resolve, this.DEFAULT_STREAM_DELAY_MS);
+    });
+  }
+
+  private async addUsage(
+    usageType: LanguageModelUsageType,
+    context: StreamContext,
+    result: StreamTextResult<any>,
+  ): Promise<void> {
+    const usage = {
+      type: usageType,
+      tokens: await result.usage,
+    };
+    this.logger.debug('Usage:', usage);
+
+    if (usage) context.usages.push(usage);
+  }
 
   private createCallSettings(
     context: StreamContext,

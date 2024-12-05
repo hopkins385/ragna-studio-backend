@@ -64,16 +64,17 @@ export class ChatStreamController {
 
     const payload = this.createChatStreamPayload(body, chat);
 
-    const readableStream = await this.chatStreamService.createMessageStream(
-      chat,
-      payload,
-      abortController.signal,
-    );
-
     try {
+      const readableStream = await this.chatStreamService.createMessageStream(
+        chat,
+        payload,
+        abortController,
+      );
+
       await pipeline(readableStream, res, {
         signal: abortController.signal,
       });
+      //
     } catch (error: any) {
       if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
         this.logger.error(`Stream pipeline error: ${error?.message}`);
@@ -106,7 +107,7 @@ export class ChatStreamController {
   ): StreamHandlers {
     const handlers = {
       onClose: () => {
-        this.logger.debug('request closed');
+        this.logger.debug('request closed, aborting stream');
         abortController.abort();
       },
       onDrain: () => {
@@ -120,6 +121,7 @@ export class ChatStreamController {
 
     // Setup request handlers
     req.on('close', handlers.onClose);
+    req.socket.on('close', handlers.onClose);
     // Setup response handlers
     res.on('drain', handlers.onDrain);
     res.on('error', handlers.onError);
@@ -134,6 +136,7 @@ export class ChatStreamController {
   ) {
     // Cleanup all listeners
     req.off('close', handlers.onClose);
+    req.socket.off('close', handlers.onClose);
     res.off('drain', handlers.onDrain);
     res.off('error', handlers.onError);
   }

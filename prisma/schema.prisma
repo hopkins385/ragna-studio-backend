@@ -225,6 +225,7 @@ model Tool {
   functionName String          @map("function_name")
   name         String
   description  String?
+  iconName     String?         @map("icon_name")
   createdAt    DateTime        @default(now()) @map("created_at")
   updatedAt    DateTime        @updatedAt @map("updated_at")
   deletedAt    DateTime?       @map("deleted_at")

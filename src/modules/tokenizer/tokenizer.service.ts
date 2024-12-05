@@ -17,7 +17,7 @@ export class TokenizerService {
     );
     this.url = newUrl.toString();
     // local
-    this.model = 'cl100k_base';
+    this.model = 'o200k_base';
     this.encoder = get_encoding(this.model);
   }
 
@@ -34,9 +34,9 @@ export class TokenizerService {
       const { tokens, tokenCount, charCount } = data;
       return { tokens: new Uint32Array(tokens), tokenCount, charCount };
     } catch (error) {
-      this.logger.debug(
-        'Failed to get tokens from rag server, falling back to local',
-      );
+      // this.logger.debug(
+      //   'Failed to get tokens from rag server, falling back to local',
+      // );
       try {
         return await this.getTokensLocal(content);
       } catch (error) {

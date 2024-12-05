@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { tool } from 'ai';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { getJson } from 'serpapi';
 import { z } from 'zod';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
@@ -31,11 +31,17 @@ type Tools = Record<
 
 @Injectable()
 export class ChatToolService {
-  constructor(private readonly config: ConfigService) {}
+  private readonly logger = new Logger(ChatToolService.name);
+
+  constructor(
+    private readonly config: ConfigService,
+    @Inject('HTTP_CLIENT')
+    private readonly httpClient: AxiosInstance,
+  ) {}
   // Define tool configurations
   toolConfigs: ToolConfig[] = [
     {
-      id: 1,
+      id: 4,
       name: 'directions',
       description:
         'Get directions between two or more locations and optional including waypoints',
@@ -56,6 +62,7 @@ export class ChatToolService {
           toolName: 'directions',
           toolInfo: `${start} to ${destination}`,
         });
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return await this.getGoogleMapsDirections(
           start,
           destination,
@@ -64,7 +71,7 @@ export class ChatToolService {
       },
     },
     // {
-    //   id: 2,
+    //   id: 3,
     //   name: 'imageGenerator',
     //   description: 'Generates an image by describing it',
     //   parameters: {
@@ -76,7 +83,7 @@ export class ChatToolService {
     //   },
     // },
     {
-      id: 3,
+      id: 2,
       name: 'website',
       description: 'Get information about a website',
       parameters: {
@@ -93,30 +100,12 @@ export class ChatToolService {
       execute: async ({ url }, emitToolInfoData) => {
         const newUrl = new URL(url);
         emitToolInfoData({ toolName: 'website', toolInfo: `${newUrl.href}` });
-        return this.scrapeWebsite(newUrl);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return await this.scrapeWebsite(newUrl);
       },
     },
     {
-      id: 4,
-      name: 'youtubeTranscript',
-      description: 'Get the transcript of a youtube video',
-      parameters: {
-        urlOrId: z
-          .string()
-          .describe(
-            'The URL or video id of the youtube video to get the transcript of',
-          ),
-      },
-      execute: async ({ urlOrId }, emitToolInfoData) => {
-        emitToolInfoData({
-          toolName: 'youtubeTranscript',
-          toolInfo: `${urlOrId}`,
-        });
-        return this.scrapeYoutube(urlOrId);
-      },
-    },
-    {
-      id: 5,
+      id: 1,
       name: 'searchWeb',
       description: 'Search the web',
       parameters: {
@@ -128,7 +117,8 @@ export class ChatToolService {
       },
       execute: async ({ query }, emitToolInfoData) => {
         emitToolInfoData({ toolName: 'searchWeb', toolInfo: `${query}` });
-        return this.searchWeb(query);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return await this.searchWeb(query);
       },
     },
   ];
@@ -138,7 +128,7 @@ export class ChatToolService {
     return tool({
       description: config.description,
       parameters: z.object(config.parameters),
-      execute: async (params) => await config.execute(params, emitToolInfoData),
+      execute: (params) => config.execute(params, emitToolInfoData),
     });
   }
 
@@ -188,25 +178,18 @@ export class ChatToolService {
       }
       // scrape the website
       const scrapeUrl = `${scrapeServerUrl}/scrape?url=${url.toString()}`;
-      const response = await axios.get(scrapeUrl);
+      const response = await this.httpClient.get(scrapeUrl);
       if (response.status !== 200) {
         throw new Error('Failed to scrape');
       }
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      this.logger.error(`Failed to scrape website: ${error}; ${error?.errors}`);
       return {
         meta: null,
-        body: null,
-        error: 'cannot scrape website. does it exist?',
+        body: 'cannot visit website. does it exist?',
       };
     }
-  }
-
-  async scrapeYoutube(urlOrId: string) {
-    throw new Error('Not implemented');
-    return {
-      urlOrId,
-    };
   }
 
   async searchWeb(query: string) {
@@ -219,7 +202,7 @@ export class ChatToolService {
       });
       return response;
     } catch (error: any) {
-      return { error: 'cannot search the web' };
+      return { message: 'cannot search the web' };
     }
   }
 }

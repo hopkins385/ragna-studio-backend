@@ -76,6 +76,7 @@ export class AssistantToolService {
         id: true,
         name: true,
         description: true,
+        iconName: true,
       },
       where: {
         deletedAt: null,

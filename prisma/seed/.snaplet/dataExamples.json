@@ -2159,6 +2159,32 @@
     "description": "This column contains descriptions of various tools available to the public in the project, such as what they are used for and how they function."
   },
   {
+    "input": "public tools icon_name",
+    "examples": [
+      "icon_home",
+      "icon_settings",
+      "icon_calendar",
+      "icon_search",
+      "icon_alert",
+      "icon_edit",
+      "icon_user",
+      "icon_document",
+      "icon_chart",
+      "icon_bell",
+      "icon_camera",
+      "icon_email",
+      "icon_cloud",
+      "icon_folder",
+      "icon_network",
+      "icon_lock",
+      "icon_star",
+      "icon_music",
+      "icon_box",
+      "icon_book"
+    ],
+    "description": "This column is about storing the name of the icon associated with a specific tool or functionality used in the project. The icons are likely used for visual representation and quick identification of different tools within the system."
+  },
+  {
     "input": "public user_roles id",
     "examples": [
       "admin",

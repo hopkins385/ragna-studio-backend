@@ -4436,6 +4436,20 @@
           "maxLength": null
         },
         {
+          "id": "public.tools.icon_name",
+          "name": "icon_name",
+          "columnName": "icon_name",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "assistant_tools",
           "type": "assistant_tools",
           "isRequired": false,
