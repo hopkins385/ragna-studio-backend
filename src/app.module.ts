@@ -44,6 +44,7 @@ import { GoogleDriveModule } from './modules/google-drive/google-drive.module';
 import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { HttpClientModule } from './modules/http-client/http-client.module';
+import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
 
 @Module({
   imports: [
@@ -152,6 +153,8 @@ import { HttpClientModule } from './modules/http-client/http-client.module';
     ProviderAuthModule,
 
     HttpClientModule,
+
+    UserFavoriteModule,
     // ,
   ],
   controllers: [ChatMessageController],

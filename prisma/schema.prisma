@@ -35,10 +35,22 @@ model User {
   sessions      Session[]
   tokenUsages   TokenUsage[]
   providerAuths ProviderAuth[]
+  favorites     UserFavorite[]
 
   @@unique([deviceId, email])
   @@index([email])
   @@map("users")
+}
+
+model UserFavorite {
+  id           String @id @default(cuid())
+  userId       String @map("user_id")
+  favoriteId   String @map("favorite_id")
+  favoriteType String @map("favorite_type")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_favorites")
 }
 
 model Role {
