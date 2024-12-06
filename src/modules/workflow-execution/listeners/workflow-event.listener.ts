@@ -9,29 +9,42 @@ export class WorkflowEventListener {
   constructor(private readonly socket: SocketService) {}
 
   @OnEvent(WorkflowEvent.CELL_ACTIVE)
-  cellActiveEvent(data: WorkflowExecutionEventDto) {
+  cellActiveEvent(payload: WorkflowExecutionEventDto) {
     this.socket.emitEvent({
-      room: `user:${data.userId}`,
-      event: `workflow-update:${data.workflowId}`,
-      data,
+      room: `user:${payload.userId}`,
+      event: `workflow-update:${payload.workflowId}`,
+      data: { cellActive: true },
     });
   }
 
   @OnEvent(WorkflowEvent.CELL_COMPLETED)
-  cellCompletedEvent(data: WorkflowExecutionEventDto) {
+  cellCompletedEvent(payload: WorkflowExecutionEventDto) {
     this.socket.emitEvent({
-      room: `user:${data.userId}`,
-      event: `workflow-update:${data.workflowId}`,
-      data,
+      room: `user:${payload.userId}`,
+      event: `workflow-update:${payload.workflowId}`,
+      data: { cellCompleted: true },
     });
   }
 
   @OnEvent(WorkflowEvent.ROW_COMPLETED)
-  cellFailedEvent(data: WorkflowExecutionEventDto) {
+  cellFailedEvent(payload: WorkflowExecutionEventDto) {
     this.socket.emitEvent({
-      room: `user:${data.userId}`,
-      event: `workflow-update:${data.workflowId}`,
-      data,
+      room: `user:${payload.userId}`,
+      event: `workflow-update:${payload.workflowId}`,
+      data: { rowCompleted: true },
+    });
+  }
+
+  @OnEvent(WorkflowEvent.PROGRESS)
+  progressEvent(payload: {
+    userId: string;
+    workflowId: string;
+    progress: number;
+  }) {
+    this.socket.emitEvent({
+      room: `user:${payload.userId}`,
+      event: `workflow-update:${payload.workflowId}`,
+      data: { progress: payload.progress },
     });
   }
 }

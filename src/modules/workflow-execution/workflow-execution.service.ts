@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { WorkflowService } from '@/modules/workflow/workflow.service';
 import { InjectFlowProducer } from '@nestjs/bullmq';
 import { FlowJob, FlowProducer, JobsOptions } from 'bullmq';
-import { AssistantJobDto } from '@/modules/assistant/dto/assistant-job.dto';
+import { AssistantJobDto } from '../assistant-job/dto/assistant-job.dto';
 
 @Injectable()
 export class WorkflowExecutionService {
@@ -55,6 +55,8 @@ export class WorkflowExecutionService {
       });
 
       const jobData = AssistantJobDto.fromInput({
+        totalStepCount: stepsCount,
+        totalRowCount: rowCount,
         stepIndex,
         rowIndex,
         stepName: name,

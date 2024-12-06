@@ -88,6 +88,8 @@ export class ChatStreamService {
     //
     // TODO: RAG implementation
     //
+    if (chat.assistant.hasKnowledgeBase) {
+    }
 
     const stream = this.generateStream(
       abortController.signal,

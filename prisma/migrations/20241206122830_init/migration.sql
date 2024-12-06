@@ -26,6 +26,16 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
+CREATE TABLE "user_favorites" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "favorite_id" TEXT NOT NULL,
+    "favorite_type" TEXT NOT NULL,
+
+    CONSTRAINT "user_favorites_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "roles" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -158,6 +168,9 @@ CREATE TABLE "assistants" (
     "system_prompt" TEXT NOT NULL,
     "system_prompt_token_count" INTEGER NOT NULL,
     "is_shared" BOOLEAN NOT NULL DEFAULT false,
+    "has_knowledge_base" BOOLEAN DEFAULT false,
+    "has_workflow" BOOLEAN DEFAULT false,
+    "settings" JSON,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -172,6 +185,7 @@ CREATE TABLE "tools" (
     "function_name" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "icon_name" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -582,6 +596,9 @@ CREATE INDEX "text_to_image_runs_folder_id_idx" ON "text_to_image_runs"("folder_
 
 -- CreateIndex
 CREATE INDEX "text_to_images_run_id_idx" ON "text_to_images"("run_id");
+
+-- AddForeignKey
+ALTER TABLE "user_favorites" ADD CONSTRAINT "user_favorites_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_roles" ADD CONSTRAINT "user_roles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

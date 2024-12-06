@@ -186,6 +186,8 @@ export class ChatService {
             id: true,
             title: true,
             systemPrompt: true,
+            hasKnowledgeBase: true,
+            hasWorkflow: true,
             tools: {
               select: {
                 toolId: true,

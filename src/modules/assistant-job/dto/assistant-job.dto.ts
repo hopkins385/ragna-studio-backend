@@ -1,4 +1,6 @@
 export class AssistantJobDto {
+  readonly totalStepCount: number;
+  readonly totalRowCount: number;
   readonly stepIndex: number;
   readonly rowIndex: number;
   readonly stepName: string;
@@ -14,6 +16,8 @@ export class AssistantJobDto {
   readonly workflowId: string;
 
   constructor(
+    totalStepCount: number,
+    totalRowCount: number,
     stepIndex: number,
     rowIndex: number,
     stepName: string,
@@ -28,6 +32,8 @@ export class AssistantJobDto {
     userId: string,
     workflowId: string,
   ) {
+    this.totalStepCount = Number(totalStepCount);
+    this.totalRowCount = Number(totalRowCount);
     this.stepIndex = Number(stepIndex);
     this.rowIndex = Number(rowIndex);
     this.stepName = stepName;
@@ -44,6 +50,8 @@ export class AssistantJobDto {
   }
 
   static fromInput(input: {
+    totalStepCount: number;
+    totalRowCount: number;
     stepIndex: number;
     rowIndex: number;
     stepName: string;
@@ -59,6 +67,8 @@ export class AssistantJobDto {
     workflowId: string;
   }): AssistantJobDto {
     return new AssistantJobDto(
+      input.totalStepCount,
+      input.totalRowCount,
       input.stepIndex,
       input.rowIndex,
       input.stepName,

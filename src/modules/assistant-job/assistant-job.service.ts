@@ -138,6 +138,12 @@ export class AssistantJobService {
       status: 'completed',
     });
 
+    /*this.event.emit(WorkflowEvent.PROGRESS, {
+      userId,
+      workflowId: payload.workflowId,
+      progress: this.getProgress(payload),
+    });*/
+
     /*
     this.event.emit(
       UsageEvent.TRACKTOKENS,
@@ -194,5 +200,18 @@ export class AssistantJobService {
         this.logger.error(`Invalid job status: ${status}`);
         break;
     }
+  }
+
+  private getProgress({
+    stepIndex,
+    totalStepCount,
+    rowIndex,
+    totalRowCount,
+  }: AssistantJobDto) {
+    const totalCells = totalStepCount * totalRowCount;
+    const completedCells = rowIndex * totalStepCount + stepIndex + 1;
+    const progressPercentage = (completedCells / totalCells) * 100;
+
+    return Math.min(Math.floor(progressPercentage), 100);
   }
 }

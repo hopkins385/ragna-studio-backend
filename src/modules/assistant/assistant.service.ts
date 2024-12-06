@@ -190,6 +190,8 @@ export class AssistantService {
     description,
     systemPrompt,
     isShared,
+    hasKnowledgeBase,
+    hasWorkflow,
     systemPromptTokenCount,
     tools,
   }: UpdateAssistantDto) {
@@ -208,6 +210,8 @@ export class AssistantService {
         systemPrompt,
         isShared,
         systemPromptTokenCount,
+        hasKnowledgeBase,
+        hasWorkflow,
         updatedAt: new Date(),
       },
     });

@@ -11,6 +11,8 @@ export class UpdateAssistantDto {
   readonly description: string;
   readonly systemPrompt: string;
   readonly isShared: boolean | undefined;
+  readonly hasKnowledgeBase: boolean | undefined;
+  readonly hasWorkflow: boolean | undefined;
   readonly systemPromptTokenCount: number;
   readonly tools: string[];
 
@@ -22,6 +24,8 @@ export class UpdateAssistantDto {
     description: string,
     systemPrompt: string,
     isShared: boolean | undefined,
+    hasKnowledgeBase: boolean | undefined,
+    hasWorkflow: boolean | undefined,
     systemPromptTokenCount: number,
     tools: string[],
   ) {
@@ -32,6 +36,8 @@ export class UpdateAssistantDto {
     this.description = description.toString();
     this.systemPrompt = systemPrompt.toString();
     this.isShared = Boolean(isShared);
+    this.hasKnowledgeBase = Boolean(hasKnowledgeBase);
+    this.hasWorkflow = Boolean(hasWorkflow);
     this.systemPromptTokenCount = Number(systemPromptTokenCount);
     this.tools = tools;
   }
@@ -44,6 +50,8 @@ export class UpdateAssistantDto {
     description: string;
     systemPrompt: string;
     isShared?: boolean | undefined;
+    hasKnowledgeBase?: boolean | undefined;
+    hasWorkflow?: boolean | undefined;
     systemPromptTokenCount: number;
     tools: string[];
   }): UpdateAssistantDto {
@@ -55,6 +63,8 @@ export class UpdateAssistantDto {
       input.description,
       input.systemPrompt,
       input.isShared || false,
+      input.hasKnowledgeBase || false,
+      input.hasWorkflow || false,
       input.systemPromptTokenCount,
       input.tools,
     );

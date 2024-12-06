@@ -131,6 +131,8 @@ export class AssistantController {
           description: body.description,
           systemPrompt: body.systemPrompt,
           isShared: body.isShared,
+          hasKnowledgeBase: body.hasKnowledgeBase,
+          hasWorkflow: body.hasWorkflow,
           systemPromptTokenCount: body.systemPromptTokenCount,
           tools: body.tools,
         }),

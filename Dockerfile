@@ -4,6 +4,9 @@ FROM node:22-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# heap out of memory
+ENV NODE_OPTIONS=--max_old_space_size=4096
+
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -33,7 +36,7 @@ COPY prisma ./prisma/
 # Install production dependencies only
 RUN npm ci --omit=dev
 # Install tsx globlally
-RUN npm install -g tsx
+# RUN npm install -g tsx
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist

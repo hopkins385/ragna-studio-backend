@@ -16,7 +16,7 @@ const HTTP_CONFIG = 'HTTP_CONFIG';
     {
       provide: HTTP_CONFIG,
       useFactory: (configService: ConfigService): HttpConfig => ({
-        timeout: configService.get('HTTP_CLIENT_TIMEOUT', 5000),
+        timeout: configService.get('HTTP_CLIENT_TIMEOUT', 15000),
         retries: configService.get('HTTP_CLIENT_RETRIES', 3),
       }),
       inject: [ConfigService],

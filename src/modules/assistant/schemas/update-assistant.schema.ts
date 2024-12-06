@@ -8,6 +8,8 @@ export const updateAssistantSchema = z.object({
   description: z.string(),
   systemPrompt: z.string(),
   isShared: z.boolean().optional(),
+  hasKnowledgeBase: z.boolean().optional(),
+  hasWorkflow: z.boolean().optional(),
   systemPromptTokenCount: z.number(),
   tools: z.array(cuidSchema),
 });
