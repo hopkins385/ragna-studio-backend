@@ -48,9 +48,10 @@ export class SocketService {
       if (response.status !== 200) {
         throw new Error('Failed to emit event');
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
-        `Failed to emit event: ${payload.event} to room: ${payload.room}`,
+        `Failed to emit event: ${payload.event} to room: ${payload.room}, Reason: ${error?.message}`,
+        error?.stack,
       );
     }
   }

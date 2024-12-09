@@ -219,6 +219,15 @@ export class CreatesNewUserAction {
       },
     });
 
+    // add the assistant to user favorites
+    await this.prisma.userFavorite.create({
+      data: {
+        userId,
+        favoriteId: assistant.id,
+        favoriteType: 'assistant',
+      },
+    });
+
     return { userId, teamId, assistantId: assistant.id };
   }
 

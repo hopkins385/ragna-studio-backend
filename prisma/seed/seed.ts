@@ -168,6 +168,15 @@ async function seedDefaults(
     seed,
   );
 
+  // add assistant to user favourites
+  await seed.userFavorite([
+    {
+      id: createId(),
+      userId: users[0].id,
+      favoriteId: assistant[0].id,
+      favoriteType: 'assistant',
+    },
+  ]);
   // seed chats for user
   const { chat: chats } = await seedChatsForUser(
     users[0].id,

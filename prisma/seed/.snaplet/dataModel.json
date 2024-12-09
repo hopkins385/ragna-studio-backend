@@ -592,6 +592,48 @@
           "maxLength": null
         },
         {
+          "id": "public.assistants.has_knowledge_base",
+          "name": "has_knowledge_base",
+          "columnName": "has_knowledge_base",
+          "type": "bool",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.assistants.has_workflow",
+          "name": "has_workflow",
+          "columnName": "has_workflow",
+          "type": "bool",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.assistants.settings",
+          "name": "settings",
+          "columnName": "settings",
+          "type": "json",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "id": "public.assistants.created_at",
           "name": "created_at",
           "columnName": "created_at",
@@ -4394,6 +4436,20 @@
           "maxLength": null
         },
         {
+          "id": "public.tools.icon_name",
+          "name": "icon_name",
+          "columnName": "icon_name",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "id": "public.tools.created_at",
           "name": "created_at",
           "columnName": "created_at",
@@ -4436,20 +4492,6 @@
           "maxLength": null
         },
         {
-          "id": "public.tools.icon_name",
-          "name": "icon_name",
-          "columnName": "icon_name",
-          "type": "text",
-          "isRequired": false,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
           "name": "assistant_tools",
           "type": "assistant_tools",
           "isRequired": false,
@@ -4476,6 +4518,96 @@
           "name": "tools_function_id_key",
           "fields": [
             "function_id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
+    "user_favorites": {
+      "id": "public.user_favorites",
+      "schemaName": "public",
+      "tableName": "user_favorites",
+      "fields": [
+        {
+          "id": "public.user_favorites.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_favorites.user_id",
+          "name": "user_id",
+          "columnName": "user_id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_favorites.favorite_id",
+          "name": "favorite_id",
+          "columnName": "favorite_id",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_favorites.favorite_type",
+          "name": "favorite_type",
+          "columnName": "favorite_type",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "users",
+          "type": "users",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "user_favoritesTousers",
+          "relationFromFields": [
+            "user_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "user_favorites_pkey",
+          "fields": [
+            "id"
           ],
           "nullNotDistinct": false
         }
@@ -4922,6 +5054,20 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "token_usagesTousers",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "user_favorites",
+          "type": "user_favorites",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "user_favoritesTousers",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
