@@ -19,6 +19,7 @@ export class SocketService {
   ) {
     this.socketServerUrl = this.config.get<string>('SOCKET_SERVER_URL');
     this.socketAppId = this.config.get<string>('SOCKET_APP_ID', '');
+
     this.jwtToken = this.createAuthToken({ appId: this.socketAppId });
   }
 
@@ -26,7 +27,7 @@ export class SocketService {
     // TODO: refactor socket jwtAuth
     return this.jwtService.sign(jwtPayload, {
       secret: this.config.get('SOCKET_AUTH_SECRET'),
-      expiresIn: this.config.get('SOCKET_AUTH_EXPIRES_IN', '1d'),
+      // expiresIn: this.config.get('SOCKET_AUTH_EXPIRES_IN', '365d'),
     });
   }
 
@@ -36,7 +37,6 @@ export class SocketService {
     );
     try {
       const route = `${this.socketServerUrl}/v1/socket/emit/${this.socketAppId}`;
-
       const response = await this.httpClient.post(route, payload, {
         headers: {
           Authorization: `Bearer ${this.jwtToken}`,
