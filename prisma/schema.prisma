@@ -272,6 +272,53 @@ model AssistantTool {
   @@map("assistant_tools")
 }
 
+model AssistantTemplate {
+  id                     String    @id @default(cuid())
+  llmId                  String    @map("llm_id")
+  title                  String
+  description            String
+  systemPrompt           String    @map("system_prompt") @db.Text
+  systemPromptTokenCount Int       @map("system_prompt_token_count")
+  config                 Json?     @map("config") @db.Json
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  deletedAt              DateTime? @map("deleted_at")
+
+  categoryItems AssistantTemplateCategoryItem[]
+
+  llm LargeLangModel @relation(fields: [llmId], references: [id])
+
+  @@map("assistant_templates")
+}
+
+model AssistantTemplateCategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  config      Json?     @map("config") @db.Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  categoryItems AssistantTemplateCategoryItem[]
+
+  @@map("assistant_template_categories")
+}
+
+model AssistantTemplateCategoryItem {
+  id         String    @id @default(cuid())
+  categoryId String    @map("category_id")
+  templateId String    @map("template_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  category AssistantTemplateCategory @relation(fields: [categoryId], references: [id])
+  template AssistantTemplate         @relation(fields: [templateId], references: [id])
+
+  @@map("assistant_template_category_items")
+}
+
 model LargeLangModel {
   id           String    @id @default(cuid())
   provider     String
@@ -286,7 +333,8 @@ model LargeLangModel {
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
-  assistants Assistant[]
+  assistants         Assistant[]
+  assistantTemplates AssistantTemplate[]
 
   @@index([apiName])
   @@map("llms")

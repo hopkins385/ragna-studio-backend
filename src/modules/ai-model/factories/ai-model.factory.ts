@@ -1,6 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createMistral } from '@ai-sdk/mistral';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { AiModelProvider } from '../schemas/aiModelProvider';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -60,6 +61,15 @@ class NvidiaProvider extends AiModelProvider {
   }
 }
 
+class GoogleProvider extends AiModelProvider {
+  createModel() {
+    const google = createGoogleGenerativeAI({
+      apiKey: this.config.get<string>('GOOGLE_GEMINI_API_KEY'),
+    });
+    return google(this.model);
+  }
+}
+
 @Injectable()
 export class AiModelFactory {
   private provider: ProviderType;
@@ -72,6 +82,7 @@ export class AiModelFactory {
     groq: GroqProvider,
     mistral: MistralProvider,
     nvidia: NvidiaProvider,
+    google: GoogleProvider,
   };
 
   constructor(private readonly config: ConfigService) {

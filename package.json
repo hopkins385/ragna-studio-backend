@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.2",
+    "@ai-sdk/google": "^1.0.10",
     "@ai-sdk/mistral": "^1.0.3",
     "@ai-sdk/openai": "^1.0.6",
     "@aws-sdk/client-s3": "^3.693.0",

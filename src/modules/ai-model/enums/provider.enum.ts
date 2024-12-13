@@ -4,4 +4,5 @@ export enum ProviderType {
   GROQ = 'groq',
   MISTRAL = 'mistral',
   NVIDIA = 'nvidia',
+  GOOGLE = 'google',
 }
