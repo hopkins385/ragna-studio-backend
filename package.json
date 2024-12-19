@@ -25,10 +25,10 @@
     "db:reset": "npx @snaplet/seed sync && npx prisma db push --force-reset && npx prisma db seed"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.0.2",
-    "@ai-sdk/google": "^1.0.10",
-    "@ai-sdk/mistral": "^1.0.3",
-    "@ai-sdk/openai": "^1.0.6",
+    "@ai-sdk/anthropic": "^1.0.5",
+    "@ai-sdk/google": "^1.0.11",
+    "@ai-sdk/mistral": "^1.0.5",
+    "@ai-sdk/openai": "^1.0.10",
     "@aws-sdk/client-s3": "^3.693.0",
     "@nestjs/bullmq": "^10.2.3",
     "@nestjs/cache-manager": "^2.3.0",
@@ -42,10 +42,10 @@
     "@nestjs/platform-express": "^10.4.13",
     "@nestjs/swagger": "^8.0.7",
     "@nestjs/throttler": "^6.2.1",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.1.0",
     "@snaplet/copycat": "^5.1.0",
     "@snaplet/seed": "^0.98.0",
-    "ai": "^4.0.11",
+    "ai": "^4.0.20",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.31.1",
@@ -59,22 +59,27 @@
     "googleapis": "^144.0.0",
     "helmet": "^8.0.0",
     "ioredis": "^5.4.1",
-    "nestjs-prisma": "^0.23.0",
+    "nestjs-prisma": "0.24.0-dev.0",
     "nestjs-zod": "^4.2.0",
     "node-xlsx": "^0.24.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "prisma": "^5.22.0",
+    "prisma": "^6.1.0",
     "prisma-extension-cuid2": "^1.1.1",
-    "prisma-extension-pagination": "^0.7.4",
+    "prisma-extension-pagination": "^0.7.5",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "serpapi": "^2.1.0",
     "sharp": "^0.33.5",
     "stripe": "^17.3.1",
     "tiktoken": "^1.0.17",
-    "zod": "^3.23.8"
+    "zod": "^3.24.1"
+  },
+  "overrides": {
+    "prisma-extension-cuid2": {
+      "@prisma/client": "^6.1.0"
+    }
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
