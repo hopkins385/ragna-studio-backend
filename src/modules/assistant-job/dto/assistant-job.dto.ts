@@ -7,6 +7,7 @@ export class AssistantJobDto {
   readonly llmProvider: string;
   readonly llmNameApi: string;
   readonly assistantId: string;
+  readonly functionIds: number[];
   readonly inputDocumentItemIds: string[];
   readonly documentItemId: string;
   readonly systemPrompt: string;
@@ -22,6 +23,7 @@ export class AssistantJobDto {
     rowIndex: number,
     stepName: string,
     assistantId: string,
+    functionIds: number[],
     llmProvider: string,
     llmNameApi: string,
     inputDocumentItemIds: string[],
@@ -38,6 +40,7 @@ export class AssistantJobDto {
     this.rowIndex = Number(rowIndex);
     this.stepName = stepName;
     this.assistantId = assistantId.toLowerCase();
+    this.functionIds = functionIds;
     this.llmProvider = llmProvider;
     this.llmNameApi = llmNameApi;
     this.inputDocumentItemIds = inputDocumentItemIds;
@@ -56,6 +59,7 @@ export class AssistantJobDto {
     rowIndex: number;
     stepName: string;
     assistantId: string;
+    functionIds: number[];
     llmProvider: string;
     llmNameApi: string;
     inputDocumentItemIds: string[];
@@ -73,6 +77,7 @@ export class AssistantJobDto {
       input.rowIndex,
       input.stepName,
       input.assistantId,
+      input.functionIds,
       input.llmProvider,
       input.llmNameApi,
       input.inputDocumentItemIds,

@@ -3,6 +3,7 @@ import {
   Post,
   Param,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { WorkflowExecutionService } from './workflow-execution.service';
 import { ReqUser } from '../user/decorators/user.decorator';
@@ -11,6 +12,8 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 
 @Controller('workflow')
 export class WorkflowExecutionController {
+  private readonly logger = new Logger(WorkflowExecutionController.name);
+
   constructor(
     private readonly workflowExecutionService: WorkflowExecutionService,
   ) {}
@@ -28,7 +31,11 @@ export class WorkflowExecutionController {
         workflowId.toLowerCase(),
       );
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
+      this.logger.error(
+        `Error executing workflow: ${error?.message}`,
+        error?.stack,
+      );
       throw new InternalServerErrorException('Error executing workflow');
     }
   }

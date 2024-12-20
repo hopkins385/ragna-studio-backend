@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { WorkflowService } from '@/modules/workflow/workflow.service';
 import { InjectFlowProducer } from '@nestjs/bullmq';
 import { FlowJob, FlowProducer, JobsOptions } from 'bullmq';
 import { AssistantJobDto } from '../assistant-job/dto/assistant-job.dto';
+import { WorkflowStepWithRelations } from '../workflow-step/interfaces/workflow-step.interface';
 
 @Injectable()
 export class WorkflowExecutionService {
+  private readonly logger = new Logger(WorkflowExecutionService.name);
+
   constructor(
     @InjectFlowProducer('workflow')
     private readonly flowProducer: FlowProducer,
@@ -20,7 +23,7 @@ export class WorkflowExecutionService {
   getFlowRows(payload: {
     userId: string;
     workflowId: string;
-    workflowSteps: any[];
+    workflowSteps: WorkflowStepWithRelations[];
   }): FlowJob[] {
     const stepsCount = payload.workflowSteps.length;
     const startStepIndex = stepsCount - 1;
@@ -34,7 +37,7 @@ export class WorkflowExecutionService {
     } as JobsOptions;
 
     function jobChild(stepIndex: number, rowIndex: number): any {
-      const { assistant, document, name, step, inputSteps } =
+      const { assistant, document, name, inputSteps } =
         payload.workflowSteps[stepIndex];
       const documentItem = document.documentItems[rowIndex];
 
@@ -61,13 +64,14 @@ export class WorkflowExecutionService {
         rowIndex,
         stepName: name,
         assistantId: assistant.id,
+        functionIds: assistant.tools.map((t) => t.tool.functionId),
         llmProvider: assistant.llm.provider,
         llmNameApi: assistant.llm.apiName,
         inputDocumentItemIds,
         documentItemId: documentItem.id,
         systemPrompt: assistant.systemPrompt,
-        temperature: 0.5,
-        maxTokens: 100,
+        temperature: 0.8, // TODO: get from assistant
+        maxTokens: 4000, // TODO: get from assistant
         userId: payload.userId,
         workflowId: payload.workflowId,
       });
@@ -128,7 +132,7 @@ export class WorkflowExecutionService {
 
     const jobs = this.getFlowRows({
       userId,
-      workflowSteps: steps,
+      workflowSteps: steps as any, // TODO: fix types
       workflowId: id,
     });
 
@@ -139,8 +143,8 @@ export class WorkflowExecutionService {
       const chain = await this.flowProducer.addBulk(jobs);
       return chain;
       //
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      this.logger.error(`Error executing workflow: ${error?.message}`);
       throw new Error('Error executing workflow');
     }
   }

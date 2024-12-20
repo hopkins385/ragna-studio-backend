@@ -5,6 +5,7 @@ import axios, { AxiosInstance } from 'axios';
 import { getJson } from 'serpapi';
 import { z } from 'zod';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
+import { ProviderType } from '../ai-model/enums/provider.enum';
 
 export interface ToolInfoData {
   toolName: string;
@@ -13,6 +14,13 @@ export interface ToolInfoData {
 
 // Define a type for the emitToolInfoData function
 type EmitToolInfoData = (toolInfoData: ToolInfoData) => void;
+
+interface IGetTool {
+  llmProvider: string;
+  llmName: string;
+  functionIds: number[] | null;
+  emitToolInfoData: EmitToolInfoData;
+}
 
 // Define a type for the tool configuration
 interface ToolConfig {
@@ -132,22 +140,26 @@ export class ChatToolService {
     });
   }
 
-  getTools(
-    functionIds: number[] | null = null,
-    emitToolInfoData: EmitToolInfoData,
-  ): Tools | undefined {
+  public getTools(payload: IGetTool): Tools | undefined {
     const tools: Tools = {};
 
-    if (!functionIds || functionIds.length < 1) {
+    if (!payload.functionIds || payload.functionIds.length < 1) {
+      return undefined;
+    }
+
+    if (
+      payload.llmProvider === ProviderType.GROQ ||
+      payload.llmProvider === ProviderType.MISTRAL
+    ) {
       return undefined;
     }
 
     const filteredConfigs = this.toolConfigs.filter((config) =>
-      functionIds.includes(config.id),
+      payload.functionIds.includes(config.id),
     );
 
     for (const config of filteredConfigs) {
-      tools[config.name] = this.createTool(config, emitToolInfoData);
+      tools[config.name] = this.createTool(config, payload.emitToolInfoData);
     }
 
     return tools;

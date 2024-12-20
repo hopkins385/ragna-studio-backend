@@ -301,11 +301,16 @@ export class ChatStreamService {
       { role: 'tool', content: toolResults },
     ];
 
+    const followUpMessages: CoreMessage[] = [
+      ...payload.messages,
+      ...toolMessages,
+    ];
+
     const result = streamText({
       abortSignal: signal,
       model: context.model,
       system: payload.systemPrompt,
-      messages: [...payload.messages, ...toolMessages],
+      messages: followUpMessages,
       maxTokens: payload.maxTokens,
       tools: availableTools,
       maxSteps: 1,
@@ -432,20 +437,13 @@ export class ChatStreamService {
     payload: CreateChatStreamDto,
   ) {
     const isPreview = payload.model.startsWith('o1-');
-    const filterTools = () => {
-      switch (payload.provider) {
-        case ProviderType.GROQ:
-        case ProviderType.MISTRAL:
-          return undefined;
-        default:
-          return this.chatToolService.getTools(
-            payload.functionIds,
-            this.toolStartCallback(context),
-          );
-      }
-    };
 
-    const availableTools = filterTools();
+    const availableTools = this.chatToolService.getTools({
+      llmProvider: payload.provider,
+      llmName: payload.model,
+      functionIds: payload.functionIds,
+      emitToolInfoData: this.toolStartCallback(context),
+    });
 
     return {
       availableTools,

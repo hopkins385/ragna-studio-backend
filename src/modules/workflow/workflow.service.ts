@@ -284,6 +284,20 @@ export class WorkflowService {
                 apiName: true,
               },
             },
+            tools: {
+              select: {
+                tool: {
+                  select: {
+                    id: true,
+                    name: true,
+                    functionId: true,
+                  },
+                },
+              },
+              where: {
+                deletedAt: null,
+              },
+            },
           },
           where: {
             deletedAt: null,
