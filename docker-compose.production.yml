@@ -8,7 +8,7 @@ services:
       # Common
       - 'traefik.http.services.api-srv.loadbalancer.server.port=3000'
       # HTTP Routers
-      - 'traefik.http.routers.api-srv.rule=Host(`api.ragna.app`)'
+      - 'traefik.http.routers.api-srv.rule=Host(`api.ragna.io`)'
       - 'traefik.http.routers.api-srv.entrypoints=https'
       - 'traefik.http.routers.api-srv.service=api-srv'
       - 'traefik.http.routers.api-srv.middlewares=crowdsec-bouncer@file,default@file' #,gzip@file
