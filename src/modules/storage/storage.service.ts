@@ -23,9 +23,8 @@ import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
 import type { AxiosInstance } from 'axios';
 
-type Bucket = 'public' | 'images';
-
-type R2Bucket = 'ragna-public' | 'ragna-cloud-images';
+type Bucket = 'images';
+type R2Bucket = 'ragna-studio-images';
 
 interface BucketSettings {
   bucket: R2Bucket;
@@ -43,8 +42,8 @@ export class StorageService {
     private readonly httpClient: AxiosInstance,
   ) {
     this.s3Client = new S3Client({
-      region: this.config.get<string>('AWS_REGION', 'auto'),
-      endpoint: `https://${this.config.get('CF_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
+      region: this.config.get<string>('CF_REGION', 'auto'),
+      endpoint: `https://${this.config.get('CF_ACCOUNT_ID')}.eu.r2.cloudflarestorage.com`,
       credentials: {
         accessKeyId: this.config.get<string>('CF_ACCESS_KEY_ID'),
         secretAccessKey: this.config.get<string>('CF_SECRET_ACCESS_KEY'),
@@ -92,21 +91,13 @@ export class StorageService {
 
   getBucketSettings(bucket: Bucket): BucketSettings {
     switch (bucket) {
-      case 'public':
-        return {
-          bucket: 'ragna-public',
-          url: 'https://static.ragna.app',
-        };
       case 'images':
         return {
-          bucket: 'ragna-cloud-images',
-          url: 'https://images.ragna.app',
+          bucket: 'ragna-studio-images',
+          url: 'https://images.ragna.io',
         };
       default:
-        return {
-          bucket: 'ragna-public',
-          url: 'https://static.ragna.app',
-        };
+        throw new Error('Invalid bucket');
     }
   }
 
@@ -274,6 +265,7 @@ export class StorageService {
   }
 
   async downloadFileFromBucket(path: string): Promise<Buffer> {
+    throw new Error('Method not implemented.');
     const getObjectCommand = new GetObjectCommand({
       Bucket: 'ragna-public',
       Key: path,
@@ -321,6 +313,7 @@ export class StorageService {
   }
 
   async deleteFileFromBucket(filePath: string): Promise<boolean> {
+    throw new Error('Method not implemented.');
     const deleteObjectCommand = new DeleteObjectCommand({
       Bucket: 'ragna-public',
       Key: filePath,

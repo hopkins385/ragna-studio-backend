@@ -5,10 +5,13 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   InternalServerErrorException,
   Logger,
   NotFoundException,
   Patch,
+  Post,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
@@ -74,10 +77,13 @@ export class AccountController {
     }
   }
 
-  @Delete()
-  async delete(@ReqUser() user: UserEntity) {
+  @HttpCode(HttpStatus.OK)
+  @Post('/delete')
+  async delete(@ReqUser() user: UserEntity, @Body() body: DeleteAccountBody) {
     try {
-      await this.userService.softDelete(user.id);
+      await this.userService.softDeleteUser(user.id, {
+        password: body.password,
+      });
       return { success: true };
     } catch (error: any) {
       this.logger.error(`Failed to delete account, ${error?.message}`);

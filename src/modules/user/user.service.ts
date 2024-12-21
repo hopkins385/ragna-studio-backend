@@ -133,4 +133,14 @@ export class UserService {
   async softDelete(userId: string) {
     return this.userRepository.softDelete(userId);
   }
+
+  async softDeleteUser(userId: string, pay: { password: string }) {
+    const user = await this.userRepository.findByIdWithPassword(userId);
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    const isPasswordMatch = await comparePassword(pay.password, user.password);
+    if (!isPasswordMatch) throw new Error('Invalid password');
+
+    return this.userRepository.softDelete(userId);
+  }
 }
