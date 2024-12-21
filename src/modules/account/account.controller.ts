@@ -15,15 +15,13 @@ import { UserEntity } from '@/modules/user/entities/user.entity';
 import { UpdateAccountNameBody } from './dto/update-account-name-body.dto';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { UpdateAccountPasswordBody } from './dto/update-account-password-body.dto';
+import { DeleteAccountBody } from './dto/delete-account-body.dto';
 
 @Controller('account')
 export class AccountController {
   private readonly logger = new Logger(AccountController.name);
 
-  constructor(
-    private readonly userService: UserService,
-    private readonly accountService: AccountService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   // @Post()
   // create(@Body() createAccountDto: CreateAccountDto) {
@@ -79,7 +77,6 @@ export class AccountController {
   @Delete()
   async delete(@ReqUser() user: UserEntity) {
     try {
-      new Promise((resolve) => setTimeout(resolve, 4000));
       await this.userService.softDelete(user.id);
       return { success: true };
     } catch (error: any) {

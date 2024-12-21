@@ -128,22 +128,9 @@ export class AssistantJobService {
         //   });
         // }
 
-        // TODO: remove this workaround
-        // workaround: add type to toolResults
-        // https://github.com/vercel/ai/issues/4165
-        const newToolResults = toolResults.map((toolResult) => {
-          if (!toolResult.type) {
-            return {
-              ...toolResult,
-              type: 'tool-result',
-            };
-          }
-          return toolResult;
-        });
-
         const toolMessages: CoreMessage[] = [
           { role: 'assistant', content: toolCalls },
-          { role: 'tool', content: newToolResults as any },
+          { role: 'tool', content: toolResults },
         ];
 
         const text = await this.handleToolCall({

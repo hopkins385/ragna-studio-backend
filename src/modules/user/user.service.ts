@@ -131,7 +131,6 @@ export class UserService {
   }
 
   async softDelete(userId: string) {
-    if (!userId) throw new Error('User ID is required');
     return this.userRepository.softDelete(userId);
   }
 }
