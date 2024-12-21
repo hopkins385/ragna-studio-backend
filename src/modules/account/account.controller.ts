@@ -3,6 +3,7 @@ import { UserService } from '@/modules/user/user.service';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   InternalServerErrorException,
   Logger,
@@ -12,6 +13,8 @@ import {
 import { AccountService } from './account.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { UpdateAccountNameBody } from './dto/update-account-name-body.dto';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { UpdateAccountPasswordBody } from './dto/update-account-password-body.dto';
 
 @Controller('account')
 export class AccountController {
@@ -39,7 +42,7 @@ export class AccountController {
   }
 
   @Patch('/name')
-  async update(
+  async updateName(
     @ReqUser() user: UserEntity,
     @Body() body: UpdateAccountNameBody,
   ) {
@@ -52,6 +55,36 @@ export class AccountController {
     } catch (error: any) {
       this.logger.error(`Failed to update account, ${error?.message}`);
       throw new InternalServerErrorException('Failed to update account');
+    }
+  }
+
+  @Patch('/password')
+  async updatePassword(
+    @ReqUser() user: UserEntity,
+    @Body() body: UpdateAccountPasswordBody,
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    try {
+      const accountData = await this.userService.updateUserPassword(user.id, {
+        oldPassword: body.oldPassword,
+        newPassword: body.newPassword,
+      });
+      return { success: true };
+    } catch (error: any) {
+      this.logger.error(`Failed to update account, ${error?.message}`);
+      throw new InternalServerErrorException('Failed to update account');
+    }
+  }
+
+  @Delete()
+  async delete(@ReqUser() user: UserEntity) {
+    try {
+      new Promise((resolve) => setTimeout(resolve, 4000));
+      await this.userService.softDelete(user.id);
+      return { success: true };
+    } catch (error: any) {
+      this.logger.error(`Failed to delete account, ${error?.message}`);
+      throw new InternalServerErrorException('Failed to delete account');
     }
   }
 }

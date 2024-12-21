@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { hashPassword } from 'src/common/utils/bcrypt';
+import { comparePassword, hashPassword } from 'src/common/utils/bcrypt';
 import { UserRepository } from './repositories/user.repository';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
@@ -82,6 +82,28 @@ export class UserService {
     });
   }
 
+  async updateUserPassword(
+    userId: string,
+    pay: { oldPassword: string; newPassword: string },
+  ) {
+    const user = await this.userRepository.findByIdWithPassword(userId);
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    const isPasswordMatch = await comparePassword(
+      pay.oldPassword,
+      user.password,
+    );
+    if (!isPasswordMatch) throw new Error('Invalid password');
+
+    const hashedPassword = await hashPassword(pay.newPassword);
+    return this.userRepository.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+      },
+    });
+  }
+
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -99,12 +121,17 @@ export class UserService {
     return new UserEntity(user as any); // TODO: fix types
   }
 
-  async updateLastLogin(id: string) {
-    if (!id) throw new Error('User ID is required');
-    return this.userRepository.update(id, { lastLoginAt: new Date() });
+  async updateLastLogin(userId: string) {
+    if (!userId) throw new Error('User ID is required');
+    return this.userRepository.update(userId, { lastLoginAt: new Date() });
   }
 
-  async remove(id: string) {
+  async delete(userId: string) {
     throw new Error('Not implemented');
+  }
+
+  async softDelete(userId: string) {
+    if (!userId) throw new Error('User ID is required');
+    return this.userRepository.softDelete(userId);
   }
 }

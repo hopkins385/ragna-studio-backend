@@ -65,6 +65,18 @@ export class UserRepository extends BaseRepository<User> {
     });
   }
 
+  async findByIdWithPassword(id: string) {
+    return this.prisma.user.findFirst({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+      },
+      where: { id },
+    });
+  }
+
   // used for authentication
   async findByEmail(email: string) {
     return this.prisma.user.findFirst({
@@ -74,7 +86,7 @@ export class UserRepository extends BaseRepository<User> {
         email: true,
         password: true,
       },
-      where: { email },
+      where: { email, deletedAt: null },
     });
   }
 
@@ -129,18 +141,20 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async delete(id: string) {
-    return !!this.prisma.user.delete({
+    const result = await this.prisma.user.delete({
       where: { id },
     });
+    return !!result;
   }
 
   async softDelete(id: string) {
-    return !!this.prisma.user.update({
+    const result = await this.prisma.user.update({
       where: { id },
       data: {
         deletedAt: new Date(),
       },
     });
+    return !!result;
   }
 
   async findMany(filter: Partial<User>) {

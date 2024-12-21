@@ -77,7 +77,7 @@ export class UserController {
       throw new ForbiddenException('You cannot delete yourself');
     }
     try {
-      return await this.userService.remove(id);
+      return await this.userService.delete(id);
     } catch (error) {
       throw new InternalServerErrorException('Error deleting user');
     }
