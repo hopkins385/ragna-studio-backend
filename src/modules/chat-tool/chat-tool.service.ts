@@ -6,6 +6,34 @@ import { getJson } from 'serpapi';
 import { z } from 'zod';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
 import { ProviderType } from '../ai-model/enums/provider.enum';
+import { jsonSchema } from 'ai';
+
+/*
+interface IExampleSchema {
+  start: string;
+  destination: string;
+  waypoints?: string[];
+}
+
+const exampleSchema = jsonSchema<IExampleSchema>({
+  type: 'object',
+  properties: {
+    start: { type: 'string', minLength: 1, maxLength: 100 },
+    destination: { type: 'string', minLength: 1, maxLength: 100 },
+    waypoints: {
+      type: 'array',
+      items: { type: 'string', minLength: 1, maxLength: 100 },
+    },
+  },
+  required: ['start', 'destination'],
+});
+
+exampleSchema.validate({
+  start: 'Berlin',
+  destination: 'Hamburg',
+  waypoints: ['Bremen'],
+});
+*/
 
 export interface ToolInfoData {
   toolName: string;

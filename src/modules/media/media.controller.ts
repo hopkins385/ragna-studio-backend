@@ -9,6 +9,7 @@ import {
   HttpCode,
   NotFoundException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
@@ -20,6 +21,8 @@ import { UserEntity } from '../user/entities/user.entity';
 
 @Controller('media')
 export class MediaController {
+  private readonly logger = new Logger(MediaController.name);
+
   constructor(private readonly mediaService: MediaService) {}
 
   @Get(':id')
@@ -74,7 +77,11 @@ export class MediaController {
     try {
       await this.mediaService.delete({ userId: user.id, mediaId: param.id });
       return { status: 'ok' };
-    } catch (error) {
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to delete media: ${error?.message}`,
+        error?.stack,
+      );
       throw new InternalServerErrorException('Error deleting media');
     }
   }

@@ -312,13 +312,28 @@ export class StorageService {
     return true;
   }
 
-  async deleteFileFromBucket(filePath: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  async deleteFileFromBucket(
+    filePath: string,
+    bucketName?: Bucket,
+  ): Promise<boolean> {
+    const bucketSettings = this.getBucketSettings(bucketName ?? 'images');
+    const cleanedFilePath = filePath.replace(`${bucketSettings.url}/`, '');
+
+    this.logger.debug(
+      `Deleting file from bucket ${bucketSettings.bucket} at filePath: ${cleanedFilePath}`,
+    );
+
     const deleteObjectCommand = new DeleteObjectCommand({
-      Bucket: 'ragna-public',
-      Key: filePath,
+      Bucket: bucketSettings.bucket,
+      Key: cleanedFilePath,
     });
-    await this.s3Client.send(deleteObjectCommand);
+
+    try {
+      await this.s3Client.send(deleteObjectCommand);
+    } catch (error: any) {
+      this.logger.error(`Error deleting file from bucket: ${error?.message}`);
+      throw new Error('Error deleting file from bucket');
+    }
 
     return true;
   }
