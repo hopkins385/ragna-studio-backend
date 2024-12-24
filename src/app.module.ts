@@ -45,6 +45,7 @@ import { ProviderAuthModule } from './modules/provider-auth/provider-auth.module
 import { CacheModule } from '@nestjs/cache-manager';
 import { HttpClientModule } from './modules/http-client/http-client.module';
 import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -86,6 +87,11 @@ import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module
         },
       ],
     }),
+    // Mail
+    MailModule.forRoot({
+      isGlobal: true,
+    }),
+
     // Payment
     StripeModule,
 
