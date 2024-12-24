@@ -2,10 +2,10 @@ import { OnboardRepository } from './repositories/onboard.repository';
 import { Module } from '@nestjs/common';
 import { OnboardService } from './onboard.service';
 import { OnboardController } from './onboard.controller';
-import { MailService } from '../mail/mail.service';
+import { OnboardingListeners } from './listeners/onboarding.listeners';
 
 @Module({
   controllers: [OnboardController],
-  providers: [OnboardRepository, OnboardService],
+  providers: [OnboardRepository, OnboardService, OnboardingListeners],
 })
 export class OnboardModule {}

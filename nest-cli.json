@@ -7,14 +7,14 @@
   },
   "compilerOptions": {
     "deleteOutDir": true,
+    "watchAssets": true,
     "plugins": [
       "@nestjs/swagger"
     ],
     "assets": [
       {
         "include": "modules/mail/templates",
-        "outDir": "dist",
-        "watchAssets": true
+        "outDir": "dist"
       }
     ]
   }

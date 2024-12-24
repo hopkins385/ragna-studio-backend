@@ -23,7 +23,7 @@ import { Public } from '@/common/decorators/public.decorator';
 export class OnboardController {
   constructor(
     private readonly onboardService: OnboardService,
-    private readonly mailService: MailService,
+    // private readonly mailService: MailService,
   ) {}
 
   @Post('user')
@@ -37,28 +37,14 @@ export class OnboardController {
     const payload = OnboardUserDto.fromInput({
       userId: user.id,
       userName: user.name ?? 'User Name',
+      userEmail: user.email,
       orgName: body.orgName,
     });
     try {
       const result = await this.onboardService.onboardUser(payload);
-      // todo: dispatch send email
-      await this.sendMail({ name: user.name, email: user.email });
-      //
       return { success: result };
     } catch (error: any) {
       throw new InternalServerErrorException('Error onboarding user');
     }
-  }
-
-  async sendMail({ name, email }: { name: string; email: string }) {
-    const emailData = {
-      to: { name, email },
-      templateId: 'welcome-de',
-      templateData: {
-        name,
-        activationLink: 'https://ragna.io',
-      },
-    };
-    return await this.mailService.sendTemplatedEmail(emailData);
   }
 }
