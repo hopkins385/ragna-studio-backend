@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { User as UserModel } from '@prisma/client';
 import { CredentialsDto } from './dto/credentials.dto';
 import { SocialAuthResponseDto } from './google/social-auth-response.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 interface UserPayload {
   userId: string;
@@ -32,6 +34,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
+    @InjectQueue('email')
+    private readonly emailQueue: Queue,
   ) {}
 
   async updateLastLogin({ userId }: { userId: string }): Promise<void> {
@@ -138,5 +142,51 @@ export class AuthService {
       });
     }
     return this.generateTokens({ userId: user.id, username: user.name });
+  }
+
+  async register(payload: { email: string; name: string; password: string }) {
+    const existingUser = await this.userService.findByEmail(payload.email);
+    if (existingUser) {
+      throw new Error('User already exists');
+    }
+
+    const newUser = await this.userService.create({
+      email: payload.email,
+      name: payload.name,
+      password: payload.password,
+    });
+
+    /*const token = await this.createEmailVerificationToken({ sub: newUser.id });
+    const job = await this.emailQueue.add('confirmation', {
+      userId: newUser.id,
+      firstName: newUser.firstName,
+      email: newUser.email,
+      token,
+    });
+    */
+
+    return { jobId: 'job.id' };
+  }
+
+  async confirmEmail(payload: any) {
+    throw new Error('Method not implemented.');
+    /*
+    const { sub } = await this.verifyEmailVerificationToken(payload.token);
+    if (sub !== payload.id) {
+      throw new UnprocessableEntityException('Invalid token');
+    }
+    const user = await this.userService.findOneById(sub);
+    if (!user) {
+      throw new UnprocessableEntityException('User not found');
+    }
+    if (user.emailVerifiedAt !== null) {
+      return true;
+    }
+    user.emailVerifiedAt = new Date();
+    user.isActive = true;
+    await this.userService.update(user.id, user);
+    return true;
+    // return this.getTokens(user.id, user.name);
+    */
   }
 }

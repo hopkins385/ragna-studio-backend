@@ -1,5 +1,4 @@
 import { Credit, Team } from '@prisma/client';
-import { Exclude } from 'class-transformer';
 
 export class UserEntity {
   id: string;
@@ -28,11 +27,11 @@ export class UserEntity {
   firstTeamId: string;
   totalCredits: number;
 
-  // required relations
+  // required relations after onboarding
   credit?: Partial<Credit>[];
   roles?: string[];
   teams?: {
-    team: Partial<Team>;
+    team?: Partial<Team>;
   }[];
 
   constructor(input: UserEntity) {
@@ -50,7 +49,7 @@ export class UserEntity {
     this.credit = input.credit;
     this.roles = input.roles;
     this.teams = input.teams;
-    this.firstTeamId = input.teams[0].team.id;
+    this.firstTeamId = input.teams?.[0]?.team.id || '';
     this.totalCredits = input.credit.reduce((acc, c) => acc + c.amount, 0);
   }
 

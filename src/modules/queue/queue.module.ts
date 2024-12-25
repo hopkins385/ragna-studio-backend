@@ -1,7 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { workflowProcessors } from '../assistant-job/processors/assistant-processor.config';
 
 @Module({
   imports: [
@@ -15,6 +14,9 @@ import { workflowProcessors } from '../assistant-job/processors/assistant-proces
           password: config.getOrThrow<string>('REDIS_PASSWORD'),
         },
       }),
+    }),
+    BullModule.registerQueue({
+      name: 'email',
     }),
   ],
   exports: [BullModule],

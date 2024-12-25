@@ -5,10 +5,11 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/auth.local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserModule } from '../user/user.module';
+import { UserModule } from '@/modules/user/user.module';
 import { JwtStrategy } from './strategies/auth.jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/auth.refreshToken.strategy';
 import { AuthGoogleService } from './google/auth-google.service';
+import { QueueModule } from '@/modules/queue/queue.module';
 
 const jwtFactory = {
   useFactory: (configService: ConfigService) => ({
@@ -22,6 +23,7 @@ const jwtFactory = {
 
 @Module({
   imports: [
+    QueueModule,
     UserModule,
     PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync(jwtFactory),

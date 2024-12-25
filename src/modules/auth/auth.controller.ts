@@ -1,11 +1,15 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  InternalServerErrorException,
+  Logger,
   Param,
   Post,
+  Query,
   Req,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -23,10 +27,13 @@ import { UseZodGuard } from 'nestjs-zod';
 import { AuthGoogleService } from './google/auth-google.service';
 import { SocialAuthProviderParam } from './google/social-auth-provider.param';
 import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
+import { RegisterUserBody } from './dto/register-user-body.dto';
 
 @Public()
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly googleService: AuthGoogleService,
@@ -97,6 +104,41 @@ export class AuthController {
         break;
       default:
         throw new UnprocessableEntityException('Invalid provider');
+    }
+  }
+
+  @Post('/register')
+  async register(@Body() body: RegisterUserBody, @Query() query: string) {
+    // needs inviation token
+    /*const validToken = await this.authService.validateInvitationToken(query.token);
+
+    if (!validToken) {
+      throw new BadRequestException('Invalid token');
+    }*/
+
+    try {
+      const result = await this.authService.register({
+        name: body.name,
+        email: body.email,
+        password: body.password,
+      });
+      return { success: true };
+      //
+    } catch (error: any) {
+      this.logger.error(error?.message);
+      throw new InternalServerErrorException('Failed to register user');
+    }
+  }
+
+  @Get('/confirm/email/:id/:token')
+  async confirmEmail(@Param() params: any) {
+    try {
+      await this.authService.confirmEmail(params);
+      return { success: true };
+      //
+    } catch (error: any) {
+      this.logger.error(error?.message);
+      throw new InternalServerErrorException('Failed to confirm email');
     }
   }
 }
