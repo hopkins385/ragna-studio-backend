@@ -21,6 +21,7 @@ import {
   ProjectIdParam,
   RunIdParam,
 } from './dto/text-to-image.param.dto';
+import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 
 @Controller('text-to-image')
 export class TextToImageController {
@@ -81,15 +82,14 @@ export class TextToImageController {
   @Get(':folderId/paginated')
   async getFolderImagesRunsPg(
     @Param() param: FolderIdParam,
-    @Query() query: PaginateQuery,
+    @Query() query: TextToImagePaginatedQuery,
   ) {
     const folderId = param.folderId;
-    const showDeleted = false; // TODO: Implement this
 
     try {
       const [runs, meta] =
         await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
-          showDeleted,
+          showDeleted: query.showHidden,
           page: query.page,
         });
       return { runs, meta };
