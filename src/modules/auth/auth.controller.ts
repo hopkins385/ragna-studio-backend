@@ -108,13 +108,15 @@ export class AuthController {
   }
 
   @Post('/register')
-  async register(@Body() body: RegisterUserBody, @Query() query: string) {
-    // needs inviation token
-    /*const validToken = await this.authService.validateInvitationToken(query.token);
+  async register(@Body() body: RegisterUserBody) {
+    // needs invite token
+    const validToken = await this.authService.validateInviteToken(
+      body.invitationCode,
+    );
 
     if (!validToken) {
       throw new BadRequestException('Invalid token');
-    }*/
+    }
 
     try {
       const result = await this.authService.register({

@@ -5,10 +5,15 @@ import { comparePassword, hashPassword } from 'src/common/utils/bcrypt';
 import { UserRepository } from './repositories/user.repository';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly configService: ConfigService,
+  ) {}
 
   async create({ name, email, password }: CreateUserDto) {
     const exists = await this.findByEmail(email);
@@ -142,5 +147,22 @@ export class UserService {
     if (!isPasswordMatch) throw new Error('Invalid password');
 
     return this.userRepository.softDelete(userId);
+  }
+
+  async createInviteToken(payload: any) {
+    return new Promise((resolve, reject) => {
+      const signOptions = {
+        expiresIn: this.configService.get('JWT_INVITE_EXPIRES_IN', '1h'),
+      };
+      jwt.sign(
+        payload,
+        this.configService.get('JWT_INVITE_SECRET'),
+        signOptions,
+        (err, token) => {
+          if (err) reject(err);
+          resolve(token);
+        },
+      );
+    });
   }
 }

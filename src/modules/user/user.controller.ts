@@ -11,6 +11,7 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,12 +22,24 @@ import { RolesGuard } from './guards/roles.guard';
 import { ReqUser } from './decorators/user.decorator';
 import { UserEntity } from './entities/user.entity';
 import { IdParam } from '@/common/dto/cuid-param.dto';
-import { ApiTags } from '@nestjs/swagger';
 
 @Controller('user')
 @UseGuards(RolesGuard)
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
+
   constructor(private readonly userService: UserService) {}
+
+  @Get('/invite-token')
+  @Roles(Role.ADMIN)
+  async createInviteToken(@ReqUser() user: UserEntity) {
+    try {
+      return await this.userService.createInviteToken({ userId: user.id });
+    } catch (error: any) {
+      this.logger.error(`Error creating invite token: ${error?.message}`);
+      throw new InternalServerErrorException('Error creating invite token');
+    }
+  }
 
   @Post()
   @Roles(Role.ADMIN)

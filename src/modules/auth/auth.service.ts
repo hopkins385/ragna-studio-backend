@@ -83,7 +83,7 @@ export class AuthService {
     }
   }
 
-  generateAccessToken(payload: UserPayload): Promise<string> {
+  async generateAccessToken(payload: UserPayload): Promise<string> {
     const tokenPayload: TokenPayload = {
       sub: payload.userId,
       username: payload.username,
@@ -96,7 +96,7 @@ export class AuthService {
     });
   }
 
-  generateRefreshToken(payload: UserPayload): Promise<string> {
+  async generateRefreshToken(payload: UserPayload): Promise<string> {
     return this.jwtService.signAsync(
       { sub: payload.userId },
       {
@@ -105,6 +105,20 @@ export class AuthService {
         // algorithm: 'RS256',
       },
     );
+  }
+
+  async generateInviteToken(payload: { sub: string }): Promise<string> {
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>('JWT_INVITE_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_INVITE_EXPIRES_IN'),
+      // algorithm: 'RS256',
+    });
+  }
+
+  async validateInviteToken(token: string): Promise<{ sub: string }> {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>('JWT_INVITE_SECRET'),
+    });
   }
 
   private async generateTokens(payload: UserPayload): Promise<TokenResponse> {

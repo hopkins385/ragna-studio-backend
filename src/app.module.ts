@@ -46,6 +46,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { HttpClientModule } from './modules/http-client/http-client.module';
 import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
 import { MailModule } from './modules/mail/mail.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
