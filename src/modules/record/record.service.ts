@@ -5,6 +5,12 @@ import { RecordRepository } from './repositories/record.repository';
 import { MediaService } from '@/modules/media/media.service';
 import { EmbeddingService } from '@/modules/embedding/embedding.service';
 
+/**
+ * Service responsible for handling record related operations
+ * A record is a reference to a media file that is embedded to the vector store
+ * Collection -> Record(s) -> Chunks
+ * @class
+ */
 @Injectable()
 export class RecordService {
   constructor(

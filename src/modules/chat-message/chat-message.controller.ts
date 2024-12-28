@@ -40,6 +40,7 @@ export class ChatMessageController {
         visionContent: body.message.visionContent,
       },
     });
+
     try {
       return await this.chatService.createMessage(payload);
     } catch (error) {

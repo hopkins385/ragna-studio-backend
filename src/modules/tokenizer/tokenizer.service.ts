@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger } from '@nestjs/common';
 import { get_encoding, Tiktoken, TiktokenEncoding } from 'tiktoken';
 import { TokenizerResponse } from './interfaces/tokenizer.res';
+import axios from 'axios';
 
 @Injectable()
 export class TokenizerService {
@@ -11,10 +12,8 @@ export class TokenizerService {
   private readonly url: string;
 
   constructor(private readonly config: ConfigService) {
-    const newUrl = new URL(
-      '/api/v1/tokenize/text',
-      this.config.get<string>('RAG_SERVER_URL'),
-    );
+    const ragServerURL = this.config.getOrThrow<string>('RAG_SERVER_URL');
+    const newUrl = new URL('/api/v1/tokenize/text', ragServerURL);
     this.url = newUrl.toString();
     // local
     this.model = 'o200k_base';
@@ -25,13 +24,10 @@ export class TokenizerService {
     content: string | undefined | null,
   ): Promise<{ tokens: Uint32Array; tokenCount: number; charCount: number }> {
     try {
-      const response = await fetch(this.url, {
-        method: 'POST',
-        body: JSON.stringify({ text: content }),
-        // timeout: 3000, // 3 seconds
+      const response = await axios.post<TokenizerResponse>(this.url, {
+        text: content || undefined,
       });
-      const data = (await response.json()) as TokenizerResponse;
-      const { tokens, tokenCount, charCount } = data;
+      const { tokens, tokenCount, charCount } = response.data;
       return { tokens: new Uint32Array(tokens), tokenCount, charCount };
     } catch (error) {
       // this.logger.debug(

@@ -62,4 +62,20 @@ export class RecordController {
       throw new NotFoundException('Records not found');
     }
   }
+
+  @Delete(':id')
+  async remove(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+    const teamId = user.firstTeamId;
+    const recordId = param.id;
+
+    try {
+      await this.recordService.delete({
+        teamId,
+        recordId,
+      });
+      return { message: 'Record deleted successfully' };
+    } catch (error) {
+      throw new NotFoundException('Record not found');
+    }
+  }
 }
