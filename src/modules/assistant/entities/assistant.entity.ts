@@ -5,4 +5,5 @@ export class AssistantEntity {
   hasKnowledgeBase: boolean;
   hasWorkflow: boolean;
   tools: any[];
+  llm?: any;
 }

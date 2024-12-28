@@ -221,6 +221,26 @@ export class AssistantService {
     return assistant;
   }
 
+  async updateHasKnowledgeBase({
+    teamId,
+    assistantId,
+    hasKnowledgeBase,
+  }: Partial<UpdateAssistantDto>) {
+    if (!teamId) {
+      throw new Error('Team ID is required');
+    }
+    return this.assistantRepository.prisma.assistant.update({
+      where: {
+        teamId,
+        id: assistantId,
+      },
+      data: {
+        hasKnowledgeBase,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
   async softDelete({ teamId, assistantId }: DeleteAssistantDto) {
     if (!teamId) {
       throw new Error('Team ID is required');

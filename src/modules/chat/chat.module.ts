@@ -7,9 +7,11 @@ import { ChatToolService } from '../chat-tool/chat-tool.service';
 import { AssistantModule } from '../assistant/assistant.module';
 import { TokenizerService } from '../tokenizer/tokenizer.service';
 import { AiModelFactory } from '../ai-model/factories/ai-model.factory';
+import { CollectionModule } from '../collection/collection.module';
+import { EmbeddingModule } from '../embedding/embedding.module';
 
 @Module({
-  imports: [SocketModule, AssistantModule],
+  imports: [SocketModule, AssistantModule, CollectionModule, EmbeddingModule],
   controllers: [ChatController],
   providers: [
     ChatRepository,

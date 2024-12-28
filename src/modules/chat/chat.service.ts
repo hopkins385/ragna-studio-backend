@@ -14,6 +14,9 @@ import {
 } from './interfaces/chat-upsert.interface';
 import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
+import { CollectionAbleDto } from '../collection-able/dto/collection-able.dto';
+import { CollectionService } from '../collection/collection.service';
+import { EmbeddingService } from '../embedding/embedding.service';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
@@ -26,6 +29,8 @@ export class ChatService {
   constructor(
     private readonly tokenizerService: TokenizerService,
     private readonly chatRepository: ChatRepository,
+    private readonly collectionService: CollectionService,
+    private readonly embeddingService: EmbeddingService,
     private readonly event: EventEmitter2,
   ) {}
 
@@ -219,7 +224,14 @@ export class ChatService {
       },
     });
 
-    return new ChatEntity(chat);
+    return new ChatEntity({
+      id: chat.id,
+      title: chat.title,
+      assistantId: chat.assistant.id,
+      userId: chat.userId,
+      assistant: chat.assistant,
+      messages: chat.messages as any, // TODO: fix type
+    });
   }
 
   public async getChatAndCreditsForUser(chatId: string, userId: string) {
@@ -500,7 +512,34 @@ export class ChatService {
     });
   }
 
-  // POLICIES
+  public async getContextAwareSystemPrompt(payload: {
+    assistantId: string;
+    lastMessageContent: string;
+    assistantSystemPrompt: string;
+  }) {
+    const collections = await this.collectionService.findAllWithRecordsFor(
+      CollectionAbleDto.fromInput({
+        id: payload.assistantId,
+        type: 'assistant',
+      }),
+    );
+
+    if (collections.length < 1) {
+      return payload.assistantSystemPrompt;
+    }
+
+    const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
+    const res = await this.embeddingService.searchDocsByQuery({
+      query: payload.lastMessageContent,
+      recordIds,
+    });
+
+    const context = res.map((r) => r?.text || '').join('\n\n');
+
+    return (
+      payload.assistantSystemPrompt + '\n\n<context>' + context + '</context>'
+    );
+  }
 
   // POLICIES
 

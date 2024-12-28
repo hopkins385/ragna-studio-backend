@@ -62,7 +62,7 @@ export class ChatStreamController {
     // Set stream headers
     this.setStreamHeaders(res);
 
-    const payload = this.createChatStreamPayload(body, chat);
+    const payload = await this.createChatStreamPayload(body, chat);
 
     try {
       const readableStream = await this.chatStreamService.createMessageStream(
@@ -85,14 +85,42 @@ export class ChatStreamController {
     }
   }
 
-  private createChatStreamPayload(
+  private async createChatStreamPayload(
     body: CreateChatStreamBody,
     chat: ChatEntity,
-  ): CreateChatStreamDto {
+  ): Promise<CreateChatStreamDto> {
+    let assistantSystemPrompt = chat.assistant.systemPrompt;
+
+    //
+    // RAG implementation
+    //
+    if (chat.assistant.hasKnowledgeBase === true) {
+      // TODO: emit event that assistant has knowledge base and is using RAG
+
+      // debug logging
+      this.logger.debug('Assistant is using RAG');
+      const lastMessage = chat.messages[chat.messages.length - 1];
+      const systemPrompt = await this.chatService.getContextAwareSystemPrompt({
+        assistantId: chat.assistant.id,
+        lastMessageContent: lastMessage.content,
+        assistantSystemPrompt: assistantSystemPrompt,
+      });
+
+      if (!systemPrompt) {
+        this.logger.error('No system prompt returned from RAG');
+        return;
+      }
+
+      assistantSystemPrompt = systemPrompt;
+    }
+
+    // timestamp
+    const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
+
     return CreateChatStreamDto.fromInput({
       provider: body.provider,
       model: body.model,
-      systemPrompt: chat.assistant.systemPrompt,
+      systemPrompt: assistantSystemPrompt + timestamp,
       messages: this.chatService.formatChatMessages(body.messages as any),
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
       maxTokens: body.maxTokens,

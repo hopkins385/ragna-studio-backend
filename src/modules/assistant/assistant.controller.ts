@@ -29,6 +29,7 @@ import { FindAllAssistantsDto } from './dto/find-all-assistant.dto';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
 import { PaginateBody, PaginateQuery } from '@/common/dto/paginate.dto';
+import { UpdateAssistantHasKnowledgeBody } from './dto/update-assistant-knw-body.dto';
 
 @Controller('assistant')
 export class AssistantController {
@@ -137,6 +138,39 @@ export class AssistantController {
           tools: body.tools,
         }),
       );
+    } catch (error) {
+      throw new NotFoundException('Assistant not found');
+    }
+  }
+
+  @Patch(':id/has-knowledge')
+  async updateHasKnowledgeBase(
+    @ReqUser() user: UserEntity,
+    @Param() param: IdParam,
+    @Body() body: UpdateAssistantHasKnowledgeBody,
+  ) {
+    const { id: assistantId } = param;
+
+    if (!assistantId) {
+      throw new NotFoundException('Assistant not found');
+    }
+
+    try {
+      const assistant = await this.assistantService.findFirst(
+        FindAssistantDto.fromInput({
+          id: assistantId,
+        }),
+      );
+
+      if (!assistant) {
+        throw new Error('Assistant not found');
+      }
+
+      return await this.assistantService.updateHasKnowledgeBase({
+        teamId: user.firstTeamId,
+        assistantId: assistant.id,
+        hasKnowledgeBase: body.hasKnowledgeBase,
+      });
     } catch (error) {
       throw new NotFoundException('Assistant not found');
     }

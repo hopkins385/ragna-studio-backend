@@ -5,23 +5,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Chat as ChatModel } from '@prisma/client';
 
 export class ChatEntity implements ChatModel {
-  @ApiProperty()
   id: string;
-  @ApiProperty()
   title: string;
-  @ApiProperty()
-  description: string;
-  @ApiProperty()
   assistantId: string;
-  @ApiProperty()
   userId: string;
 
   // Relations
-  @ApiProperty()
   user?: UserEntity;
-  @ApiProperty()
   assistant?: AssistantEntity;
-  @ApiProperty()
   messages?: ChatMessageEntity[];
 
   createdAt: Date;
@@ -29,6 +20,15 @@ export class ChatEntity implements ChatModel {
   deletedAt: Date;
 
   constructor(partial: Partial<ChatEntity>) {
-    Object.assign(this, partial);
+    this.id = partial.id;
+    this.title = partial.title;
+    this.assistantId = partial.assistantId;
+    this.userId = partial.userId;
+    this.user = partial.user;
+    this.assistant = partial.assistant;
+    this.messages = partial.messages;
+    this.createdAt = partial.createdAt;
+    this.updatedAt = partial.updatedAt;
+    this.deletedAt = partial.deletedAt;
   }
 }

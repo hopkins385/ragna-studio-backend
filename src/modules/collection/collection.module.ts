@@ -8,5 +8,6 @@ import { EmbeddingModule } from '../embedding/embedding.module';
   imports: [EmbeddingModule],
   controllers: [CollectionController],
   providers: [CollectionRepository, CollectionService],
+  exports: [CollectionService],
 })
 export class CollectionModule {}
