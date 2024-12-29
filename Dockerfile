@@ -49,6 +49,10 @@ RUN npm install -g tsx
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Create directory and set permissions
+RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
+RUN mkdir -p /app/temp && chown -R node:node /app/temp
+
 # Expose the port the app runs on
 EXPOSE 3000
 
