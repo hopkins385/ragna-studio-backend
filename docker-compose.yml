@@ -4,6 +4,7 @@ name: ragna-studio-backend
 volumes:
   postgres_data:
   redis_data:
+  app_uploads:
 
 services:
   server:
@@ -12,6 +13,8 @@ services:
     working_dir: /app
     env_file:
       - .env
+    volumes:
+      - app_uploads:/app/uploads:rw
     depends_on:
       - postgres
       - redis
