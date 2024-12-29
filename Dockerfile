@@ -46,12 +46,15 @@ RUN npm ci --omit=dev
 RUN npm install -g tsx
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --chown=node:node --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Create directory and set permissions
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 RUN mkdir -p /app/temp && chown -R node:node /app/temp
+
+# Switch to non-root user
+USER node
 
 # Expose the port the app runs on
 EXPOSE 3000
