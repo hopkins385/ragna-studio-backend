@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { tool } from 'ai';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { getJson } from 'serpapi';
 import { z } from 'zod';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
@@ -208,17 +208,20 @@ export class ChatToolService {
     };
   }
 
-  async scrapeWebsite(url: URL): Promise<ScrapeWebsiteResult> {
+  async scrapeWebsite(websiteURL: URL): Promise<ScrapeWebsiteResult> {
     const scrapeServerUrl = this.config.getOrThrow('SCRAPE_SERVER_URL');
     try {
       // check if its a valid url
-      const isValidUrl = url.protocol === 'https:';
+      const isValidUrl = websiteURL.protocol === 'https:';
       if (!isValidUrl) {
         throw new Error('Invalid URL');
       }
       // scrape the website
-      const scrapeUrl = `${scrapeServerUrl}/scrape?url=${url.toString()}`;
-      const response = await this.httpClient.get(scrapeUrl);
+      // `${scrapeServerUrl}/scrape?url=${url.toString()}`;
+      const scrapeUrl = new URL(
+        `${scrapeServerUrl}/scrape?url=${websiteURL.toString()}`,
+      );
+      const response = await this.httpClient.get(scrapeUrl.toString());
       if (response.status !== 200) {
         throw new Error('Failed to scrape');
       }

@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IEmbedFilePayload,
   RagDocument,
   SearchResultDocument,
 } from './interfaces/emedding.interface';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { AxiosInstance } from 'axios';
 
 type EmbedFileResponse = RagDocument[];
 type SearchVectorResponse = SearchResultDocument[];
@@ -16,7 +16,11 @@ export class EmbeddingService {
   private readonly embedFileUrl: string;
   private readonly searchVectorUrl: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @Inject('HTTP_CLIENT')
+    private readonly httpClient: AxiosInstance,
+  ) {
     const ragServerUrl = this.config.getOrThrow<string>('RAG_SERVER_URL');
     const newEmbedFileUrl = new URL('/api/v1/embed/file', ragServerUrl);
     const newSearchVectorUrl = new URL('/api/v1/search/vector', ragServerUrl);
@@ -29,14 +33,17 @@ export class EmbeddingService {
     options: { resetCollection?: boolean } = {},
   ): Promise<RagDocument[]> {
     try {
-      const response = await axios.post<EmbedFileResponse>(
+      this.logger.debug(
+        `Embedding file with payload: ${JSON.stringify(payload)} and server url: ${this.embedFileUrl}`,
+      );
+      const response = await this.httpClient.post<EmbedFileResponse>(
         this.embedFileUrl,
         payload,
       );
       return response.data;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Sorry this service is currently unavailable');
+      throw new Error('Failed to embed file');
     }
   }
 
@@ -45,12 +52,12 @@ export class EmbeddingService {
     recordIds: string[];
   }): Promise<void> {
     try {
-      const response = await axios.delete(this.embedFileUrl, {
+      const response = await this.httpClient.delete(this.embedFileUrl, {
         data: payload,
       });
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Sorry this service is currently unavailable');
+      throw new Error('Failed to delete embeddings');
     }
   }
 
@@ -59,14 +66,14 @@ export class EmbeddingService {
     recordIds: string[];
   }): Promise<SearchResultDocument[]> {
     try {
-      const response = await axios.post<SearchVectorResponse>(
+      const response = await this.httpClient.post<SearchVectorResponse>(
         this.searchVectorUrl,
         payload,
       );
       return response.data;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Sorry this service is currently unavailable');
+      throw new Error('Failed to search documents');
     }
   }
 }

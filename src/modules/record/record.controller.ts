@@ -3,11 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
-  NotFoundException,
+  Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { RecordService } from './record.service';
 import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
@@ -19,6 +19,8 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 
 @Controller('record')
 export class RecordController {
+  private readonly logger = new Logger(RecordController.name);
+
   constructor(private readonly recordService: RecordService) {}
 
   @Post()
@@ -33,8 +35,9 @@ export class RecordController {
     try {
       const record = await this.recordService.create(payload);
       return { record };
-    } catch (error) {
-      throw new NotFoundException('Record not found');
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new InternalServerErrorException('Failed to create record');
     }
   }
 
@@ -58,8 +61,9 @@ export class RecordController {
         query.limit,
       );
       return { records, meta };
-    } catch (error) {
-      throw new NotFoundException('Records not found');
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new InternalServerErrorException('Failed to fetch records');
     }
   }
 
@@ -74,8 +78,9 @@ export class RecordController {
         recordId,
       });
       return { message: 'Record deleted successfully' };
-    } catch (error) {
-      throw new NotFoundException('Record not found');
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new InternalServerErrorException('Failed to delete record');
     }
   }
 }
