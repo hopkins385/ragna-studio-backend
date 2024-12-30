@@ -41,6 +41,7 @@ export class EmbeddingService {
         payload,
       );
       return response.data;
+      //
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to embed file');
