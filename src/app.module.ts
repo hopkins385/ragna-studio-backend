@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { CsrfModule } from './modules/csrf/csrf.module';
 import { UserModule } from './modules/user/user.module';
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { AccountModule } from './modules/account/account.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ChatModule } from './modules/chat/chat.module';
@@ -47,6 +47,7 @@ import { HttpClientModule } from './modules/http-client/http-client.module';
 import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
 import { MailModule } from './modules/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 @Module({
   imports: [
@@ -176,6 +177,10 @@ import { JwtModule } from '@nestjs/jwt';
     },
   ],
   // providers: [
+  //  {
+  //    provide: APP_INTERCEPTOR,
+  //    useClass: TimeoutInterceptor,
+  //  },
   //   {
   //     provide: APP_GUARD,
   //     useClass: ThrottlerBehindProxyGuard,

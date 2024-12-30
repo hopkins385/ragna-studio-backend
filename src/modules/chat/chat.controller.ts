@@ -81,18 +81,19 @@ export class ChatController {
       const assistant = await this.assistantService.findFirst(payload);
 
       if (!assistant) {
-        throw new Error('Assistant not found');
+        throw new Error('Assistant not found with Id: ' + assistantId);
       }
 
       // access policy
       const canAccess = this.chatService.canCreateChatPolicy(user, assistant);
       if (!canAccess) {
-        throw new Error('Assistant not found');
+        throw new Error('Not allowed to create chat');
       }
 
       const chat = await this.chatService.create(assistantId, user.id);
       return { chat };
-    } catch (error) {
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
       throw new NotFoundException('Assistant not found');
     }
   }
