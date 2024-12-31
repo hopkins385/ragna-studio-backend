@@ -6,7 +6,6 @@ import {
   Logger,
   MaxFileSizeValidator,
   ParseFilePipe,
-  ParseFilePipeBuilder,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -17,11 +16,11 @@ import { UserEntity } from '../user/entities/user.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ACCEPTED_FILE_TYPES_REGEXP } from './validations/file-allowed-list';
 import { FilesCountValidator } from './validations/file-size.validation';
-// import { FileSizeValidationPipe } from './validations/file-size.validation';
 
 @Controller('upload')
 export class UploadController {
   private readonly logger = new Logger(UploadController.name);
+
   constructor(private readonly uploadService: UploadService) {}
 
   @Post()
