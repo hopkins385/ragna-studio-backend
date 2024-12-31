@@ -1,18 +1,16 @@
-import type { File as FormidableFile } from 'formidable';
-
 export class UploadFileDto {
-  readonly file: FormidableFile;
+  readonly file: Express.Multer.File;
   readonly userId: string;
   readonly teamId: string;
 
-  constructor(file: FormidableFile, userId: string, teamId: string) {
+  constructor(file: Express.Multer.File, userId: string, teamId: string) {
     this.file = file;
     this.userId = userId;
     this.teamId = teamId;
   }
 
   static fromInput(input: {
-    file: FormidableFile;
+    file: Express.Multer.File;
     userId: string;
     teamId: string;
   }): UploadFileDto {

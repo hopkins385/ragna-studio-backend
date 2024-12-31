@@ -48,6 +48,7 @@ import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module
 import { MailModule } from './modules/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
         },
       ],
     }),
+    // Cache
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],

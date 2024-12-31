@@ -22,6 +22,7 @@ import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
 import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
 import type { AxiosInstance } from 'axios';
+import { randomCUID2 } from '@/common/utils/random-cuid2';
 
 type Bucket = 'images';
 type R2Bucket = 'ragna-studio-images';
@@ -71,22 +72,29 @@ export class StorageService {
       await mkdir(userPath);
     }
 
-    const originalFilename = payload.file.originalFilename ?? 'Untitled';
-    const fileName = `${Date.now()}-${payload.file.newFilename}.${mimeType}`;
+    const originalFilename = payload.file.originalname ?? 'Untitled';
+    const fileName = `${Date.now()}-${randomCUID2()}.${mimeType}`;
     const newPath = `${join(this.getBasePath(), payload.userId, fileName)}`;
-    await copyFile(payload.file.filepath, newPath);
 
-    const createMediaPayload = CreateMediaDto.fromInput({
-      teamId: payload.teamId,
-      name: originalFilename,
-      fileName,
-      filePath: newPath,
-      fileMime: payload.file.mimetype,
-      fileSize: payload.file.size,
-      model: { id: payload.userId, type: 'user' },
-    });
+    try {
+      const buffer = payload.file.buffer;
+      await writeFile(newPath, buffer);
 
-    return createMediaPayload;
+      const createMediaPayload = CreateMediaDto.fromInput({
+        teamId: payload.teamId,
+        name: originalFilename,
+        fileName,
+        filePath: newPath,
+        fileMime: payload.file.mimetype,
+        fileSize: payload.file.size,
+        model: { id: payload.userId, type: 'user' },
+      });
+
+      return createMediaPayload;
+    } catch (error: any) {
+      this.logger.error(`Error copying file: ${error?.message}`);
+      throw new Error('Error copying file');
+    }
   }
 
   getBucketSettings(bucket: Bucket): BucketSettings {
@@ -191,37 +199,43 @@ export class StorageService {
     if (!mimeType) {
       throw new Error('Unsupported file type: ' + payload.file.mimetype);
     }
-    const originalFilename = payload.file.originalFilename ?? 'Untitled';
-    const fileName = `${Date.now()}-${payload.file.newFilename}.${mimeType}`;
+    const originalFilename = payload.file.originalname ?? 'Untitled';
+    const fileName = `${Date.now()}-${randomCUID2()}.${mimeType}`;
     const { bucket: Bucket, url } = this.getBucketSettings(bucket);
     const filePath = `${payload.userId}/uploads/${bucket}/${fileName}`;
     const bucketUrl = `${url}/${payload.userId}/uploads/${bucket}/${fileName}`;
-    const fileBlob = await readFile(payload.file.filepath);
 
-    const putObjectCommand = new PutObjectCommand({
-      Bucket,
-      Key: filePath,
-      Body: fileBlob,
-      ContentType: payload.file.mimetype,
-    });
+    try {
+      const fileBlob = await readFile(payload.file.path);
 
-    await this.s3Client.send(putObjectCommand);
+      const putObjectCommand = new PutObjectCommand({
+        Bucket,
+        Key: filePath,
+        Body: fileBlob,
+        ContentType: payload.file.mimetype,
+      });
 
-    // wait 1000ms
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      await this.s3Client.send(putObjectCommand);
 
-    // TODO: this should be removed and placed in a separate service
-    const createMediaPayload = CreateMediaDto.fromInput({
-      teamId: payload.teamId,
-      name: originalFilename,
-      fileName,
-      filePath: bucketUrl,
-      fileMime: payload.file.mimetype,
-      fileSize: payload.file.size,
-      model: { id: payload.userId, type: 'user' },
-    });
+      // wait 1000ms
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    return createMediaPayload;
+      // TODO: this should be removed and placed in a separate service
+      const createMediaPayload = CreateMediaDto.fromInput({
+        teamId: payload.teamId,
+        name: originalFilename,
+        fileName,
+        filePath: bucketUrl,
+        fileMime: payload.file.mimetype,
+        fileSize: payload.file.size,
+        model: { id: payload.userId, type: 'user' },
+      });
+
+      return createMediaPayload;
+    } catch (error: any) {
+      this.logger.error(`Error uploading file to bucket: ${error?.message}`);
+      throw new Error('Error uploading file to bucket');
+    }
   }
 
   /**
