@@ -9,7 +9,6 @@ import {
   Logger,
   Param,
   Post,
-  Query,
   Req,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -28,6 +27,8 @@ import { AuthGoogleService } from './google/auth-google.service';
 import { SocialAuthProviderParam } from './google/social-auth-provider.param';
 import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
 import { RegisterUserBody } from './dto/register-user-body.dto';
+import { session } from 'passport';
+import { SessionService } from '../session/session.service';
 
 @Public()
 @Controller('auth')
@@ -37,6 +38,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly googleService: AuthGoogleService,
+    private readonly sessionService: SessionService,
   ) {}
 
   @Post('login')
@@ -45,8 +47,21 @@ export class AuthController {
   @UseZodGuard('body', CredentialsDto)
   async login(@Req() req: Request): Promise<TokenResponse> {
     try {
-      // @ts-ignore
-      const authUser = { id: req.user.id, name: req.user.name }; // TODO: fix typing
+      // TODO: add session
+      /*const sessionId = await this.sessionService.createSession({
+        // @ts-ignore
+        userId: req.user.id,
+        // @ts-ignore
+        payload: { user: req.user },
+      });*/
+      // TODO: fix typing
+      const authUser = {
+        // @ts-ignore
+        id: req.user.id,
+        // @ts-ignore
+        name: req.user.name,
+        sessionId: 'session.id',
+      };
       const tokens = await this.authService.createTokensForUser(authUser);
       if (!tokens) {
         throw new Error('Failed to generate tokens');
@@ -63,7 +78,13 @@ export class AuthController {
   async refreshTokens(@ReqUser() user: UserEntity): Promise<TokenResponse> {
     const { id: userId, name: username } = user;
     try {
-      const tokens = await this.authService.refreshTokens({ userId, username });
+      // const sessionId = this.sessionService.getSession('session.id');
+
+      const tokens = await this.authService.refreshTokens({
+        userId,
+        username,
+        sessionId: 'session.id',
+      });
       if (!tokens) {
         throw new Error('Failed to generate tokens');
       }

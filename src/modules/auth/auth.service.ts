@@ -12,11 +12,13 @@ import { Queue } from 'bullmq';
 interface UserPayload {
   userId: string;
   username: string;
+  sessionId: string;
 }
 
 interface TokenPayload {
   sub: string;
   username: string;
+  session_id: string;
 }
 
 export interface TokenResponse {
@@ -56,6 +58,7 @@ export class AuthService {
   async createTokensForUser(user: {
     id: string;
     name: string;
+    sessionId: string;
   }): Promise<TokenResponse | null> {
     if (!user) {
       throw new Error('User not found');
@@ -64,6 +67,7 @@ export class AuthService {
     const payload: UserPayload = {
       userId: user.id,
       username: user.name,
+      sessionId: user.sessionId,
     };
 
     try {
@@ -87,6 +91,7 @@ export class AuthService {
     const tokenPayload: TokenPayload = {
       sub: payload.userId,
       username: payload.username,
+      session_id: payload.sessionId,
     };
 
     return this.jwtService.signAsync(tokenPayload, {
@@ -98,7 +103,10 @@ export class AuthService {
 
   async generateRefreshToken(payload: UserPayload): Promise<string> {
     return this.jwtService.signAsync(
-      { sub: payload.userId },
+      {
+        sub: payload.userId,
+        session_id: payload.sessionId,
+      },
       {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
@@ -155,7 +163,11 @@ export class AuthService {
         name: userName,
       });
     }
-    return this.generateTokens({ userId: user.id, username: user.name });
+    return this.generateTokens({
+      userId: user.id,
+      username: user.name,
+      sessionId: 'session.id',
+    });
   }
 
   async register(payload: { email: string; name: string; password: string }) {

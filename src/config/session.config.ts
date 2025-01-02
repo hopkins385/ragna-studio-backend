@@ -1,8 +1,9 @@
 // import RedisStore from 'connect-redis';
 import Redis from 'ioredis';
-import { SessionOptions } from 'express-session';
+// import { SessionOptions } from 'express-session';
 
-export function getSessionConfig(isDev: boolean): SessionOptions {
+export function getSessionConfig(isDev: boolean): any {
+  // type: SessionOptions
   if (
     !process.env.APP_SECRET ||
     !process.env.REDIS_PASSWORD ||
@@ -24,7 +25,7 @@ export function getSessionConfig(isDev: boolean): SessionOptions {
   //   prefix: 'session:',
   // });
 
-  const sessionConfig: SessionOptions = {
+  const sessionConfig: any = {
     // store: redisStore,
     name: isDev ? 'session-token' : '__Secure-auth.session-token',
     secret: process.env.APP_SECRET,

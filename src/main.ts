@@ -3,18 +3,9 @@ import { AppModule } from './app.module';
 import {
   ClassSerializerInterceptor,
   NestApplicationOptions,
-  ValidationPipe,
 } from '@nestjs/common';
-import { validationConfig } from './config/validation.config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { doubleCsrf } from 'csrf-csrf';
-import { getCsrfOptions } from './config/csrf.config';
-import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import * as session from 'express-session';
-import { getSessionConfig } from './config/session.config';
-import { ConfigService } from '@nestjs/config';
-import * as passport from 'passport';
 import { SwaggerConfig } from './config/swagger.config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
 
@@ -31,8 +22,6 @@ async function bootstrap() {
     appConfig,
   );
 
-  // app.use(cookieParser());
-
   app.use(
     helmet({
       contentSecurityPolicy: false,
@@ -40,7 +29,6 @@ async function bootstrap() {
     }),
   );
 
-  // app.useGlobalPipes(new ValidationPipe(validationConfig));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   // app.useGlobalFilters(new HttpExceptionFilter());
 

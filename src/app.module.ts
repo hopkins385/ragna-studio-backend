@@ -49,6 +49,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { MulterModule } from '@nestjs/platform-express';
+import { SessionModule } from './modules/session/session.module';
 
 @Module({
   imports: [

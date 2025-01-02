@@ -1,3 +1,4 @@
+import { SessionService } from '@/modules/session/session.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
@@ -9,6 +10,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -19,7 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    const { sub: userId } = payload;
+    const userId = payload.sub;
+    const sessionId = payload.session_id;
+    // find session in request.session (express session)
+    // const session = await this.sessionService.getSession(sessionId);
+    // console.log('session', session);
+
+    // if session not found, throw unauthorized exception
     const user = await this.userService.findOne(userId);
     if (!user) {
       throw new UnauthorizedException();

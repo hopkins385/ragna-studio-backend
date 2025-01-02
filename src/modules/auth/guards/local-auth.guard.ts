@@ -9,7 +9,7 @@ export class LocalAuthGuard extends AuthGuard('local') {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const result: boolean = (await super.canActivate(context)) as boolean;
+    const result: boolean = Boolean(await super.canActivate(context));
     await super.logIn(context.switchToHttp().getRequest());
     return result;
   }

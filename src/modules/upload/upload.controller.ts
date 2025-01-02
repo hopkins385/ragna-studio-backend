@@ -11,8 +11,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { UserEntity } from '@/modules/user/entities/user.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ACCEPTED_FILE_TYPES_REGEXP } from './validations/file-allowed-list';
 import { FilesCountValidator } from './validations/file-size.validation';
@@ -30,7 +30,7 @@ export class UploadController {
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new FilesCountValidator({ maxCount: 2 }),
+          new FilesCountValidator({ maxCount: 10 }),
           new FileTypeValidator({ fileType: ACCEPTED_FILE_TYPES_REGEXP }),
           new MaxFileSizeValidator({ maxSize: 15 * 1000 * 1000 }),
         ],
