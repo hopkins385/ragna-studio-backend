@@ -7,6 +7,7 @@ import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
+import { SessionUser } from './entities/session-user.entity';
 
 @Injectable()
 export class UserService {
@@ -53,6 +54,67 @@ export class UserService {
     const roles = user.roles.map((r) => r.role.name);
 
     return new UserEntity({ ...user, roles } as any); // TODO: fix types
+  }
+
+  async getSessionUser({ userId }: { userId: string }): Promise<SessionUser> {
+    if (!userId) throw new Error('User ID is required');
+
+    const user = await this.userRepository.prisma.user.findFirst({
+      relationLoadStrategy: 'join',
+      select: {
+        id: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        onboardedAt: true,
+        lastLoginAt: true,
+        emailVerifiedAt: true,
+        credit: {
+          select: {
+            amount: true,
+          },
+        },
+        teams: {
+          select: {
+            teamId: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        roles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    return SessionUser.fromInput({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      lastLoginAt: user.lastLoginAt,
+      hasEmailVerified: user.emailVerifiedAt !== null,
+      hasOnboarded: user.onboardedAt !== null,
+      firstTeamId: user.teams?.[0]?.team.id || '',
+      credits: user.credit.reduce((acc, c) => acc + c.amount, 0),
+      roles: user.roles.map((r) => r.role.name),
+      teams: user.teams.map((t) => t.team.id),
+    });
   }
 
   async findByEmail(email: string): Promise<Partial<User>> {

@@ -1,4 +1,5 @@
 import { SessionService } from '@/modules/session/session.service';
+import { SessionUser } from '@/modules/user/entities/session-user.entity';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
@@ -29,6 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     // if session not found, throw unauthorized exception
     const user = await this.userService.findOne(userId);
+    // const user = await this.userService.getSessionUser({ userId });
     if (!user) {
       throw new UnauthorizedException();
     }

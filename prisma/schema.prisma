@@ -12,21 +12,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  deviceId      String?   @map("device_id")
-  email         String    @unique
-  name          String
-  firstName     String?   @map("first_name")
-  lastName      String?   @map("last_name")
-  password      String?
-  isActive      Boolean   @default(false) @map("is_active")
-  lastLoginAt   DateTime? @map("last_login_at")
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
-  onboardedAt   DateTime? @map("onboarded_at")
+  id              String    @id @default(cuid())
+  deviceId        String?   @map("device_id")
+  email           String    @unique
+  name            String
+  image           String?
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  password        String?
+  isActive        Boolean   @default(false) @map("is_active")
+  lastLoginAt     DateTime? @map("last_login_at")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  onboardedAt     DateTime? @map("onboarded_at")
 
   roles         UserRole[]
   chats         Chat[]
