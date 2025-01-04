@@ -33,7 +33,7 @@ export class AuthGoogleService {
   }
 
   async getProfileByAccessToken(accessToken: string) {
-    //
+    throw new Error('Method not implemented.');
   }
 
   async getProfileByToken(idToken: string): Promise<SocialAuthResponseDto> {

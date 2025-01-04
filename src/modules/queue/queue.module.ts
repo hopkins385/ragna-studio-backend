@@ -1,6 +1,9 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { QueueName } from './enums/queue-name.enum';
+
+const registeredQueues = new Set<QueueName>();
 
 @Module({
   imports: [
@@ -16,9 +19,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
     BullModule.registerQueue({
-      name: 'email',
+      name: QueueName.EMAIL,
     }),
   ],
   exports: [BullModule],
 })
-export class QueueModule {}
+export class QueueModule {
+  // TODO: clarify if this implementation is good
+  // static forFeature(queueName: QueueName) {
+  //   if (registeredQueues.has(queueName)) {
+  //     return BullModule.registerQueue();
+  //   }
+  //   registeredQueues.add(queueName);
+  //   return BullModule.registerQueue({
+  //     name: queueName,
+  //   });
+  // }
+}

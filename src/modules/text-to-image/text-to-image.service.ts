@@ -7,6 +7,7 @@ import { TextToImageRepository } from './repositories/text-to-image.repository';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
+import { QueueName } from '@/modules/queue/enums/queue-name.enum';
 
 enum TextToImageRunStatus {
   PENDING = 'PENDING',
@@ -38,7 +39,7 @@ export class TextToImageService {
     private readonly textToImageRepo: TextToImageRepository,
     private readonly fluxImageGenerator: FluxImageGenerator,
     private readonly storageService: StorageService,
-    @InjectQueue('image-conversion')
+    @InjectQueue(QueueName.IMAGE_CONVERSION)
     private readonly imageConversionQueue: Queue,
   ) {}
 
