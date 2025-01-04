@@ -4,7 +4,7 @@
   "description": "Ragna Studio Backend",
   "author": "Sven Stadhouders",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "other",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
