@@ -9,7 +9,7 @@ export interface SessionPayload {
 type SessionId = string;
 
 const SESSION_PREFIX = 'session:';
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 1; // 1 days
 
 @Injectable()
 export class SessionService {
@@ -39,7 +39,7 @@ export class SessionService {
     return sessionData;
   }
 
-  async updateSession(
+  async refreshSession(
     sessionId: SessionId,
     payload: SessionPayload,
   ): Promise<SessionId | null> {
@@ -51,7 +51,11 @@ export class SessionService {
       return null;
     }
 
-    await this.cacheManager.set(SESSION_PREFIX + sessionId, payload);
+    await this.cacheManager.set(
+      SESSION_PREFIX + sessionId,
+      payload,
+      SESSION_TTL_MS,
+    );
     return sessionId;
   }
 
