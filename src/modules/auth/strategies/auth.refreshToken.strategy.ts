@@ -27,12 +27,23 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(payload: any) {
-    const { sub: userId } = payload;
+    const userId = payload.sub;
+    const sessionId = payload.sid;
+
+    if (!userId || !sessionId) {
+      throw new UnauthorizedException();
+    }
+
     const user = await this.userService.findOne(userId);
+
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+
+    return {
+      sessionId,
+      ...user,
+    };
   }
 
   private static extractJWTFromCookie(req: Request): string | null {

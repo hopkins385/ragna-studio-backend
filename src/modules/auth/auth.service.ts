@@ -18,8 +18,8 @@ interface UserPayload {
 
 interface TokenPayload {
   sub: string;
-  username: string;
-  session_id: string;
+  iss: string;
+  sid: string;
 }
 
 export interface TokenResponse {
@@ -91,8 +91,8 @@ export class AuthService {
   async generateAccessToken(payload: UserPayload): Promise<string> {
     const tokenPayload: TokenPayload = {
       sub: payload.userId,
-      username: payload.username,
-      session_id: payload.sessionId,
+      iss: this.configService.get<string>('JWT_ISSUER', 'https://api.ragna.io'),
+      sid: payload.sessionId,
     };
 
     return this.jwtService.signAsync(tokenPayload, {
@@ -103,17 +103,16 @@ export class AuthService {
   }
 
   async generateRefreshToken(payload: UserPayload): Promise<string> {
-    return this.jwtService.signAsync(
-      {
-        sub: payload.userId,
-        session_id: payload.sessionId,
-      },
-      {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
-        // algorithm: 'RS256',
-      },
-    );
+    const tokenPayload: TokenPayload = {
+      sub: payload.userId,
+      iss: this.configService.get<string>('JWT_ISSUER', 'https://api.ragna.io'),
+      sid: payload.sessionId,
+    };
+    return this.jwtService.signAsync(tokenPayload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+      // algorithm: 'RS256',
+    });
   }
 
   async generateInviteToken(payload: { sub: string }): Promise<string> {

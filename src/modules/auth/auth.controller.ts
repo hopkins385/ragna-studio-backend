@@ -27,10 +27,8 @@ import { AuthGoogleService } from './google/auth-google.service';
 import { SocialAuthProviderParam } from './google/social-auth-provider.param';
 import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
 import { RegisterUserBody } from './dto/register-user-body.dto';
-import { session } from 'passport';
-import { SessionService } from '../session/session.service';
+import { SessionService } from '@/modules/session/session.service';
 
-@Public()
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -41,26 +39,30 @@ export class AuthController {
     private readonly sessionService: SessionService,
   ) {}
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @UseZodGuard('body', CredentialsDto)
   async login(@Req() req: Request): Promise<TokenResponse> {
+    // @ts-ignore
+    const userId = req.user.id;
+    // @ts-ignore
+    const userName = req.user.name;
     try {
-      // TODO: add session
-      /*const sessionId = await this.sessionService.createSession({
+      const sessionId = await this.sessionService.createSession({
         // @ts-ignore
-        userId: req.user.id,
+        userId,
         // @ts-ignore
         payload: { user: req.user },
-      });*/
-      // TODO: fix typing
+      });
+
+      this.logger.debug(`Created session: ${sessionId}`);
+
       const authUser = {
-        // @ts-ignore
-        id: req.user.id,
-        // @ts-ignore
-        name: req.user.name,
-        sessionId: 'session.id',
+        id: userId,
+        name: userName,
+        sessionId,
       };
       const tokens = await this.authService.createTokensForUser(authUser);
       if (!tokens) {
@@ -72,23 +74,35 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(RefreshJwtGuard)
   async refreshTokens(@ReqUser() user: UserEntity): Promise<TokenResponse> {
-    const { id: userId, name: username } = user;
+    //@ts-ignore
+    const { id: userId, name: username, sessionId } = user;
+
     try {
-      // const sessionId = this.sessionService.getSession('session.id');
+      const sessionData = await this.sessionService.getSession(sessionId);
+
+      if (!sessionData) {
+        throw new UnauthorizedException();
+      }
+
+      this.logger.debug(`Session data: ${JSON.stringify(sessionData)}`);
 
       const tokens = await this.authService.refreshTokens({
         userId,
         username,
-        sessionId: 'session.id',
+        sessionId,
       });
+
       if (!tokens) {
         throw new Error('Failed to generate tokens');
       }
+
       return tokens;
+      //
     } catch (error) {
       throw new UnauthorizedException();
     }
@@ -96,10 +110,14 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: Request) {
+  async logout(@ReqUser() user: UserEntity) {
+    //@ts-ignore
+    const sessionId = user.sessionId;
+    const result = await this.sessionService.deleteSession(sessionId);
     return { message: 'Successfully logged out' };
   }
 
+  @Public()
   @Post('/google/callback')
   async googleCallback(@Body() body: GoogleAuthCallbackBody) {
     try {
@@ -116,6 +134,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Get('/:provider/url')
   async googleAuthUrl(@Param() param: SocialAuthProviderParam) {
     switch (param.provider) {

@@ -8,6 +8,9 @@ export interface SessionPayload {
 
 type SessionId = string;
 
+const SESSION_PREFIX = 'session:';
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
 @Injectable()
 export class SessionService {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
@@ -19,7 +22,11 @@ export class SessionService {
   }): Promise<SessionId> {
     // create a new session id
     const sessionId = randomCUID2();
-    await this.cacheManager.set(`session:${sessionId}`, payload);
+    await this.cacheManager.set(
+      SESSION_PREFIX + sessionId,
+      payload,
+      SESSION_TTL_MS,
+    );
 
     return sessionId;
   }
@@ -28,7 +35,7 @@ export class SessionService {
     if (!isCUID2(sessionId)) {
       return null;
     }
-    const sessionData = await this.cacheManager.get(`session:${sessionId}`);
+    const sessionData = await this.cacheManager.get(SESSION_PREFIX + sessionId);
     return sessionData;
   }
 
@@ -39,12 +46,12 @@ export class SessionService {
     if (!sessionId || !payload || !isCUID2(sessionId)) {
       return null;
     }
-    const sessionData = await this.cacheManager.get(`session:${sessionId}`);
+    const sessionData = await this.cacheManager.get(SESSION_PREFIX + sessionId);
     if (!sessionData) {
       return null;
     }
 
-    await this.cacheManager.set(`session:${sessionId}`, payload);
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, payload);
     return sessionId;
   }
 
@@ -52,7 +59,7 @@ export class SessionService {
     if (!isCUID2(sessionId)) {
       return false;
     }
-    await this.cacheManager.del(`session:${sessionId}`);
+    await this.cacheManager.del(SESSION_PREFIX + sessionId);
     return true;
   }
 }

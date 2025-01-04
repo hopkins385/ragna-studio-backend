@@ -1,6 +1,6 @@
 import { SessionService } from '@/modules/session/session.service';
 import { SessionUser } from '@/modules/user/entities/session-user.entity';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -8,6 +8,8 @@ import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UserService,
@@ -23,7 +25,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: any) {
     const userId = payload.sub;
-    const sessionId = payload.session_id;
+    const sessionId = payload.sid;
+
+    if (!userId || !sessionId) {
+      throw new UnauthorizedException();
+    }
     // find session in request.session (express session)
     // const session = await this.sessionService.getSession(sessionId);
     // console.log('session', session);
@@ -35,6 +41,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException();
     }
 
-    return user;
+    return {
+      sessionId,
+      ...user,
+    };
   }
 }
