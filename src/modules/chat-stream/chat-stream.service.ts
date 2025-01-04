@@ -214,7 +214,7 @@ export class ChatStreamService {
 
   private async *handleStream(
     signal: AbortSignal,
-    result: StreamTextResult<any>,
+    result: StreamTextResult<any, unknown>,
     payload: CreateChatStreamDto,
     context: StreamContext,
     availableTools: any,
@@ -268,7 +268,7 @@ export class ChatStreamService {
 
   private async *handleToolCalls(
     signal: AbortSignal,
-    initalResult: StreamTextResult<any>,
+    initalResult: StreamTextResult<any, unknown>,
     payload: CreateChatStreamDto,
     context: StreamContext,
     availableTools: any,
@@ -415,7 +415,7 @@ export class ChatStreamService {
   private async addUsage(
     usageType: LanguageModelUsageType,
     context: StreamContext,
-    result: StreamTextResult<any>,
+    result: StreamTextResult<any, unknown>,
   ): Promise<void> {
     const usage = {
       type: usageType,

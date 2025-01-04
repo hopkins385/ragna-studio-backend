@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
-import { CsrfModule } from './modules/csrf/csrf.module';
 import { UserModule } from './modules/user/user.module';
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { AccountModule } from './modules/account/account.module';
@@ -102,7 +101,6 @@ import { SessionModule } from './modules/session/session.module';
 
     // Auth
     AuthModule,
-    CsrfModule,
     // Account
     UserModule,
     AccountModule,
