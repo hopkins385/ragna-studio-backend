@@ -32,7 +32,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       // update last login
       await this.authService.updateLastLogin({ userId: user.id });
 
-      return { id: user.id, email: user.email, name: user.name }; // TODO: return full UserEntity?
+      return { id: user.id, name: user.name }; // TODO: which data should be returned? // email: user.email,
     } catch (error) {
       throw new UnauthorizedException();
     }

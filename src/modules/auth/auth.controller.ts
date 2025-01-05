@@ -50,11 +50,9 @@ export class AuthController {
     // @ts-ignore
     const userName = req.user.name;
     try {
+      const sessionPayload = { user: { id: userId } };
       const sessionId = await this.sessionService.createSession({
-        // @ts-ignore
-        userId,
-        // @ts-ignore
-        payload: { user: req.user },
+        payload: sessionPayload,
       });
 
       this.logger.debug(`Created session: ${sessionId}`);
