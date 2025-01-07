@@ -137,6 +137,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('/register')
   async register(@Body() body: RegisterUserBody) {
     // needs invite token
@@ -162,6 +163,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Get('/confirm/email/:id/:token')
   async confirmEmail(@Param() params: any) {
     try {
@@ -171,6 +173,18 @@ export class AuthController {
     } catch (error: any) {
       this.logger.error(error?.message);
       throw new InternalServerErrorException('Failed to confirm email');
+    }
+  }
+
+  @Get('/invite-token')
+  async getInviteToken() {
+    try {
+      const token = await this.authService.generateInviteToken();
+      return { token };
+      //
+    } catch (error: any) {
+      this.logger.error(error?.message);
+      throw new InternalServerErrorException('Failed to generate invite token');
     }
   }
 }

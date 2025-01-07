@@ -9,18 +9,17 @@ import helmet from 'helmet';
 import { SwaggerConfig } from './config/swagger.config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
 
-const appConfig: NestApplicationOptions = {
-  rawBody: true,
-  logger: ['debug', 'error', 'warn', 'log'],
-  // bufferLogs: true,
-  // bodyParser: false,
-};
-
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(
-    AppModule,
-    appConfig,
-  );
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+    logger: AppModule.isDev
+      ? ['log', 'error', 'warn', 'debug']
+      : ['log', 'error', 'warn'],
+    // bufferLogs: true,
+    // bodyParser: false,
+  });
+
+  const reflector = app.get(Reflector);
 
   app.use(
     helmet({
@@ -29,8 +28,11 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  // app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+
+  if (!AppModule.isDev) {
+    app.useGlobalFilters(new HttpExceptionFilter());
+  }
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

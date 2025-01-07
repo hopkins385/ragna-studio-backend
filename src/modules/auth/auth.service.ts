@@ -115,7 +115,8 @@ export class AuthService {
     });
   }
 
-  async generateInviteToken(payload: { sub: string }): Promise<string> {
+  async generateInviteToken(): Promise<string> {
+    const payload = { iss: 'https://api.ragna.io' };
     return this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('JWT_INVITE_SECRET'),
       expiresIn: this.configService.get<string>('JWT_INVITE_EXPIRES_IN'),
