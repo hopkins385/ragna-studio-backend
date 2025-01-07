@@ -23,20 +23,24 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: any) {
-    const userId = payload.sub;
-    const sessionId = payload.sid;
+  async validate(decoded: any) {
+    const userId = decoded.sub;
+    const sessionId = decoded.sid;
 
     if (!userId || !sessionId) {
       throw new UnauthorizedException();
     }
-    // find session in request.session (express session)
-    // const session = await this.sessionService.getSession(sessionId);
-    // console.log('session', session);
 
-    // if session not found, throw unauthorized exception
+    const sessionData = await this.sessionService.getSession(sessionId);
+
+    if (!sessionData) {
+      throw new UnauthorizedException();
+    }
+
+    // this.logger.debug(`Session data: ${JSON.stringify(sessionData)}`);
+
     const user = await this.userService.findOne(userId);
-    // const user = await this.userService.getSessionUser({ userId });
+
     if (!user) {
       throw new UnauthorizedException();
     }

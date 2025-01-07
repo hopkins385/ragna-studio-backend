@@ -55,7 +55,7 @@ export class AuthController {
         payload: sessionPayload,
       });
 
-      this.logger.debug(`Created session: ${sessionId}`);
+      this.logger.debug(`Created session: sessionId:${sessionId}`);
 
       const authUser = {
         id: userId,
@@ -81,14 +81,6 @@ export class AuthController {
     const { id: userId, name: username, sessionId } = user;
 
     try {
-      const sessionData = await this.sessionService.getSession(sessionId);
-
-      if (!sessionData) {
-        throw new UnauthorizedException();
-      }
-
-      this.logger.debug(`Session data: ${JSON.stringify(sessionData)}`);
-
       const tokens = await this.authService.refreshTokens({
         userId,
         username,

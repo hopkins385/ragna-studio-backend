@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { SessionService } from '@/modules/session/session.service';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import type { Request } from 'express';
@@ -10,9 +11,12 @@ export class JwtRefreshStrategy extends PassportStrategy(
   Strategy,
   'jwt-refresh',
 ) {
+  private readonly logger = new Logger(JwtRefreshStrategy.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
   ) {
     super({
       // jwtFromRequest: ExtractJwt.fromExtractors([
@@ -26,13 +30,21 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: any) {
-    const userId = payload.sub;
-    const sessionId = payload.sid;
+  async validate(decoded: any) {
+    const userId = decoded.sub;
+    const sessionId = decoded.sid;
 
     if (!userId || !sessionId) {
       throw new UnauthorizedException();
     }
+
+    const sessionData = await this.sessionService.getSession(sessionId);
+
+    if (!sessionData) {
+      throw new UnauthorizedException();
+    }
+
+    // this.logger.debug(`Session data: ${JSON.stringify(sessionData)}`);
 
     const user = await this.userService.findOne(userId);
 
