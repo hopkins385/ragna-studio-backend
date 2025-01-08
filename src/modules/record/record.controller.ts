@@ -42,12 +42,28 @@ export class RecordController {
   }
 
   @Get(':id')
+  async findOne(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+    const payload = FindRecordsDto.fromInput({
+      collectionId: param.id,
+      teamId: user.firstTeamId,
+    });
+
+    try {
+      const records = await this.recordService.findAll(payload);
+      return { records };
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new InternalServerErrorException('Failed to fetch record');
+    }
+  }
+
+  @Get(':id/paginated')
   async findAllPaginated(
     @ReqUser() user: UserEntity,
     @Param() param: IdParam,
     @Query() query: PaginateQuery,
   ) {
-    const teamId = user.teams[0].team.id;
+    const teamId = user.firstTeamId;
     const collectionId = param.id;
     const payload = FindRecordsDto.fromInput({
       collectionId,

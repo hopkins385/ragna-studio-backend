@@ -12,9 +12,10 @@ import { HttpExceptionFilter } from './filter/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
-    logger: AppModule.isDev
-      ? ['log', 'error', 'warn', 'debug']
-      : ['log', 'error', 'warn'],
+    logger:
+      process.env.APP_ENV !== 'dev'
+        ? ['log', 'error', 'warn']
+        : ['log', 'error', 'warn', 'debug'],
     // bufferLogs: true,
     // bodyParser: false,
   });
@@ -30,9 +31,9 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
-  if (!AppModule.isDev) {
-    app.useGlobalFilters(new HttpExceptionFilter());
-  }
+  // if (!AppModule.isDev) {
+  //   app.useGlobalFilters(new HttpExceptionFilter());
+  // }
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

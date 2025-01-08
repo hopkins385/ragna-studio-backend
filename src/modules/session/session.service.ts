@@ -2,11 +2,18 @@ import { isCUID2, randomCUID2 } from '@/common/utils/random-cuid2';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 
-export interface SessionPayload {
-  [key: string]: any;
+type SessionId = string;
+type UserId = string;
+
+export interface SessionUser {
+  user: {
+    id: UserId;
+  };
 }
 
-type SessionId = string;
+export interface SessionPayload {
+  user: SessionUser['user'];
+}
 
 const SESSION_PREFIX = 'session:';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 1; // 1 days
@@ -22,21 +29,37 @@ export class SessionService {
   }): Promise<SessionId> {
     // create a new session id
     const sessionId = randomCUID2();
+    const sessionData = {
+      user: {
+        id: payload.user.id,
+      },
+    };
+
     await this.cacheManager.set(
       SESSION_PREFIX + sessionId,
-      payload,
+      sessionData,
       SESSION_TTL_MS,
     );
 
     return sessionId;
   }
 
-  async getSession(sessionId: SessionId): Promise<SessionPayload | null> {
+  async getSession(sessionId: SessionId): Promise<SessionUser | null> {
     if (!isCUID2(sessionId)) {
       return null;
     }
-    const sessionData = await this.cacheManager.get(SESSION_PREFIX + sessionId);
-    return sessionData;
+
+    const sessionData = await this.cacheManager.get<SessionUser>(
+      SESSION_PREFIX + sessionId,
+    );
+
+    if (!sessionData || !sessionData.user) {
+      return null;
+    }
+
+    return {
+      user: sessionData.user,
+    };
   }
 
   async refreshSession(
@@ -46,14 +69,22 @@ export class SessionService {
     if (!sessionId || !payload || !isCUID2(sessionId)) {
       return null;
     }
-    const sessionData = await this.cacheManager.get(SESSION_PREFIX + sessionId);
-    if (!sessionData) {
+    const oldSessionData = await this.cacheManager.get<SessionUser>(
+      SESSION_PREFIX + sessionId,
+    );
+    if (!oldSessionData) {
       return null;
     }
 
+    const sessionData = {
+      user: {
+        id: payload.user.id,
+      },
+    };
+
     await this.cacheManager.set(
       SESSION_PREFIX + sessionId,
-      payload,
+      sessionData,
       SESSION_TTL_MS,
     );
     return sessionId;

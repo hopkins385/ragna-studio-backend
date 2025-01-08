@@ -9,6 +9,7 @@ import { SocialAuthResponseDto } from './google/social-auth-response.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
+import { SessionService } from '../session/session.service';
 
 interface UserPayload {
   userId: string;
@@ -37,6 +38,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
     @InjectQueue(QueueName.EMAIL)
     private readonly emailQueue: Queue,
   ) {}

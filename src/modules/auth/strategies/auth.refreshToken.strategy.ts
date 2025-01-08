@@ -31,29 +31,27 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(decoded: any) {
-    const userId = decoded.sub;
-    const sessionId = decoded.sid;
+    const decodedUserId = decoded.sub;
+    const decodedSessionId = decoded.sid;
 
-    if (!userId || !sessionId) {
+    if (!decodedUserId || !decodedSessionId) {
       throw new UnauthorizedException();
     }
 
-    const sessionData = await this.sessionService.getSession(sessionId);
+    const sessionData = await this.sessionService.getSession(decodedSessionId);
 
-    if (!sessionData) {
+    if (!sessionData || !sessionData.user) {
       throw new UnauthorizedException();
     }
 
-    // this.logger.debug(`Session data: ${JSON.stringify(sessionData)}`);
+    const user = await this.userService.findOne(sessionData.user.id);
 
-    const user = await this.userService.findOne(userId);
-
-    if (!user) {
+    if (!user || user.id !== decodedUserId) {
       throw new UnauthorizedException();
     }
 
     return {
-      sessionId,
+      sessionId: decodedSessionId,
       ...user,
     };
   }

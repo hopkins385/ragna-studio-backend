@@ -52,7 +52,9 @@ export class AuthController {
     try {
       const sessionPayload = { user: { id: userId } };
       const sessionId = await this.sessionService.createSession({
-        payload: sessionPayload,
+        payload: {
+          user: { id: userId },
+        },
       });
 
       this.logger.debug(`Created session: sessionId:${sessionId}`);
@@ -102,9 +104,25 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@ReqUser() user: UserEntity) {
     //@ts-ignore
-    const sessionId = user.sessionId;
+    const { sessionId } = user;
     const result = await this.sessionService.deleteSession(sessionId);
     return { message: 'Successfully logged out' };
+  }
+
+  // get current session
+  @Get('session')
+  async getSession(@ReqUser() user: UserEntity) {
+    try {
+      //@ts-ignore
+      const { sessionId } = user;
+      const session = await this.sessionService.getSession(sessionId);
+
+      return {
+        user: session.user,
+      };
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 
   @Public()
