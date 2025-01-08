@@ -197,7 +197,9 @@ export class AppModule {
   constructor(private readonly configService: ConfigService) {
     AppModule.port = +this.configService.get<number>('API_PORT', 3000);
     AppModule.apiPrefix = this.configService.get<string>('API_PREFIX', '');
-    AppModule.isDev = this.configService.get<string>('APP_ENV') === 'dev';
+    AppModule.isDev = Boolean(
+      this.configService.get<string>('APP_ENV') === 'dev',
+    );
     AppModule.origins = this.configService
       .get<string>('CORS_ORIGINS', '*')
       .replace(/\s/g, '')
