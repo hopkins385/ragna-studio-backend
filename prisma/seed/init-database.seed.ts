@@ -1,18 +1,13 @@
 /**
  * ! Executing this script will delete all data in your database and seed it with 10 organisation.
  * ! Make sure to adjust the script to your needs.
- * Use any TypeScript runner to run this script, for example: `npx tsx seed.ts`
- * Learn more about the Seed Client by following our guide: https://snaplet-seed.netlify.app/seed/integrations/prisma
  */
-import type { SeedClient } from '@snaplet/seed';
-import { createSeedClient } from '@snaplet/seed';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { createId } from '@paralleldrive/cuid2';
-import { copycat } from '@snaplet/copycat';
-import { hashPassword } from './bcrypt';
+import { prismaSeedClient, type SeedPrismaClient } from './seed.config';
 
-async function seedLLMs(seed: SeedClient) {
+async function seedLLMs(prisma: SeedPrismaClient) {
   const path = join(__dirname, 'llm_providers.json');
   const data = readFileSync(path, 'utf8');
   const providers = JSON.parse(data);
@@ -31,162 +26,136 @@ async function seedLLMs(seed: SeedClient) {
       deletedAt: null,
     });
   }
-  const llms = await seed.largeLangModel(prData);
+  const llms = await prisma.largeLangModel.createMany({
+    data: prData,
+  });
   console.log('Seeded llms');
   return llms;
 }
 
-/*
-async function seedDefaults(
-  seed: SeedClient,
-  payload: { orgId: string; firstTeamId: string; secondTeamId: string },
-) {
-
-  // seed assistant
-  const { assistant } = await seedChatAssistants(
-    llm[0].id,
-    users[0].id,
-    payload.firstTeamId,
-    seed,
-  );
-
-  // add assistant to user favourites
-  await seed.userFavorite([
-    {
-      id: createId(),
-      userId: users[0].id,
-      favoriteId: assistant[0].id,
-      favoriteType: 'assistant',
-    },
-  ]);
-  // seed chats for user
-  const { chat: chats } = await seedChatsForUser(
-    users[0].id,
-    assistant[0].id,
-    seed,
-  );
-
-  // seed chat messages for chat
-  for (const chat of chats) {
-    await seedChatMessagesForChat(chat.id, seed);
-  }
-}
-  */
-
-async function seedRoles(seed: SeedClient) {
-  const roles = await seed.role([
-    {
-      id: createId(),
-      name: 'admin',
-    },
-    {
-      id: createId(),
-      name: 'user',
-    },
-  ]);
-
+async function seedRoles(prisma: SeedPrismaClient) {
+  const roles = await prisma.role.createMany({
+    data: [
+      {
+        id: createId(),
+        name: 'admin',
+      },
+      {
+        id: createId(),
+        name: 'user',
+      },
+    ],
+  });
   console.log('Seeded roles');
-
   return roles;
 }
 
-async function seedAssistantTools(seed: SeedClient) {
-  const tools = [
-    {
-      id: createId(),
-      functionId: 4,
-      functionName: 'directions',
-      name: 'Google Maps',
-      description: 'Get directions to a location',
-      iconName: 'map',
-      deletedAt: null,
-    },
-    {
-      id: createId(),
-      functionId: 3,
-      functionName: 'imageGenerator',
-      name: 'Image Generator',
-      description: 'Generate images',
-      iconName: 'image',
-      deletedAt: null,
-    },
-    {
-      id: createId(),
-      functionId: 2,
-      functionName: 'website',
-      name: 'Visit Website',
-      description: 'Get the content of a website',
-      iconName: 'web',
-      deletedAt: null,
-    },
-    {
-      id: createId(),
-      functionId: 1,
-      functionName: 'searchWeb',
-      name: 'Web Search',
-      description: 'Search the web',
-      iconName: 'search',
-      deletedAt: null,
-    },
-  ];
-
-  const aTools = await seed.tool(tools);
+async function seedAssistantTools(prisma: SeedPrismaClient) {
+  const aTools = await prisma.tool.createMany({
+    data: [
+      {
+        id: createId(),
+        functionId: 4,
+        functionName: 'directions',
+        name: 'Google Maps',
+        description: 'Get directions to a location',
+        iconName: 'map',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 3,
+        functionName: 'imageGenerator',
+        name: 'Image Generator',
+        description: 'Generate images',
+        iconName: 'image',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 2,
+        functionName: 'website',
+        name: 'Visit Website',
+        description: 'Get the content of a website',
+        iconName: 'web',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 1,
+        functionName: 'searchWeb',
+        name: 'Web Search',
+        description: 'Search the web',
+        iconName: 'search',
+        deletedAt: null,
+      },
+    ],
+  });
   console.log('Seeded tools');
   return aTools;
 }
 
-async function seedAssistantTemplates(seed: SeedClient) {
+async function seedAssistantTemplates(prisma: SeedPrismaClient) {
   // assistant template categories
-  const aCategories = await seed.assistantTemplateCategory([
-    {
-      id: createId(),
-      name: 'General',
-      description: 'General purpose templates',
-    },
-    {
-      id: createId(),
-      name: 'Weather',
-      description: 'Templates for weather',
-    },
-    {
-      id: createId(),
-      name: 'News',
-      description: 'Templates for news',
-    },
-    {
-      id: createId(),
-      name: 'Search',
-      description: 'Templates for search',
-    },
-    {
-      id: createId(),
-      name: 'Social Media',
-      description: 'Templates for social media',
-    },
-    {
-      id: createId(),
-      name: 'Utilities',
-      description: 'Templates for utilities',
-    },
-  ]);
+  const aCategories = await prisma.assistantTemplateCategory.createMany({
+    data: [
+      {
+        id: createId(),
+        name: 'General',
+        description: 'General purpose templates',
+      },
+      {
+        id: createId(),
+        name: 'Weather',
+        description: 'Templates for weather',
+      },
+      {
+        id: createId(),
+        name: 'News',
+        description: 'Templates for news',
+      },
+      {
+        id: createId(),
+        name: 'Search',
+        description: 'Templates for search',
+      },
+      {
+        id: createId(),
+        name: 'Social Media',
+        description: 'Templates for social media',
+      },
+      {
+        id: createId(),
+        name: 'Utilities',
+        description: 'Templates for utilities',
+      },
+    ],
+  });
 
   console.log('Seeded assistant template categories');
 }
 
+async function truncate(prisma: SeedPrismaClient) {
+  await Promise.all([
+    prisma.largeLangModel.deleteMany({}),
+    prisma.role.deleteMany({}),
+    prisma.tool.deleteMany({}),
+    prisma.assistantTool.deleteMany({}),
+    prisma.assistantTemplate.deleteMany({}),
+  ]);
+  console.log('Truncated llms, roles, tools and assistant templates');
+}
+
 export async function initDatabase() {
-  const seed = await createSeedClient();
-
   // Truncate all tables in the database
-  await seed.$resetDatabase();
+  await truncate(prismaSeedClient);
 
-  const { role: roles } = await seedRoles(seed);
-
-  const { largeLangModel: llms } = await seedLLMs(seed);
-
-  const { tool: tools } = await seedAssistantTools(seed);
+  const roles = await seedRoles(prismaSeedClient);
+  const llms = await seedLLMs(prismaSeedClient);
+  const tools = await seedAssistantTools(prismaSeedClient);
 
   // assistant Templates
-  await seedAssistantTemplates(seed);
+  await seedAssistantTemplates(prismaSeedClient);
 
   return { roles, llms, tools };
 }

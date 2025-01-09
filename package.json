@@ -19,10 +19,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate": "prisma migrate dev",
-    "postmigrate": "npx @snaplet/seed sync",
     "migrate:prod": "prisma migrate deploy",
     "migrate:applied": "prisma migrate resolve --applied 20240912095635_init",
-    "db:reset": "npx @snaplet/seed sync && npx prisma db push --force-reset && npx prisma db seed"
+    "seed:users": "npx ts-node --transpile-only prisma/seed/default-users.seed.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.6",
@@ -43,9 +42,7 @@
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/swagger": "^8.1.0",
     "@nestjs/throttler": "^6.2.1",
-    "@prisma/client": "^6.1.0",
-    "@snaplet/copycat": "^5.1.0",
-    "@snaplet/seed": "^0.98.0",
+    "@prisma/client": "^6.2.1",
     "ai": "^4.0.26",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
@@ -63,7 +60,6 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "prisma": "^6.1.0",
     "prisma-extension-cuid2": "^1.1.1",
     "prisma-extension-pagination": "^0.7.5",
     "reflect-metadata": "^0.2.2",
@@ -104,6 +100,7 @@
     "globals": "^15.12.0",
     "jest": "^29.7.0",
     "prettier": "^3.3.3",
+    "prisma": "^6.2.1",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
@@ -112,11 +109,8 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.3"
   },
-  "@snaplet/seed": {
-    "config": "prisma/seed/seed.config.ts"
-  },
   "prisma": {
-    "seed": "npx tsx prisma/seed/seed.ts"
+    "seed": "ts-node --transpile-only prisma/seed/seed.ts"
   },
   "jest": {
     "moduleFileExtensions": [
