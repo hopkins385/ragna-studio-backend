@@ -42,6 +42,87 @@ async function seedAssistantTemplates(prisma: SeedPrismaClient) {
           en: 'Hello! How can I help you?',
         },
       },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.health',
+        description: 'template.assistant.health.description',
+        systemPrompt: {
+          de: 'Wie geht es Ihnen heute?',
+          en: 'How are you feeling today?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.work',
+        description: 'template.assistant.work.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen bei der Arbeit helfen?',
+          en: 'How can I help you at work?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.personal',
+        description: 'template.assistant.personal.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen im Alltag helfen?',
+          en: 'How can I help you in your daily life?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.relationships',
+        description: 'template.assistant.relationships.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen in Beziehungen helfen?',
+          en: 'How can I help you in relationships?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.general',
+        description: 'template.assistant.general.description',
+        systemPrompt: {
+          de: 'Hallo! Wie kann ich Ihnen helfen?',
+          en: 'Hello! How can I help you?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.health',
+        description: 'template.assistant.health.description',
+        systemPrompt: {
+          de: 'Wie geht es Ihnen heute?',
+          en: 'How are you feeling today?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.work',
+        description: 'template.assistant.work.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen bei der Arbeit helfen?',
+          en: 'How can I help you at work?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.personal',
+        description: 'template.assistant.personal.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen im Alltag helfen?',
+          en: 'How can I help you in your daily life?',
+        },
+      },
+      {
+        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+        title: 'template.assistant.relationships',
+        description: 'template.assistant.relationships.description',
+        systemPrompt: {
+          de: 'Wie kann ich Ihnen in Beziehungen helfen?',
+          en: 'How can I help you in relationships?',
+        },
+      },
     ],
   });
 }

@@ -6,6 +6,10 @@ generator client {
   previewFeatures = ["relationJoins"]
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -277,7 +281,7 @@ model AssistantTemplate {
   llmId        String    @map("llm_id")
   title        String
   description  String
-  systemPrompt Json      @map("system_prompt") @db.Json
+  systemPrompt Json      @map("system_prompt") @db.Json /// [TemplateSystemPromptType]
   config       Json?     @map("config") @db.Json
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")

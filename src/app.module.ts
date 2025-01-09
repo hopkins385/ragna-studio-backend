@@ -49,6 +49,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { MulterModule } from '@nestjs/platform-express';
 import { SessionModule } from './modules/session/session.module';
+import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
 
 @Module({
   imports: [
@@ -111,6 +112,7 @@ import { SessionModule } from './modules/session/session.module';
     // Assistant
     AssistantModule,
     AssistantToolModule,
+    AssistantTemplateModule,
     //
 
     SocketModule,
