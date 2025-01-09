@@ -154,7 +154,13 @@ async function seedDefaultUsers() {
   await seedData(prismaSeedClient);
 }
 
-seedDefaultUsers().then(() => {
-  console.log('Seeding default users complete');
-  process.exit(0);
-});
+seedDefaultUsers()
+  .then(async () => {
+    console.log('Database seeded successfully!');
+    await prismaSeedClient.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prismaSeedClient.$disconnect();
+    process.exit(1);
+  });

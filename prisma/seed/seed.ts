@@ -1,11 +1,13 @@
 import { initDatabase } from './init-database.seed';
+import { prismaSeedClient } from './seed.config';
 
 initDatabase()
-  .then(() => {
+  .then(async () => {
     console.log('Database seeded successfully!');
-    process.exit();
+    await prismaSeedClient.$disconnect();
   })
-  .catch((e) => {
+  .catch(async (e) => {
     console.error(e);
+    await prismaSeedClient.$disconnect();
     process.exit(1);
   });

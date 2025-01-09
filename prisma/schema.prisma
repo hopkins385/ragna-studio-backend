@@ -273,16 +273,15 @@ model AssistantTool {
 }
 
 model AssistantTemplate {
-  id                     String    @id @default(cuid())
-  llmId                  String    @map("llm_id")
-  title                  String
-  description            String
-  systemPrompt           String    @map("system_prompt") @db.Text
-  systemPromptTokenCount Int       @map("system_prompt_token_count")
-  config                 Json?     @map("config") @db.Json
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @updatedAt @map("updated_at")
-  deletedAt              DateTime? @map("deleted_at")
+  id           String    @id @default(cuid())
+  llmId        String    @map("llm_id")
+  title        String
+  description  String
+  systemPrompt Json      @map("system_prompt") @db.Json
+  config       Json?     @map("config") @db.Json
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
   categoryItems AssistantTemplateCategoryItem[]
 

@@ -2,10 +2,12 @@
  * ! Executing this script will delete all data in your database and seed it with 10 organisation.
  * ! Make sure to adjust the script to your needs.
  */
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { createInterface } from 'node:readline';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createId } from '@paralleldrive/cuid2';
 import { prismaSeedClient, type SeedPrismaClient } from './seed.config';
+import chalk from 'chalk';
 
 async function seedLLMs(prisma: SeedPrismaClient) {
   const path = join(__dirname, 'llm_providers.json');
@@ -95,46 +97,6 @@ async function seedAssistantTools(prisma: SeedPrismaClient) {
   return aTools;
 }
 
-async function seedAssistantTemplates(prisma: SeedPrismaClient) {
-  // assistant template categories
-  const aCategories = await prisma.assistantTemplateCategory.createMany({
-    data: [
-      {
-        id: createId(),
-        name: 'General',
-        description: 'General purpose templates',
-      },
-      {
-        id: createId(),
-        name: 'Weather',
-        description: 'Templates for weather',
-      },
-      {
-        id: createId(),
-        name: 'News',
-        description: 'Templates for news',
-      },
-      {
-        id: createId(),
-        name: 'Search',
-        description: 'Templates for search',
-      },
-      {
-        id: createId(),
-        name: 'Social Media',
-        description: 'Templates for social media',
-      },
-      {
-        id: createId(),
-        name: 'Utilities',
-        description: 'Templates for utilities',
-      },
-    ],
-  });
-
-  console.log('Seeded assistant template categories');
-}
-
 async function truncate(prisma: SeedPrismaClient) {
   await Promise.all([
     prisma.largeLangModel.deleteMany({}),
@@ -142,20 +104,53 @@ async function truncate(prisma: SeedPrismaClient) {
     prisma.tool.deleteMany({}),
     prisma.assistantTool.deleteMany({}),
     prisma.assistantTemplate.deleteMany({}),
+    prisma.assistantTemplateCategory.deleteMany({}),
+    prisma.assistantTemplateCategoryItem.deleteMany({}),
   ]);
-  console.log('Truncated llms, roles, tools and assistant templates');
+  console.log('Truncated llms, roles, assistantTools, assistantTemplates');
+}
+
+async function confirmDatabaseSeed(): Promise<boolean> {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const answer = await new Promise<string>((resolve) => {
+      console.log(chalk.yellow('\n⚠️  Warning: Initial database seed'));
+      console.log(
+        chalk.white(
+          'All Users, LLMs, AssistantTemplates, etc. will be deleted!\n',
+        ),
+      );
+
+      rl.question(
+        chalk.cyan('Are you sure you want to continue? (yes/no): '),
+        resolve,
+      );
+    });
+
+    rl.close();
+    return answer.toLowerCase().trim() === 'yes';
+  } catch (error) {
+    rl.close();
+    return false;
+  }
 }
 
 export async function initDatabase() {
+  // Usage:
+  if (!(await confirmDatabaseSeed())) {
+    console.log(chalk.red('❌ Operation cancelled'));
+    process.exit(0);
+  }
   // Truncate all tables in the database
   await truncate(prismaSeedClient);
 
   const roles = await seedRoles(prismaSeedClient);
   const llms = await seedLLMs(prismaSeedClient);
   const tools = await seedAssistantTools(prismaSeedClient);
-
-  // assistant Templates
-  await seedAssistantTemplates(prismaSeedClient);
 
   return { roles, llms, tools };
 }

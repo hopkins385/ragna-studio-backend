@@ -20,8 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate": "prisma migrate dev",
     "migrate:prod": "prisma migrate deploy",
-    "migrate:applied": "prisma migrate resolve --applied 20240912095635_init",
-    "seed:users": "npx ts-node --transpile-only prisma/seed/default-users.seed.ts"
+    "migrate:applied": "prisma migrate resolve --applied 20250104182632_init",
+    "seed:init": "ts-node --transpile-only prisma/seed/seed.ts",
+    "seed:users": "ts-node --transpile-only prisma/seed/default-users.seed.ts",
+    "seed:templates": "ts-node --transpile-only prisma/seed/assistant-templates.seed.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.6",
