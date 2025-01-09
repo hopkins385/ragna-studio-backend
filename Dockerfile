@@ -42,8 +42,6 @@ COPY prisma ./prisma/
 
 # Install production dependencies only
 RUN npm ci --omit=dev
-# Install tsx globlally
-RUN npm install -g tsx
 
 # Copy built application from builder stage
 COPY --chown=node:node --from=builder /app/dist ./dist
