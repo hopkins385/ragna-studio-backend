@@ -9,6 +9,9 @@ import {
   Res,
   StreamableFile,
   NotFoundException,
+  Delete,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
@@ -24,6 +27,8 @@ import { Response } from 'express';
 
 @Controller('workflow')
 export class WorkflowController {
+  private readonly logger = new Logger(WorkflowController.name);
+
   constructor(private readonly workflowService: WorkflowService) {}
 
   @Post()
@@ -96,6 +101,22 @@ export class WorkflowController {
       return file;
     } catch (error) {
       throw new NotFoundException('Workflow not found');
+    }
+  }
+
+  @Delete(':id')
+  async remove(@Param() param: IdParam) {
+    const workflowId = param.id;
+    try {
+      await this.workflowService.delete({ workflowId });
+      return { success: true };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to delete workflow ${workflowId}, ${error.message}`,
+        );
+      }
+      throw new InternalServerErrorException('Failed to delete workflow');
     }
   }
 }

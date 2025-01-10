@@ -512,12 +512,57 @@ export class WorkflowService {
     return true;
   }
 
-  async delete(workflowId: string) {
-    return this.workflowRepo.prisma.workflow.delete({
+  async delete(payload: { workflowId: string }) {
+    const workflowId = payload.workflowId.toLowerCase();
+    // find all the steps for the workflow and associated documents
+    const workflow = await this.workflowRepo.prisma.workflow.findFirst({
       where: {
-        id: workflowId.toLowerCase(),
+        id: workflowId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        steps: {
+          where: {
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            document: {
+              select: {
+                id: true,
+                documentItems: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    // delete associated documents
+    await this.workflowRepo.prisma.document.deleteMany({
+      where: {
+        id: {
+          in: workflow.steps.map((step) => step.document?.id),
+        },
+      },
+    });
+
+    const deleteWorkflow = this.workflowRepo.prisma.workflow.delete({
+      where: {
+        id: workflowId,
+      },
+    });
+
+    return deleteWorkflow;
   }
 
   async softDelete(workflowId: string) {
