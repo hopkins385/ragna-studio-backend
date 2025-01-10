@@ -6,6 +6,7 @@ import {
 } from './interfaces/emedding.interface';
 import { ConfigService } from '@nestjs/config';
 import { AxiosInstance } from 'axios';
+import { HTTP_CLIENT } from '../http-client/constants';
 
 type EmbedFileResponse = RagDocument[];
 type SearchVectorResponse = SearchResultDocument[];
@@ -18,7 +19,7 @@ export class EmbeddingService {
 
   constructor(
     private readonly config: ConfigService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {
     const ragServerUrl = this.config.getOrThrow<string>('RAG_SERVER_URL');

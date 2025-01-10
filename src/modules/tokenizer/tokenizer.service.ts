@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { get_encoding, Tiktoken, TiktokenEncoding } from 'tiktoken';
 import { TokenizerResponse } from './interfaces/tokenizer.res';
 import { AxiosInstance } from 'axios';
+import { HTTP_CLIENT } from '../http-client/constants';
 
 @Injectable()
 export class TokenizerService {
@@ -13,7 +14,7 @@ export class TokenizerService {
 
   constructor(
     private readonly config: ConfigService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {
     const ragServerURL = this.config.getOrThrow<string>('RAG_SERVER_URL');

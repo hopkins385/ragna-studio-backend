@@ -1,14 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { HTTP_CLIENT, HTTP_CONFIG } from './constants';
 
 export interface HttpConfig {
   timeout?: number;
   retries?: number;
 }
-
-const HTTP_CLIENT = 'HTTP_CLIENT';
-const HTTP_CONFIG = 'HTTP_CONFIG';
 
 @Global()
 @Module({

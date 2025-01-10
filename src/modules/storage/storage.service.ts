@@ -23,6 +23,7 @@ import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
 import type { AxiosInstance } from 'axios';
 import { randomCUID2 } from '@/common/utils/random-cuid2';
+import { HTTP_CLIENT } from '../http-client/constants';
 
 type Bucket = 'images';
 type R2Bucket = 'ragna-studio-images';
@@ -39,7 +40,7 @@ export class StorageService {
 
   constructor(
     private readonly config: ConfigService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {
     this.s3Client = new S3Client({

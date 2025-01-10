@@ -6,6 +6,7 @@ import { ImageConversionJobDataDto } from '../dto/image-conversion-job-data.dto'
 import { Inject, Logger } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import { AxiosInstance } from 'axios';
+import { HTTP_CLIENT } from '@/modules/http-client/constants';
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
@@ -13,7 +14,7 @@ export class ImageConversionProcessor extends WorkerHost {
 
   constructor(
     private readonly storageService: StorageService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {
     super();

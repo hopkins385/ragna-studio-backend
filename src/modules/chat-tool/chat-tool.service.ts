@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
 import { ProviderType } from '../ai-model/enums/provider.enum';
 import { jsonSchema } from 'ai';
+import { HTTP_CLIENT } from '../http-client/constants';
 
 /*
 interface IExampleSchema {
@@ -71,7 +72,7 @@ export class ChatToolService {
 
   constructor(
     private readonly config: ConfigService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {}
   // Define tool configurations

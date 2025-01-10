@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { EmitEventDto } from './dto/emit-event.dto';
 import type { AxiosInstance } from 'axios';
+import { HTTP_CLIENT } from '../http-client/constants';
 
 @Injectable()
 export class SocketService {
@@ -14,7 +15,7 @@ export class SocketService {
   constructor(
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
-    @Inject('HTTP_CLIENT')
+    @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
   ) {
     this.socketServerUrl = this.config.get<string>('SOCKET_SERVER_URL');
