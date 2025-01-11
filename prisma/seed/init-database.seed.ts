@@ -7,7 +7,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createId } from '@paralleldrive/cuid2';
 import { prismaSeedClient, type SeedPrismaClient } from './seed.config';
-import chalk from 'chalk';
 
 async function seedLLMs(prisma: SeedPrismaClient) {
   const path = join(__dirname, 'llm_providers.json');
@@ -118,20 +117,17 @@ async function confirmDatabaseSeed(): Promise<boolean> {
 
   try {
     const answer = await new Promise<string>((resolve) => {
-      console.log(chalk.yellow('\n⚠️  Warning: Initial database seed'));
+      console.log('\n⚠️  Warning: Initial database seed');
       console.log(
-        chalk.white(
-          'All Users, LLMs, AssistantTemplates, etc. will be deleted!\n',
-        ),
+        'All Users, LLMs, AssistantTemplates, etc. will be deleted!\n',
       );
 
-      rl.question(
-        chalk.cyan('Are you sure you want to continue? (yes/no): '),
-        resolve,
-      );
+      rl.question('Are you sure you want to continue? (yes/no): ', (input) => {
+        resolve(input);
+        rl.close();
+      });
     });
 
-    rl.close();
     return answer.toLowerCase().trim() === 'yes';
   } catch (error) {
     rl.close();
@@ -140,9 +136,9 @@ async function confirmDatabaseSeed(): Promise<boolean> {
 }
 
 export async function initDatabase() {
-  // Usage:
-  if (!(await confirmDatabaseSeed())) {
-    console.log(chalk.red('❌ Operation cancelled'));
+  const confirm = await confirmDatabaseSeed();
+  if (!confirm) {
+    console.log('❌ Operation cancelled');
     process.exit(0);
   }
   // Truncate all tables in the database

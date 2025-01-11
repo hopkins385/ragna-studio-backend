@@ -297,7 +297,7 @@ model AssistantTemplate {
 model AssistantTemplateCategory {
   id          String    @id @default(cuid())
   name        String
-  description String?
+  description String
   config      Json?     @map("config") @db.Json
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -724,4 +724,46 @@ model TextToImage {
 
   @@index([runId])
   @@map("text_to_images")
+}
+
+// Translations
+model Translation {
+  id         String   @id @default(cuid())
+  languageId String   @map("language_id")
+  field      String
+  value      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  translationAbles TranslationAbles[]
+
+  lang Language @relation(fields: [languageId], references: [id])
+
+  @@map("translations")
+}
+
+model TranslationAbles {
+  id            String    @id @default(cuid())
+  translationId String    @map("translation_id")
+  modelType     Int       @map("model_type") @db.SmallInt
+  modelId       String    @map("model_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  translation Translation @relation(fields: [translationId], references: [id])
+
+  @@map("translation_ables")
+}
+
+model Language {
+  id        String   @id @default(cuid())
+  code      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations Translation[]
+
+  @@map("languages")
 }
