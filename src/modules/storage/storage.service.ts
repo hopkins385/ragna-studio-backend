@@ -203,16 +203,19 @@ export class StorageService {
     const originalFilename = payload.file.originalname ?? 'Untitled';
     const fileName = `${Date.now()}-${randomCUID2()}.${mimeType}`;
     const { bucket: Bucket, url } = this.getBucketSettings(bucket);
-    const filePath = `${payload.userId}/uploads/${bucket}/${fileName}`;
+    const bucketFilePath = `${payload.userId}/uploads/${bucket}/${fileName}`;
     const bucketUrl = `${url}/${payload.userId}/uploads/${bucket}/${fileName}`;
 
     try {
-      const fileBlob = await readFile(payload.file.path);
+      const buffer = payload.file.buffer;
+      if (!buffer || buffer.length < 1) {
+        throw new Error('File buffer is required.');
+      }
 
       const putObjectCommand = new PutObjectCommand({
         Bucket,
-        Key: filePath,
-        Body: fileBlob,
+        Key: bucketFilePath,
+        Body: buffer,
         ContentType: payload.file.mimetype,
       });
 

@@ -20,7 +20,7 @@ export class UploadService {
     private readonly mediaService: MediaService,
   ) {}
 
-  isVisionFile(file: Express.Multer.File) {
+  isImage(file: Express.Multer.File) {
     return file.mimetype.includes('image');
   }
 
@@ -36,16 +36,15 @@ export class UploadService {
           teamId: user.teams[0].team.id,
         });
 
-        // TODO: Store images in a separate bucket
-        /*if (this.isVisionFile(file)) {
+        if (this.isImage(file)) {
           createMediaPayload = await this.storageService.uploadFileToBucket(
             'images',
             uploadPayload,
           );
-        } else {*/
-        createMediaPayload =
-          await this.storageService.uploadFile(uploadPayload);
-        //}
+        } else {
+          createMediaPayload =
+            await this.storageService.uploadFile(uploadPayload);
+        }
 
         const media = await this.mediaService.create(createMediaPayload);
         medias.push(media);

@@ -5,24 +5,24 @@ async function seedAssistantTemplateCategories(prisma: SeedPrismaClient) {
   return prisma.assistantTemplateCategory.createManyAndReturn({
     data: [
       {
-        name: 'General',
-        description: 'General purpose templates',
+        name: 'template.category.business.title',
+        description: 'template.category.business.description',
       },
       {
-        name: 'Health',
-        description: 'Templates for health and wellness',
+        name: 'template.category.marketing.title',
+        description: 'template.category.marketing.description',
       },
       {
-        name: 'Work',
-        description: 'Templates for work and productivity',
+        name: 'template.category.social_media.title',
+        description: 'template.category.social_media.description',
       },
       {
-        name: 'Personal',
-        description: 'Templates for personal use',
+        name: 'template.category.education.title',
+        description: 'template.category.education.description',
       },
       {
-        name: 'Relationships',
-        description: 'Templates for relationships',
+        name: 'template.category.personal.title',
+        description: 'template.category.personal.description',
       },
     ],
   });
