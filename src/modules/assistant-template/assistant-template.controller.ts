@@ -80,7 +80,7 @@ export class AssistantTemplateController {
     }
   }
 
-  @Get(':id')
+  @Get('/one/:id')
   async findOne(@Param() param: IdParam) {
     const templateId = param.id;
     try {
@@ -98,7 +98,6 @@ export class AssistantTemplateController {
   }
 
   // Categories
-
   @Get('category')
   async findAllCategories() {
     try {
@@ -141,7 +140,7 @@ export class AssistantTemplateController {
     }
   }
 
-  @Get('category/:id')
+  @Get('category/one/:id')
   async findOneCategory(@Param() param: IdParam) {
     const categoryId = param.id;
     try {

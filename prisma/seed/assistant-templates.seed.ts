@@ -1,129 +1,100 @@
-import { truncate } from 'node:fs';
 import { SeedPrismaClient, prismaSeedClient } from './seed.config';
+import { faker } from '@faker-js/faker';
 
 async function seedAssistantTemplateCategories(prisma: SeedPrismaClient) {
   return prisma.assistantTemplateCategory.createManyAndReturn({
     data: [
       {
+        name: 'template.category.recommended.title',
+        description: 'template.category.recommended.description',
+        config: {
+          icon: 'star',
+          color: 'blue',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
         name: 'template.category.business.title',
         description: 'template.category.business.description',
+        config: {
+          icon: 'briefcase',
+          color: 'green',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         name: 'template.category.marketing.title',
         description: 'template.category.marketing.description',
+        config: {
+          icon: 'megaphone',
+          color: 'red',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         name: 'template.category.social_media.title',
         description: 'template.category.social_media.description',
+        config: {
+          icon: 'share',
+          color: 'yellow',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         name: 'template.category.education.title',
         description: 'template.category.education.description',
+        config: {
+          icon: 'graduation',
+          color: 'purple',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         name: 'template.category.personal.title',
         description: 'template.category.personal.description',
+        config: {
+          icon: 'user',
+          color: 'orange',
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ],
   });
 }
 
 async function seedAssistantTemplates(prisma: SeedPrismaClient) {
+  const icons = [
+    'star',
+    'briefcase',
+    'megaphone',
+    'share',
+    'graduation',
+    'user',
+  ];
   const llms = await prisma.largeLangModel.findMany({});
   const llmsCount = llms.length;
   return prisma.assistantTemplate.createManyAndReturn({
-    data: [
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.general',
-        description: 'template.assistant.general.description',
-        systemPrompt: {
-          de: 'Hallo! Wie kann ich Ihnen helfen?',
-          en: 'Hello! How can I help you?',
-        },
+    data: Array.from({ length: 100 }).map(() => ({
+      llmId: llms[Math.floor(Math.random() * llmsCount)].id,
+      title: faker.lorem.words(),
+      description: faker.lorem.sentence(),
+      systemPrompt: {
+        de: faker.lorem.sentence(),
+        en: faker.lorem.sentence(),
       },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.health',
-        description: 'template.assistant.health.description',
-        systemPrompt: {
-          de: 'Wie geht es Ihnen heute?',
-          en: 'How are you feeling today?',
-        },
+      config: {
+        icon: icons[Math.floor(Math.random() * icons.length)],
+        color: faker.color.human(),
       },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.work',
-        description: 'template.assistant.work.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen bei der Arbeit helfen?',
-          en: 'How can I help you at work?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.personal',
-        description: 'template.assistant.personal.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen im Alltag helfen?',
-          en: 'How can I help you in your daily life?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.relationships',
-        description: 'template.assistant.relationships.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen in Beziehungen helfen?',
-          en: 'How can I help you in relationships?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.general',
-        description: 'template.assistant.general.description',
-        systemPrompt: {
-          de: 'Hallo! Wie kann ich Ihnen helfen?',
-          en: 'Hello! How can I help you?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.health',
-        description: 'template.assistant.health.description',
-        systemPrompt: {
-          de: 'Wie geht es Ihnen heute?',
-          en: 'How are you feeling today?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.work',
-        description: 'template.assistant.work.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen bei der Arbeit helfen?',
-          en: 'How can I help you at work?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.personal',
-        description: 'template.assistant.personal.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen im Alltag helfen?',
-          en: 'How can I help you in your daily life?',
-        },
-      },
-      {
-        llmId: llms[Math.floor(Math.random() * llmsCount)].id,
-        title: 'template.assistant.relationships',
-        description: 'template.assistant.relationships.description',
-        systemPrompt: {
-          de: 'Wie kann ich Ihnen in Beziehungen helfen?',
-          en: 'How can I help you in relationships?',
-        },
-      },
-    ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
   });
 }
 
@@ -134,17 +105,13 @@ async function assignTemplatesToCategories(
   const categories = await prisma.assistantTemplateCategory.findMany({});
   const categoriesCount = categories.length;
   const templatesCount = templates.length;
-  const templateCategoryAssignments = [];
-  for (let i = 0; i < templatesCount; i++) {
-    templateCategoryAssignments.push({
-      templateId: templates[i].id,
+  await prisma.assistantTemplateCategoryItem.createMany({
+    data: Array.from({ length: templatesCount }).map(() => ({
+      templateId: templates[Math.floor(Math.random() * templatesCount)].id,
       categoryId: categories[Math.floor(Math.random() * categoriesCount)].id,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  }
-  await prisma.assistantTemplateCategoryItem.createMany({
-    data: templateCategoryAssignments,
+    })),
   });
 }
 
