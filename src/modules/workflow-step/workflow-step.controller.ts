@@ -167,8 +167,9 @@ export class WorkflowStepController {
 
   @Delete(':id')
   async remove(@Param() param: IdParam) {
+    const workflowStepId = param.id;
     try {
-      const step = await this.workflowStepService.delete(param.id);
+      const step = await this.workflowStepService.delete(workflowStepId);
       return { step };
     } catch (error) {
       throw new InternalServerErrorException('Error deleting workflow step');

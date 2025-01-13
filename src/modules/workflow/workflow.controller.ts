@@ -119,4 +119,25 @@ export class WorkflowController {
       throw new InternalServerErrorException('Failed to delete workflow');
     }
   }
+
+  @Patch(':id/row')
+  async removeRows(
+    @Param() param: IdParam,
+    @Body() body: { orderColumns: number[] },
+  ) {
+    const workflowId = param.id;
+    const orderColumns = body.orderColumns;
+
+    try {
+      await this.workflowService.deleteRows({ workflowId, orderColumns });
+      return { success: true };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to delete workflow rows ${workflowId}, ${error.message}`,
+        );
+      }
+      throw new InternalServerErrorException('Failed to delete workflow rows');
+    }
+  }
 }

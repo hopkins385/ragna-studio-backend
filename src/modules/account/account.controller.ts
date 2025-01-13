@@ -64,7 +64,6 @@ export class AccountController {
     @ReqUser() user: UserEntity,
     @Body() body: UpdateAccountPasswordBody,
   ) {
-    await new Promise((resolve) => setTimeout(resolve, 4000));
     try {
       const accountData = await this.userService.updateUserPassword(user.id, {
         oldPassword: body.oldPassword,

@@ -41,7 +41,6 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @UseZodGuard('body', CredentialsDto)
   async login(@Req() req: Request): Promise<TokenResponse> {
@@ -76,7 +75,6 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  @HttpCode(HttpStatus.CREATED)
   @UseGuards(RefreshJwtGuard)
   async refreshTokens(@ReqUser() user: UserEntity): Promise<TokenResponse> {
     //@ts-ignore
