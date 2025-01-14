@@ -175,4 +175,135 @@ export class AssistantTemplateRepository {
       where: { id },
     });
   }
+
+  async findTemplatesByCategory(id: string) {
+    return this.prisma.assistantTemplateCategoryItem.findMany({
+      where: {
+        categoryId: id,
+      },
+    });
+  }
+
+  async findTemplatesByCategoryIds(ids: string[]) {
+    const MAX_TEMPLATES_PER_CATEGORY = 10;
+
+    if (!ids) {
+      throw new Error('No category ids provided');
+    }
+
+    if (!ids.length) {
+      return [];
+    }
+
+    const itemsRelations =
+      await this.prisma.assistantTemplateCategoryItem.findMany({
+        select: {
+          categoryId: true,
+          templateId: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        where: {
+          categoryId: {
+            in: ids,
+          },
+        },
+      });
+
+    const templatesIds = itemsRelations.map((item) => item.templateId);
+
+    const templates = await this.prisma.assistantTemplate.findMany({
+      select: {
+        id: true,
+        llmId: true,
+        title: true,
+        description: true,
+        config: true,
+      },
+      where: {
+        id: {
+          in: templatesIds,
+        },
+      },
+    });
+
+    // group by category Ids
+    // and return for each category a configurable number of templates
+    // the return shall be an array of categories with templates
+    const templatesByCategory = ids.map((categoryId) => {
+      const templatesForCategory = templates.filter((template) =>
+        itemsRelations.some(
+          (item) =>
+            item.categoryId === categoryId && item.templateId === template.id,
+        ),
+      );
+
+      return {
+        id: categoryId,
+        name:
+          itemsRelations.find((item) => item.categoryId === categoryId)
+            ?.category.name || 'Unknown',
+        templates: templatesForCategory.slice(0, MAX_TEMPLATES_PER_CATEGORY),
+      };
+    });
+
+    return templatesByCategory;
+  }
+
+  async findTemplatesByCategoryIds_opti(ids: string[]) {
+    const MAX_TEMPLATES_PER_CATEGORY = 10;
+
+    if (!ids) {
+      throw new Error('No category ids provided');
+    }
+
+    if (!ids.length) {
+      return [];
+    }
+
+    const relationsWithTemplates =
+      await this.prisma.assistantTemplateCategoryItem.findMany({
+        where: {
+          categoryId: {
+            in: ids,
+          },
+        },
+        select: {
+          categoryId: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
+          template: {
+            select: {
+              id: true,
+              llmId: true,
+              title: true,
+              description: true,
+              config: true,
+            },
+          },
+        },
+      });
+
+    const grouped = relationsWithTemplates.reduce(
+      (acc, item) => {
+        if (!acc[item.categoryId]) {
+          acc[item.categoryId] = [];
+        }
+        if (acc[item.categoryId].length < MAX_TEMPLATES_PER_CATEGORY) {
+          // @ts-ignore
+          acc[item.categoryId].push(item.template);
+        }
+        return acc;
+      },
+      {} as Record<string, typeof relationsWithTemplates>,
+    );
+
+    return grouped;
+  }
 }

@@ -9,6 +9,8 @@ import {
   Logger,
   NotFoundException,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AssistantTemplateService } from './assistant-template.service';
 import { IdParam } from '@/common/dto/cuid-param.dto';
@@ -140,13 +142,13 @@ export class AssistantTemplateController {
     }
   }
 
-  @Get('category/one/:id')
+  @Get('category/:id/templates')
   async findOneCategory(@Param() param: IdParam) {
     const categoryId = param.id;
     try {
-      const category =
-        await this.assistantTemplateService.findOneCategory(categoryId);
-      return { category };
+      const templates =
+        await this.assistantTemplateService.findTemplatesByCategory(categoryId);
+      return { templates };
       //
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -155,6 +157,28 @@ export class AssistantTemplateController {
         );
       } else {
         this.logger.error(`Error fetching assistant template category`);
+      }
+      throw new NotFoundException();
+    }
+  }
+
+  @Post('categories/templates')
+  @HttpCode(HttpStatus.OK)
+  async findTemplatesByCategories(@Body('categoryIds') categoryIds: string[]) {
+    try {
+      const categories =
+        await this.assistantTemplateService.findTemplatesByCategoryIds(
+          categoryIds,
+        );
+      return { categories };
+      //
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        this.logger.error(
+          `Error fetching assistant template categories: ${e.message}`,
+        );
+      } else {
+        this.logger.error(`Error fetching assistant template categories`);
       }
       throw new NotFoundException();
     }

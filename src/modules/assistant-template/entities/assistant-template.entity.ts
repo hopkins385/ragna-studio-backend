@@ -1,4 +1,4 @@
-interface AssistantTemplatePrompt {
+export interface AssistantTemplatePrompt {
   de: string;
   en: string;
 }
@@ -8,14 +8,14 @@ export class AssistantTemplateEntity {
   llmId: string;
   title: string;
   description: string;
-  systemPrompt: AssistantTemplatePrompt;
+  systemPrompt?: AssistantTemplatePrompt;
 
   constructor(
     id: string,
     llmId: string,
     title: string,
     description: string,
-    systemPrompt: AssistantTemplatePrompt,
+    systemPrompt?: AssistantTemplatePrompt,
   ) {
     this.id = id;
     this.llmId = llmId;
@@ -29,7 +29,7 @@ export class AssistantTemplateEntity {
     llmId: string;
     title: string;
     description: string;
-    systemPrompt: AssistantTemplatePrompt;
+    systemPrompt?: AssistantTemplatePrompt;
   }) {
     return new AssistantTemplateEntity(
       input.id,

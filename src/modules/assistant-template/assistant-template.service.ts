@@ -44,4 +44,12 @@ export class AssistantTemplateService {
   async findOneCategory(id: string) {
     return this.assistantTemplateRepo.findOneCategory(id);
   }
+
+  async findTemplatesByCategory(id: string) {
+    return this.assistantTemplateRepo.findTemplatesByCategory(id);
+  }
+
+  async findTemplatesByCategoryIds(ids: string[]) {
+    return this.assistantTemplateRepo.findTemplatesByCategoryIds(ids);
+  }
 }
