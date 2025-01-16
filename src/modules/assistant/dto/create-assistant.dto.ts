@@ -10,7 +10,6 @@ export class CreateAssistantDto {
   readonly description: string;
   readonly systemPrompt: string;
   readonly isShared: boolean | undefined;
-  readonly systemPromptTokenCount: number;
   readonly tools: string[];
 
   constructor(
@@ -20,7 +19,6 @@ export class CreateAssistantDto {
     description: string,
     systemPrompt: string,
     isShared: boolean | undefined,
-    systemPromptTokenCount: number,
     tools: string[],
   ) {
     this.teamId = teamId.toLowerCase();
@@ -29,7 +27,6 @@ export class CreateAssistantDto {
     this.description = description.toString();
     this.systemPrompt = systemPrompt.toString();
     this.isShared = Boolean(isShared);
-    this.systemPromptTokenCount = Number(systemPromptTokenCount);
     this.tools = tools;
   }
 
@@ -40,7 +37,6 @@ export class CreateAssistantDto {
     description: string;
     systemPrompt: string;
     isShared?: boolean | undefined;
-    systemPromptTokenCount: number;
     tools: string[];
   }): CreateAssistantDto {
     return new CreateAssistantDto(
@@ -50,7 +46,6 @@ export class CreateAssistantDto {
       input.description,
       input.systemPrompt,
       input.isShared || false,
-      input.systemPromptTokenCount,
       input.tools,
     );
   }

@@ -49,7 +49,6 @@ export class AssistantService {
     description,
     systemPrompt,
     isShared,
-    systemPromptTokenCount,
     tools,
   }: CreateAssistantDto) {
     if (!teamId) {
@@ -63,7 +62,7 @@ export class AssistantService {
         description,
         systemPrompt,
         isShared,
-        systemPromptTokenCount,
+        systemPromptTokenCount: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
         tools: {
@@ -192,7 +191,6 @@ export class AssistantService {
     isShared,
     hasKnowledgeBase,
     hasWorkflow,
-    systemPromptTokenCount,
     tools,
   }: UpdateAssistantDto) {
     if (!teamId) {
@@ -209,7 +207,7 @@ export class AssistantService {
         description,
         systemPrompt,
         isShared,
-        systemPromptTokenCount,
+        systemPromptTokenCount: 1,
         hasKnowledgeBase,
         hasWorkflow,
         updatedAt: new Date(),

@@ -8,6 +8,5 @@ export const createAssistantSchema = z.object({
   description: z.string().min(1).max(255),
   systemPrompt: z.string().min(1),
   isShared: z.boolean().default(false).optional(),
-  systemPromptTokenCount: z.number(),
   tools: z.array(cuidSchema),
 });

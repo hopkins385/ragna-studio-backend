@@ -13,7 +13,6 @@ export class UpdateAssistantDto {
   readonly isShared: boolean | undefined;
   readonly hasKnowledgeBase: boolean | undefined;
   readonly hasWorkflow: boolean | undefined;
-  readonly systemPromptTokenCount: number;
   readonly tools: string[];
 
   constructor(
@@ -26,7 +25,6 @@ export class UpdateAssistantDto {
     isShared: boolean | undefined,
     hasKnowledgeBase: boolean | undefined,
     hasWorkflow: boolean | undefined,
-    systemPromptTokenCount: number,
     tools: string[],
   ) {
     this.teamId = teamId.toLowerCase();
@@ -38,7 +36,6 @@ export class UpdateAssistantDto {
     this.isShared = Boolean(isShared);
     this.hasKnowledgeBase = Boolean(hasKnowledgeBase);
     this.hasWorkflow = Boolean(hasWorkflow);
-    this.systemPromptTokenCount = Number(systemPromptTokenCount);
     this.tools = tools;
   }
 
@@ -52,7 +49,6 @@ export class UpdateAssistantDto {
     isShared?: boolean | undefined;
     hasKnowledgeBase?: boolean | undefined;
     hasWorkflow?: boolean | undefined;
-    systemPromptTokenCount: number;
     tools: string[];
   }): UpdateAssistantDto {
     return new UpdateAssistantDto(
@@ -65,7 +61,6 @@ export class UpdateAssistantDto {
       input.isShared || false,
       input.hasKnowledgeBase || false,
       input.hasWorkflow || false,
-      input.systemPromptTokenCount,
       input.tools,
     );
   }

@@ -44,7 +44,6 @@ export class AssistantController {
       description: body.description,
       systemPrompt: body.systemPrompt,
       isShared: body.isShared,
-      systemPromptTokenCount: body.systemPromptTokenCount,
       tools: body.tools,
     });
     try {
@@ -134,7 +133,6 @@ export class AssistantController {
           isShared: body.isShared,
           hasKnowledgeBase: body.hasKnowledgeBase,
           hasWorkflow: body.hasWorkflow,
-          systemPromptTokenCount: body.systemPromptTokenCount,
           tools: body.tools,
         }),
       );
