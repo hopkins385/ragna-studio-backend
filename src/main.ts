@@ -8,6 +8,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { SwaggerConfig } from './config/swagger.config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
+import { ZodValidationExceptionFilter } from './filter/zod-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -30,6 +31,8 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+
+  app.useGlobalFilters(new ZodValidationExceptionFilter());
 
   // if (!AppModule.isDev) {
   //   app.useGlobalFilters(new HttpExceptionFilter());
