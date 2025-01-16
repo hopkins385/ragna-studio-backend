@@ -297,6 +297,7 @@ model AssistantTemplate {
 
 model AssistantTemplateCategory {
   id          String    @id @default(cuid())
+  parentId    String?   @map("parent_id")
   name        String
   description String
   config      Json?     @map("config") @db.Json
@@ -305,6 +306,10 @@ model AssistantTemplateCategory {
   deletedAt   DateTime? @map("deleted_at")
 
   categoryItems AssistantTemplateCategoryItem[]
+
+  // Self-referential relations
+  parent   AssistantTemplateCategory?  @relation("AssistantCategoryParentChild", fields: [parentId], references: [id])
+  children AssistantTemplateCategory[] @relation("AssistantCategoryParentChild")
 
   @@map("assistant_template_categories")
 }
