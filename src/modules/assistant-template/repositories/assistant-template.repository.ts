@@ -31,7 +31,6 @@ export class AssistantTemplateRepository {
         llmId: template.llmId,
         title: template.title,
         description: template.description,
-        systemPrompt: template.systemPrompt,
       }),
     );
   }
@@ -54,17 +53,16 @@ export class AssistantTemplateRepository {
           id: true,
           llmId: true,
           title: true,
-          systemPrompt: true,
           description: true,
           createdAt: true,
           updatedAt: true,
         },
         where: {
-          deletedAt: null,
           title: {
             contains: searchQuery,
             mode: 'insensitive',
           },
+          deletedAt: null,
         },
       })
       .withPages({
@@ -79,7 +77,6 @@ export class AssistantTemplateRepository {
         llmId: template.llmId,
         title: template.title,
         description: template.description,
-        systemPrompt: template.systemPrompt,
       }),
     );
 
@@ -95,10 +92,20 @@ export class AssistantTemplateRepository {
     const limit = payload.limit || 10;
 
     const templates = await this.prisma.assistantTemplate.findMany({
-      take: limit,
+      select: {
+        id: true,
+        llmId: true,
+        title: true,
+        description: true,
+        config: true,
+      },
+      where: {
+        deletedAt: null,
+      },
       orderBy: {
         createdAt: 'desc',
       },
+      take: limit,
     });
 
     if (!templates) {
@@ -111,14 +118,23 @@ export class AssistantTemplateRepository {
         llmId: template.llmId,
         title: template.title,
         description: template.description,
-        systemPrompt: template.systemPrompt,
+        config: template.config,
       }),
     );
   }
 
-  async findOne(id: string): Promise<AssistantTemplateEntity | null> {
+  async findOne(templateId: string): Promise<AssistantTemplateEntity | null> {
     const template = await this.prisma.assistantTemplate.findUnique({
-      where: { id },
+      select: {
+        id: true,
+        llmId: true,
+        title: true,
+        description: true,
+      },
+      where: {
+        id: templateId,
+        deletedAt: null,
+      },
     });
 
     if (!template) {
@@ -130,7 +146,6 @@ export class AssistantTemplateRepository {
       llmId: template.llmId,
       title: template.title,
       description: template.description,
-      systemPrompt: template.systemPrompt,
     });
   }
 
@@ -170,9 +185,9 @@ export class AssistantTemplateRepository {
       });
   }
 
-  async findOneCategory(id: string) {
+  async findOneCategory(categoryId: string) {
     return this.prisma.assistantTemplateCategory.findUnique({
-      where: { id },
+      where: { id: categoryId },
     });
   }
 
@@ -184,14 +199,14 @@ export class AssistantTemplateRepository {
     });
   }
 
-  async findTemplatesByCategoryIds(ids: string[]) {
+  async findTemplatesByCategoryIds(categoryIds: string[]) {
     const MAX_TEMPLATES_PER_CATEGORY = 10;
 
-    if (!ids) {
+    if (!categoryIds) {
       throw new Error('No category ids provided');
     }
 
-    if (!ids.length) {
+    if (!categoryIds.length) {
       return [];
     }
 
@@ -208,7 +223,7 @@ export class AssistantTemplateRepository {
         },
         where: {
           categoryId: {
-            in: ids,
+            in: categoryIds,
           },
         },
       });
@@ -233,7 +248,7 @@ export class AssistantTemplateRepository {
     // group by category Ids
     // and return for each category a configurable number of templates
     // the return shall be an array of categories with templates
-    const templatesByCategory = ids.map((categoryId) => {
+    const templatesByCategory = categoryIds.map((categoryId) => {
       const templatesForCategory = templates.filter((template) =>
         itemsRelations.some(
           (item) =>

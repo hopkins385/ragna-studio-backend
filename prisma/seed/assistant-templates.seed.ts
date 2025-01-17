@@ -1,5 +1,6 @@
 import { SeedPrismaClient, prismaSeedClient } from './seed.config';
 import { faker } from '@faker-js/faker';
+import { createId } from '@paralleldrive/cuid2';
 
 async function seedAssistantTemplateCategories(prisma: SeedPrismaClient) {
   const cats = await prisma.assistantTemplateCategory.createManyAndReturn({
@@ -173,10 +174,14 @@ async function seedAssistantTemplates(prisma: SeedPrismaClient) {
       title: 'Text zusammen\u00ADfassen',
       description:
         'Vorgegebener Text wird in einen kurzen Text zusammengefasst.',
-      systemPrompt: {
+      assistantTitle: 'Text zusammen\u00ADfassen',
+      assistantDescription:
+        'Vorgegebener Text wird in einen kurzen Text zusammengefasst.',
+      assistantSystemPrompt: {
         de: faker.lorem.sentence(),
         en: faker.lorem.sentence(),
       },
+      assistantToolIds: [createId(), createId(), createId(), createId()],
       config: {
         icon: icons[Math.floor(Math.random() * icons.length)],
         color: faker.color.human(),

@@ -278,15 +278,18 @@ model AssistantTool {
 }
 
 model AssistantTemplate {
-  id           String    @id @default(cuid())
-  llmId        String    @map("llm_id")
-  title        String
-  description  String
-  systemPrompt Json      @map("system_prompt") @db.Json /// [TemplateSystemPromptType]
-  config       Json?     @map("config") @db.Json
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
+  id                    String    @id @default(cuid())
+  llmId                 String    @map("llm_id")
+  title                 String
+  description           String
+  assistantTitle        String    @default("") @map("assistant_title")
+  assistantDescription  String    @default("") @map("assistant_description")
+  assistantToolIds      String[]  @default([]) @map("assistant_tool_ids")
+  assistantSystemPrompt Json      @map("assistant_system_prompt") @db.Json /// [TemplateSystemPromptType]
+  config                Json?     @map("config") @db.Json /// [TemplateConfigType]
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
 
   categoryItems AssistantTemplateCategoryItem[]
 

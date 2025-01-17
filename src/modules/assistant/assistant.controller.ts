@@ -30,6 +30,7 @@ import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
 import { PaginateBody, PaginateQuery } from '@/common/dto/paginate.dto';
 import { UpdateAssistantHasKnowledgeBody } from './dto/update-assistant-knw-body.dto';
+import { CreateAssistantFromTemplateBody } from './dto/create-from-template.dto';
 
 @Controller('assistant')
 export class AssistantController {
@@ -48,6 +49,23 @@ export class AssistantController {
     });
     try {
       return await this.assistantService.create(payload);
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating assistant');
+    }
+  }
+
+  @Post('from-template')
+  async createFromTemplate(
+    @ReqUser() user: UserEntity,
+    @Body() body: CreateAssistantFromTemplateBody,
+  ) {
+    try {
+      const assistant = await this.assistantService.createFromTemplate({
+        teamId: user.firstTeamId,
+        templateId: body.templateId,
+        language: body.language,
+      });
+      return { assistant };
     } catch (error) {
       throw new InternalServerErrorException('Error creating assistant');
     }

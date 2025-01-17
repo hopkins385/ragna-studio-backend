@@ -76,6 +76,51 @@ export class AssistantService {
     });
   }
 
+  async createFromTemplate(payload: {
+    teamId: string;
+    language: 'de' | 'en';
+    templateId: string;
+  }) {
+    // find template
+    const template =
+      await this.assistantRepository.prisma.assistantTemplate.findFirst({
+        select: {
+          id: true,
+          llmId: true,
+          assistantTitle: true,
+          assistantDescription: true,
+          assistantSystemPrompt: true,
+          assistantToolIds: true,
+        },
+        where: {
+          id: payload.templateId,
+          deletedAt: null,
+        },
+      });
+
+    if (!template) {
+      throw new Error('Template not found');
+    }
+
+    const templateSystemPrompt =
+      template.assistantSystemPrompt[payload.language];
+
+    // create assistant
+    return this.assistantRepository.prisma.assistant.create({
+      data: {
+        teamId: payload.teamId,
+        llmId: template.llmId,
+        title: template.assistantTitle,
+        description: template.assistantDescription,
+        systemPrompt: templateSystemPrompt,
+        systemPromptTokenCount: 1,
+        isShared: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
+
   async findFirst({ assistantId }: FindAssistantDto) {
     if (!assistantId) {
       throw new Error('Assistant ID is required');
