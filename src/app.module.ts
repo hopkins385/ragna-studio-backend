@@ -50,6 +50,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { MulterModule } from '@nestjs/platform-express';
 import { SessionModule } from './modules/session/session.module';
 import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
+import { SlackModule } from './modules/slack/slack.module';
 
 @Module({
   imports: [
@@ -166,6 +167,8 @@ import { AssistantTemplateModule } from './modules/assistant-template/assistant-
     HttpClientModule,
 
     UserFavoriteModule,
+
+    SlackModule,
     // ,
   ],
   controllers: [ChatMessageController],

@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { BrevoProvider } from './providers/brevo.provider';
 import { LiquidTemplateEngine } from './engines/liquid-template.engine';
 import { EmailTemplateRepository } from './repositories/email-template.repository';
-import { BullModule } from '@nestjs/bullmq';
 
 @Module({})
 export class MailModule {
