@@ -1,34 +1,59 @@
+import { SlackService } from './../../slack/slack.service';
 import { MailService } from '@/modules/mail/mail.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { OnboardingCompletedDto } from '@/modules/onboard/events/onboarding.event';
 import { OnboardingEvent } from '@/modules/onboard/enums/onboarding-event.enum';
 
 @Injectable()
 export class OnboardingListeners {
-  constructor(private readonly mailService: MailService) {}
+  private readonly logger = new Logger(OnboardingListeners.name);
+
+  constructor(
+    private readonly mailService: MailService,
+    private readonly slackService: SlackService,
+  ) {}
 
   @OnEvent(OnboardingEvent.COMPLETED)
   async handleOnboardingCompletedEvent({
     userName,
     userEmail,
-  }: OnboardingCompletedDto) {
+  }: OnboardingCompletedDto): Promise<void> {
     // send welcome email
-    await this.sendWelcomeMail({
-      name: userName,
-      email: userEmail,
-    });
+    // await this.sendWelcomeMail({
+    //   name: userName,
+    //   email: userEmail,
+    // });
+
+    // send slack notification
+    try {
+      await this.sendNewUserSlackNotification();
+      //
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Failed to send slack notification: ${error.message}`,
+        );
+      }
+
+      return;
+    }
   }
 
   async sendWelcomeMail({ name, email }: { name: string; email: string }) {
-    const emailData = {
+    return this.mailService.sendTemplatedEmail({
       to: { name, email },
       templateId: 'welcome-de',
       templateData: {
         name,
         activationLink: 'https://ragna.io',
       },
-    };
-    return this.mailService.sendTemplatedEmail(emailData);
+    });
+  }
+
+  async sendNewUserSlackNotification() {
+    const channel = '#appevents';
+    const message = 'A new user has joined the platform!';
+    return this.slackService.sendMessage({ channel, message });
   }
 }
