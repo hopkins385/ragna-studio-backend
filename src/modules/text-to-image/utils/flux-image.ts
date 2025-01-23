@@ -79,11 +79,11 @@ export class FluxImageGenerator {
   ): Promise<PollingResult> {
     try {
       // Step 1: Create the generation request
-      const generationResponse = await this.createRequest(request);
+      const { id } = await this.createRequest(request);
 
       // Step 2: Poll for the result
       return new Promise((resolve, reject) => {
-        this.pollForResult(generationResponse.id, resolve).catch(reject);
+        this.pollForResult(id, resolve).catch(reject);
       });
     } catch (error) {
       console.error('Error generating image:', error);
@@ -123,8 +123,7 @@ export class FluxImageGenerator {
     const pollingInterval = 500; // 500ms
 
     const getSuccessResponse = async () => {
-      const res = await this.getResult(requestId);
-      const { status, result } = res;
+      const { status, result } = await this.getResult(requestId);
 
       switch (status) {
         case StatusResponse.Ready:
