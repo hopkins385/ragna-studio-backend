@@ -51,6 +51,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { SessionModule } from './modules/session/session.module';
 import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
 import { SlackModule } from './modules/slack/slack.module';
+import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module';
 
 @Module({
   imports: [
@@ -169,6 +170,8 @@ import { SlackModule } from './modules/slack/slack.module';
     UserFavoriteModule,
 
     SlackModule,
+
+    PromptWizardModule,
     // ,
   ],
   controllers: [ChatMessageController],
