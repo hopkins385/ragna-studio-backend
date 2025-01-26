@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserEntity } from '../user/entities/user.entity';
-import { FluxProInputs } from './schemas/flux-pro.schema';
 import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
 import { StorageService } from '../storage/storage.service';
 import { TextToImageRepository } from './repositories/text-to-image.repository';
@@ -8,6 +7,10 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
+import { FluxProInputsDto } from './utils/flux-pro-inputs.dto';
+import { FluxProBody } from './dto/flux-pro-body.dto';
+import { FluxUltraBody } from './dto/flux-ultra-body.dto';
+import { FluxUltraInputsDto } from './utils/flux-ultra-inputs.dto';
 
 enum TextToImageRunStatus {
   PENDING = 'PENDING',
@@ -31,6 +34,8 @@ interface GenImageResult {
 
 type GenImageExtension = 'jpeg' | 'png';
 
+type GenerateImagesPayload = FluxProInputsDto | FluxUltraInputsDto;
+
 @Injectable()
 export class TextToImageService {
   private readonly logger = new Logger(TextToImageService.name);
@@ -42,26 +47,6 @@ export class TextToImageService {
     @InjectQueue(QueueName.IMAGE_CONVERSION)
     private readonly imageConversionQueue: Queue,
   ) {}
-
-  public async generateFluxProImages(
-    user: UserEntity,
-    payload: FluxProInputs,
-  ): Promise<string[]> {
-    const imgCount = payload.imgCount ?? 1;
-
-    try {
-      const run = await this.createSingleRun(payload);
-      const genImageResults = await this.generateImagesForRun(
-        run,
-        imgCount,
-        payload,
-      );
-      return this.processImageResults(user.id, genImageResults, payload);
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Failed to generate images');
-    }
-  }
 
   public async createFolder(payload: { teamId: string; folderName: string }) {
     return this.textToImageRepo.prisma.textToImageFolder.create({
@@ -293,12 +278,85 @@ export class TextToImageService {
     return this.softDeleteRun(runId);
   }
 
-  private async createSingleRun(payload: FluxProInputs): Promise<Run> {
+  public async generateFluxProImages(
+    user: UserEntity,
+    payload: FluxProBody,
+  ): Promise<string[]> {
+    const imgCount = payload.imgCount ?? 1;
+
+    const genImageDto = FluxProInputsDto.fromInput({
+      prompt: payload.prompt,
+      output_format: payload.outputFormat,
+      width: payload.width,
+      height: payload.height,
+      steps: payload.steps,
+      prompt_upsampling: payload.promptUpsampling,
+      seed: payload.seed,
+      guidance: payload.guidance,
+      safety_tolerance: payload.safetyTolerance,
+      interval: payload.interval,
+    });
+
+    try {
+      const run = await this.createSingleRun('fluxpro', payload);
+      const genImageResults = await this.generateImagesForRun(
+        run,
+        imgCount,
+        genImageDto,
+      );
+      return this.processImageResults(user.id, genImageResults, payload);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new Error('Failed to generate images');
+    }
+  }
+
+  public async generateFluxUltraImages(
+    user: UserEntity,
+    payload: FluxUltraBody,
+  ): Promise<string[]> {
+    const imgCount = payload.imgCount ?? 1;
+
+    const genImageDto = FluxUltraInputsDto.fromInput({
+      prompt: payload.prompt,
+      seed: payload.seed,
+      aspect_ratio: payload.aspectRatio,
+      safety_tolerance: payload.safetyTolerance,
+      output_format: payload.outputFormat,
+      raw: payload.raw,
+      image_prompt: payload.imagePrompt,
+      image_prompt_strength: payload.imagePromptStrength,
+    });
+
+    try {
+      const run = await this.createSingleRun('fluxultra', payload);
+      const genImageResults = await this.generateImagesForRun(
+        run,
+        imgCount,
+        genImageDto,
+      );
+      return this.processImageResults(user.id, genImageResults, payload);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new Error('Failed to generate images');
+    }
+  }
+
+  private async createSingleRun(
+    provider: 'fluxpro' | 'fluxultra',
+    payload: FluxProBody | FluxUltraBody,
+  ): Promise<Run> {
+    if (!provider) {
+      throw new Error('Invalid request');
+    }
+
     try {
       return await this.createRun({
         folderId: payload.folderId,
         prompt: payload.prompt,
-        settings: {},
+        settings: {
+          provider,
+        },
       });
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -328,7 +386,7 @@ export class TextToImageService {
   private async generateImagesForRun(
     run: Run,
     imageCount: number,
-    payload: FluxProInputs,
+    payload: GenerateImagesPayload,
   ): Promise<GenImageResult[]> {
     return Promise.all(
       Array.from({ length: imageCount }, () =>
@@ -339,10 +397,9 @@ export class TextToImageService {
 
   private async generateSingleImage(
     run: Run,
-    payload: FluxProInputs,
+    payload: GenerateImagesPayload,
   ): Promise<GenImageResult> {
     try {
-      //@ts-ignore
       const genImage = await this.fluxImageGenerator.generateImage(payload);
       return {
         run,
@@ -368,7 +425,7 @@ export class TextToImageService {
   private async processImageResults(
     userId: string,
     results: GenImageResult[],
-    payload: FluxProInputs,
+    payload: FluxProBody,
   ): Promise<string[]> {
     return Promise.all(
       results.map((result) =>
@@ -376,7 +433,7 @@ export class TextToImageService {
           userId,
           folderId: payload.folderId,
           result,
-          fileExtension: payload.output_format,
+          fileExtension: payload.outputFormat,
         }),
       ),
     );

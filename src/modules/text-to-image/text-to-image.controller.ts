@@ -22,6 +22,7 @@ import {
   RunIdParam,
 } from './dto/text-to-image.param.dto';
 import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
+import { FluxUltraBody } from './dto/flux-ultra-body.dto';
 
 @Controller('text-to-image')
 export class TextToImageController {
@@ -29,10 +30,29 @@ export class TextToImageController {
 
   constructor(private readonly textToImageService: TextToImageService) {}
 
-  @Post()
-  async generateImages(@ReqUser() user: UserEntity, @Body() body: FluxProBody) {
+  @Post('flux-pro')
+  async generateFluxProImages(
+    @ReqUser() user: UserEntity,
+    @Body() body: FluxProBody,
+  ) {
     try {
       const imageUrls = await this.textToImageService.generateFluxProImages(
+        user,
+        body,
+      );
+      return { imageUrls };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to generate images');
+    }
+  }
+
+  @Post('flux-ultra')
+  async generateFluxUltraImages(
+    @ReqUser() user: UserEntity,
+    @Body() body: FluxUltraBody,
+  ) {
+    try {
+      const imageUrls = await this.textToImageService.generateFluxUltraImages(
         user,
         body,
       );

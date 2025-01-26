@@ -17,21 +17,10 @@
 }*/
 
 import { waitFor } from '@/common/utils/waitFor';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-export interface FluxProPlusInputs {
-  prompt: string;
-  output_format?: 'jpeg' | 'png'; // default: jpeg
-  width?: number; // default: 1024, min: 256, max: 1440, multiple of 32
-  height?: number; // default: 768, min: 256, max: 1440, multiple of 32
-  steps?: number; // default: 40, min: 1, max: 50
-  prompt_upsampling?: boolean; // default: false
-  seed?: number | null; // default: null
-  guidance?: number; // min: 1.5, max: 5.0, default: 2.5
-  safety_tolerance?: number | null; // min: 0, max: 6, default: 2
-  interval?: number; // min: 1.0, max: 4.0, default: 2.0
-}
+import { FluxProInputsDto } from './flux-pro-inputs.dto';
+import { FluxUltraInputsDto } from './flux-ultra-inputs.dto';
 
 interface ResultResponse {
   id: string;
@@ -68,15 +57,33 @@ export enum StatusResponse {
   Error = 'Error',
 }
 
+type GenerateImageRequest = FluxProInputsDto | FluxUltraInputsDto;
+
 @Injectable()
 export class FluxImageGenerator {
+  private readonly logger = new Logger(FluxImageGenerator.name);
   private readonly baseUrl: string = 'https://api.bfl.ml/v1';
+  private readonly headers: Record<string, string>;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(private readonly config: ConfigService) {
+    this.headers = {
+      accept: 'application/json',
+      'x-key': this.config.get<string>('FLUX_API_KEY'),
+      'Content-Type': 'application/json',
+    };
+  }
 
   public async generateImage(
-    request: FluxProPlusInputs,
+    request: GenerateImageRequest,
   ): Promise<PollingResult> {
+    if (
+      !(request instanceof FluxProInputsDto) &&
+      !(request instanceof FluxUltraInputsDto)
+    ) {
+      throw new Error(
+        'Invalid request, expected FluxProInputsDto or FluxUltraInputsDto',
+      );
+    }
     try {
       // Step 1: Create the generation request
       const { id } = await this.createRequest(request);
@@ -92,16 +99,29 @@ export class FluxImageGenerator {
   }
 
   private async createRequest(
-    request: FluxProPlusInputs,
+    request: GenerateImageRequest,
   ): Promise<GenerationResponse> {
-    const response = await fetch(`${this.baseUrl}/flux-pro-1.1`, {
+    const fluxPro = request instanceof FluxProInputsDto;
+    const fluxUltra = request instanceof FluxUltraInputsDto;
+    const endpoint = fluxPro
+      ? 'flux-pro-1.1'
+      : fluxUltra
+        ? 'flux-pro-1.1-ultra'
+        : null;
+
+    if (!endpoint) {
+      throw new Error('Invalid request');
+    }
+
+    const url = new URL(`${this.baseUrl}/${endpoint}`);
+    const body = JSON.stringify(request);
+
+    this.logger.debug(`Creating request to ${url} with body:`, body);
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'x-key': this.config.get<string>('FLUX_API_KEY'),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
+      headers: this.headers,
+      body,
     });
 
     if (!response.ok) {
