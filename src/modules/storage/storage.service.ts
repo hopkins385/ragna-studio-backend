@@ -282,26 +282,41 @@ export class StorageService {
     };
   }
 
-  async downloadFileFromBucket(path: string): Promise<Buffer> {
-    throw new Error('Method not implemented.');
+  async downloadFromBucket(payload: { bucket: Bucket; bucketPath: string }) {
+    const { bucket, bucketPath } = payload;
+    const { bucket: theBucket, url } = this.getBucketSettings(bucket);
+
     const getObjectCommand = new GetObjectCommand({
-      Bucket: 'ragna-public',
-      Key: path,
+      Bucket: theBucket,
+      Key: bucketPath,
     });
-    const { Body } = await this.s3Client.send(getObjectCommand);
-    if (!Body) throw new Error('File not found');
-    const file = await new Response(Body as BodyInit).arrayBuffer();
-    if (!file) throw new Error('File not found');
-    return Buffer.from(file);
+
+    try {
+      const { Body } = await this.s3Client.send(getObjectCommand);
+      if (!Body) throw new Error('File not found');
+
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of Body as any) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      return buffer;
+    } catch (error) {
+      this.logger.error('Error downloading file from bucket', error);
+      throw error;
+    }
   }
 
   async downloadFileFromBucketToTemp(vpath: string): Promise<string> {
+    throw new Error('Method not implemented.');
+    /*
     const buffer = await this.downloadFileFromBucket(vpath);
     if (!buffer) throw new Error('File not found');
     const fpath = join(process.cwd(), 'temp', vpath);
     await mkdir(dirname(fpath), { recursive: true });
     await writeFile(fpath, buffer, 'binary');
     return fpath;
+    */
   }
 
   async downloadFileToTemp(url: string): Promise<string> {

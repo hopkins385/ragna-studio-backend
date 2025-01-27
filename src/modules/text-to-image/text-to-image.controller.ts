@@ -10,6 +10,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Logger,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { TextToImageService } from './text-to-image.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
@@ -23,6 +25,7 @@ import {
 } from './dto/text-to-image.param.dto';
 import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 import { FluxUltraBody } from './dto/flux-ultra-body.dto';
+import { IdParam } from '@/common/dto/cuid-param.dto';
 
 @Controller('text-to-image')
 export class TextToImageController {
@@ -62,6 +65,18 @@ export class TextToImageController {
     }
   }
 
+  @Get('random')
+  async getRandomImagesPaginated(@Query() query: PaginateQuery) {
+    try {
+      const runs = await this.textToImageService.getRandomImagesPaginated({
+        page: query.page,
+      });
+      return { runs };
+    } catch (error) {
+      throw new NotFoundException('Folder not found');
+    }
+  }
+
   @Get('folders')
   async getFolders(@ReqUser() user: UserEntity) {
     try {
@@ -84,18 +99,17 @@ export class TextToImageController {
     }
   }
 
-  @Get(':folderId')
-  async getFolderImagesRuns(@Param() param: FolderIdParam) {
-    const folderId = param.folderId;
-    const showDeleted = false; // TODO: Implement this
-
+  @Get(':id/download')
+  async downloadImage(
+    @Param() param: IdParam,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     try {
-      const runs = await this.textToImageService.getFolderImagesRuns(folderId, {
-        showDeleted,
-      });
-      return { runs };
-    } catch (error) {
-      throw new NotFoundException('Folder not found');
+      const file = await this.textToImageService.downloadImage(param.id);
+      return new StreamableFile(file);
+    } catch (error: any) {
+      this.logger.error(`Failed to download image: ${error?.message}`);
+      throw new NotFoundException('Image not found');
     }
   }
 
@@ -118,11 +132,14 @@ export class TextToImageController {
     }
   }
 
-  @Get('random')
-  async getRandomImagesPaginated(@Query() query: PaginateQuery) {
+  @Get(':folderId')
+  async getFolderImagesRuns(@Param() param: FolderIdParam) {
+    const folderId = param.folderId;
+    const showDeleted = false; // TODO: Implement this
+
     try {
-      const runs = await this.textToImageService.getRandomImagesPaginated({
-        page: query.page,
+      const runs = await this.textToImageService.getFolderImagesRuns(folderId, {
+        showDeleted,
       });
       return { runs };
     } catch (error) {

@@ -16,8 +16,8 @@ import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { MediaAbleBody } from '@/modules/media-able/dto/media-able-body.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { UserEntity } from '@/modules/user/entities/user.entity';
 
 @Controller('media')
 export class MediaController {
