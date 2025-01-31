@@ -28,18 +28,24 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const decodedSessionId = decoded.sid;
 
     if (!decodedUserId || !decodedSessionId) {
+      this.logger.debug(
+        `Invalid token, missing user id or session id`,
+        decoded,
+      );
       throw new UnauthorizedException();
     }
 
     const sessionData = await this.sessionService.getSession(decodedSessionId);
 
     if (!sessionData || !sessionData.user) {
+      this.logger.debug(`Invalid token, session not found`, sessionData);
       throw new UnauthorizedException();
     }
 
     const user = await this.userService.findOne(sessionData.user.id);
 
     if (!user || user.id !== decodedUserId) {
+      this.logger.debug(`Invalid token, user not found`, user);
       throw new UnauthorizedException();
     }
 
