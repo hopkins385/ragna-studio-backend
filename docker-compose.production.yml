@@ -1,7 +1,7 @@
 services:
   server:
     deploy:
-      replicas: 1
+      replicas: 4
       update_config:
         failure_action: rollback
         parallelism: 1
