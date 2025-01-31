@@ -49,7 +49,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
 import { SlackModule } from './modules/slack/slack.module';
 import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module';
-import KeyvRedis from '@keyv/redis';
+import { createKeyv } from '@keyv/redis';
 
 @Module({
   imports: [
@@ -86,9 +86,9 @@ import KeyvRedis from '@keyv/redis';
       useFactory: async (config: ConfigService) => {
         return {
           stores: [
-            new KeyvRedis({
-              url: `redis://${config.get('REDIS_HOST')}:${config.get('REDIS_PORT')}`,
-              password: config.get('REDIS_PASSWORD'),
+            createKeyv({
+              url: `redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`,
+              password: config.get('REDIS_PASSWORD', ''),
             }),
           ],
         };
