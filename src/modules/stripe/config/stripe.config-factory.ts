@@ -9,7 +9,7 @@ const stripeFactory = (config: ConfigService): StripeModuleOptions => {
   return {
     apiKey: config.getOrThrow<string>('STRIPE_API_KEY'),
     options: {
-      apiVersion: '2024-10-28.acacia',
+      apiVersion: '2025-01-27.acacia',
     },
   };
 };

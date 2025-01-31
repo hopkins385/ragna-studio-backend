@@ -45,13 +45,11 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { HttpClientModule } from './modules/http-client/http-client.module';
 import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
 import { MailModule } from './modules/mail/mail.module';
-import { JwtModule } from '@nestjs/jwt';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-import { MulterModule } from '@nestjs/platform-express';
-import { SessionModule } from './modules/session/session.module';
 import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
 import { SlackModule } from './modules/slack/slack.module';
 import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
@@ -85,14 +83,16 @@ import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module
       isGlobal: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          store: 'redis', // TODO: add redis connection
-          host: config.get('REDIS_HOST', 'localhost'),
-          port: config.get('REDIS_PORT', 6379),
-          password: config.get('REDIS_PASSWORD', ''),
-        },
-      ],
+      useFactory: async (config: ConfigService) => {
+        return {
+          stores: [
+            new KeyvRedis({
+              url: `redis://${config.get('REDIS_HOST')}:${config.get('REDIS_PORT')}`,
+              password: config.get('REDIS_PASSWORD'),
+            }),
+          ],
+        };
+      },
     }),
     // Mail
     MailModule.forRoot({
