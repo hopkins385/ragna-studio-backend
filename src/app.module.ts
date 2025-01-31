@@ -87,7 +87,7 @@ import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          store: 'redis',
+          store: 'redis', // TODO: add redis connection
           host: config.get('REDIS_HOST', 'localhost'),
           port: config.get('REDIS_PORT', 6379),
           password: config.get('REDIS_PASSWORD', ''),
