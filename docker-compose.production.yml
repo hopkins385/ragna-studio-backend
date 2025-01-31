@@ -20,6 +20,12 @@ services:
       - 'traefik.docker.network=traefik_net'
       # Common
       - 'traefik.http.services.api-srv.loadbalancer.server.port=3000'
+      # Sticky Sessions
+      - 'traefik.http.services.api-srv.loadbalancer.sticky=true'
+      - 'traefik.http.services.api-srv.loadbalancer.sticky.cookie.name=studioapi_sticky'
+      - 'traefik.http.services.api-srv.loadbalancer.sticky.cookie.secure=true'
+      - 'traefik.http.services.api-srv.loadbalancer.sticky.cookie.httpOnly=true'
+      - 'traefik.http.services.api-srv.loadbalancer.sticky.cookie.samesite=Strict'
       # HTTP Routers
       - 'traefik.http.routers.api-srv.rule=Host(`api.ragna.io`)'
       - 'traefik.http.routers.api-srv.entrypoints=https'
