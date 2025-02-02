@@ -50,6 +50,7 @@ import { AssistantTemplateModule } from './modules/assistant-template/assistant-
 import { SlackModule } from './modules/slack/slack.module';
 import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module';
 import { createKeyv } from '@keyv/redis';
+import { CacheManagerModule } from './modules/cache-manager/cache-manager.module';
 
 @Module({
   imports: [
@@ -172,6 +173,8 @@ import { createKeyv } from '@keyv/redis';
     SlackModule,
 
     PromptWizardModule,
+
+    CacheManagerModule,
     // ,
   ],
   controllers: [ChatMessageController],
