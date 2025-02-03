@@ -30,10 +30,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   app.useGlobalFilters(new ZodValidationExceptionFilter());
-
-  if (!AppModule.isDev) {
-    app.useGlobalFilters(new HttpExceptionFilter());
-  }
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

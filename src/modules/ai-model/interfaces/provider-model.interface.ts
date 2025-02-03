@@ -6,7 +6,8 @@ export type ProviderClass = new (
   config: ConfigService,
 ) => { createModel(): any };
 
-export interface ProviderModel {
+export interface ProviderModelConfig {
   provider: ProviderType;
   model: string;
+  structuredOutput?: boolean;
 }

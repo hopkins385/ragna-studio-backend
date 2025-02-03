@@ -2,14 +2,15 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createMistral } from '@ai-sdk/mistral';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { AiModelProvider } from '../schemas/aiModelProvider';
+import { AiModelProvider } from '@/modules/ai-model/schemas/aiModelProvider';
 import { ConfigService } from '@nestjs/config';
 import {
   ProviderClass,
-  ProviderModel,
-} from '../interfaces/provider-model.interface';
+  ProviderModelConfig,
+} from '@/modules/ai-model/interfaces/provider-model.interface';
 import { Injectable } from '@nestjs/common';
-import { ProviderType } from '../enums/provider.enum';
+import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import type { LanguageModelV1 } from 'ai';
 
 class OpenAIProvider extends AiModelProvider {
   createModel() {
@@ -17,7 +18,7 @@ class OpenAIProvider extends AiModelProvider {
       compatibility: 'strict',
       apiKey: this.config.get<string>('OPENAI_API_KEY'),
     });
-    return openai(this.model);
+    return openai(this.model, { structuredOutputs: false });
   }
 }
 
@@ -100,13 +101,13 @@ export class AiModelFactory {
     return this;
   }
 
-  setConfig({ provider, model }: ProviderModel): AiModelFactory {
+  setConfig({ provider, model }: ProviderModelConfig): AiModelFactory {
     this.provider = provider;
     this.model = model;
     return this;
   }
 
-  getModel() {
+  getModel(): LanguageModelV1 {
     const ProviderClass = AiModelFactory.providerMap[this.provider];
     if (!ProviderClass) {
       throw new Error(`Provider ${this.provider} not supported`);
