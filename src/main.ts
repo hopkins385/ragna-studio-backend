@@ -1,14 +1,11 @@
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  ClassSerializerInterceptor,
-  NestApplicationOptions,
-} from '@nestjs/common';
-import type { NestExpressApplication } from '@nestjs/platform-express';
-import helmet from 'helmet';
+import { ClassSerializerInterceptor } from '@nestjs/common';
 import { SwaggerConfig } from './config/swagger.config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
 import { ZodValidationExceptionFilter } from './filter/zod-exception.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -34,22 +31,15 @@ async function bootstrap() {
 
   app.useGlobalFilters(new ZodValidationExceptionFilter());
 
-  // if (!AppModule.isDev) {
-  //   app.useGlobalFilters(new HttpExceptionFilter());
-  // }
+  if (!AppModule.isDev) {
+    app.useGlobalFilters(new HttpExceptionFilter());
+  }
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({
     origin: AppModule.origins,
     methods: ['POST', 'PATCH', 'GET', 'DELETE', 'OPTIONS', 'HEAD'],
   });
-
-  // app.use(session(getSessionConfig(AppModule.isDev)));
-  // app.use(passport.initialize());
-  // app.use(passport.session());
-
-  // const { doubleCsrfProtection } = doubleCsrf(getCsrfOptions(AppModule.isDev));
-  // app.use(doubleCsrfProtection);
 
   if (AppModule.isDev) {
     SwaggerConfig(app, AppModule.apiPrefix);
