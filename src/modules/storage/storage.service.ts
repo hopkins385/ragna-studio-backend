@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
@@ -167,18 +168,29 @@ export class StorageService {
 
       const contentLength = response.headers['content-length'];
 
+      this.logger.debug(`Upload by url, Content-Length: ${contentLength}`);
+
       const passThroughStream = new PassThrough();
       response.data.pipe(passThroughStream);
 
-      const putObjectCommand = new PutObjectCommand({
+      const params = {
         Bucket: bucket,
         Key: `${bucketFolder}/${fileName}`,
         Body: passThroughStream,
         ContentType: fileMimeType,
         ContentLength: contentLength ? parseInt(contentLength) : undefined,
+      };
+
+      /*const putObjectCommand = new PutObjectCommand(params);
+      await this.s3Client.send(putObjectCommand);
+      */
+
+      const uploadFileToBucket = new Upload({
+        client: this.s3Client,
+        params,
       });
 
-      await this.s3Client.send(putObjectCommand);
+      await uploadFileToBucket.done();
 
       return {
         storagefileUrl: newfileUrl,
@@ -217,6 +229,7 @@ export class StorageService {
         Key: bucketFilePath,
         Body: buffer,
         ContentType: payload.file.mimetype,
+        ContentLength: payload.file.size,
       });
 
       await this.s3Client.send(putObjectCommand);
