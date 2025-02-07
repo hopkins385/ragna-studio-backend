@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import {
-  copyFile,
   mkdir,
   readdir,
   readFile,
@@ -24,7 +23,7 @@ import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
 import type { AxiosInstance } from 'axios';
 import { randomCUID2 } from '@/common/utils/random-cuid2';
-import { HTTP_CLIENT } from '../http-client/constants';
+import { HTTP_CLIENT } from '@/modules/http-client/constants';
 
 type Bucket = 'images';
 type R2Bucket = 'ragna-studio-images';
@@ -142,8 +141,8 @@ export class StorageService {
         filePath: newPath,
         fileMime: mimeType,
       };
-    } catch (error) {
-      console.error('Error uploading file to bucket', error);
+    } catch (error: any) {
+      this.logger.error(`Error uploading file to bucket', ${error?.message}`);
       throw error;
     }
   }
@@ -195,8 +194,8 @@ export class StorageService {
       return {
         storagefileUrl: newfileUrl,
       };
-    } catch (error) {
-      console.error('Error uploading file to bucket', error);
+    } catch (error: any) {
+      this.logger.error(`Error uploading file to bucket', ${error?.message}`);
       throw error;
     }
   }
