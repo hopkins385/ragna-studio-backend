@@ -51,6 +51,7 @@ import { SlackModule } from './modules/slack/slack.module';
 import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module';
 import { createKeyv } from '@keyv/redis';
 import { CacheManagerModule } from './modules/cache-manager/cache-manager.module';
+import { EditorModule } from './modules/editor/editor.module';
 
 @Module({
   imports: [
@@ -175,6 +176,8 @@ import { CacheManagerModule } from './modules/cache-manager/cache-manager.module
     PromptWizardModule,
 
     CacheManagerModule,
+
+    EditorModule,
     // ,
   ],
   controllers: [ChatMessageController],
