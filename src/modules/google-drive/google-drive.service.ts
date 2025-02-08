@@ -77,8 +77,6 @@ export class GoogleDriveService {
       refreshToken: tokens.refresh_token ?? undefined,
     });
 
-    console.log('payload', payload);
-
     const res = await this.providerAuthService.upsert(payload);
 
     if (!res) {
