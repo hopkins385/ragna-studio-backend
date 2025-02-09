@@ -32,7 +32,9 @@ class AnthropicProvider extends AiModelProvider {
     const anthropic = createAnthropic({
       apiKey: this.config.get<string>('ANTHROPIC_API_KEY'),
     });
-    return anthropic(this.model);
+    return anthropic(this.model, {
+      // structuredOutputs: this.options.structuredOutputs, // not supported?
+    });
   }
 }
 
@@ -43,7 +45,9 @@ class GroqProvider extends AiModelProvider {
       baseURL: 'https://api.groq.com/openai/v1',
       apiKey: this.config.get<string>('GROQ_API_KEY'),
     });
-    return groq(this.model);
+    return groq(this.model, {
+      structuredOutputs: this.options.structuredOutputs,
+    });
   }
 }
 
@@ -52,7 +56,9 @@ class MistralProvider extends AiModelProvider {
     const mistral = createMistral({
       apiKey: this.config.get<string>('MISTRAL_API_KEY'),
     });
-    return mistral(this.model);
+    return mistral(this.model, {
+      // structuredOutputs: this.options.structuredOutputs, // not supported?
+    });
   }
 }
 
@@ -63,7 +69,9 @@ class NvidiaProvider extends AiModelProvider {
       baseURL: 'https://integrate.api.nvidia.com/v1',
       apiKey: this.config.get<string>('NVIDIA_API_KEY'),
     });
-    return nvidia(this.model);
+    return nvidia(this.model, {
+      structuredOutputs: this.options.structuredOutputs,
+    });
   }
 }
 
@@ -72,7 +80,9 @@ class GoogleProvider extends AiModelProvider {
     const google = createGoogleGenerativeAI({
       apiKey: this.config.get<string>('GOOGLE_GEMINI_API_KEY'),
     });
-    return google(this.model);
+    return google(this.model, {
+      structuredOutputs: this.options.structuredOutputs,
+    });
   }
 }
 
@@ -80,7 +90,7 @@ class GoogleProvider extends AiModelProvider {
 export class AiModelFactory {
   private provider: ProviderType;
   private model: string;
-  private options: AiModelProviderOptions = { structuredOutputs: false };
+  private options: AiModelProviderOptions;
 
   // Provider mapping
   private static readonly providerMap: Record<ProviderType, ProviderClass> = {
@@ -95,6 +105,9 @@ export class AiModelFactory {
   constructor(private readonly config: ConfigService) {
     this.provider = ProviderType.OPENAI;
     this.model = 'gpt-4o-mini';
+    this.options = {
+      structuredOutputs: false,
+    };
   }
 
   setProvider(provider: ProviderType): AiModelFactory {
