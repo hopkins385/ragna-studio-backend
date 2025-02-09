@@ -75,6 +75,7 @@
     "sharp": "^0.33.5",
     "stripe": "^17.6.0",
     "tiktoken": "^1.0.19",
+    "turndown": "^7.2.0",
     "zod": "^3.24.1"
   },
   "overrides": {
@@ -103,6 +104,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",
+    "@types/turndown": "^5.0.5",
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.22.0",
     "eslint": "^9.19.0",

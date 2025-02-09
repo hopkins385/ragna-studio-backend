@@ -2,13 +2,22 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { EditorCompletionBody } from './dto/editor-completion-body.dto';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { ProviderType } from '../ai-model/enums/provider.enum';
-import { CoreMessage, generateText } from 'ai';
+import { CoreMessage, generateObject, generateText } from 'ai';
+import { z } from 'zod';
+import TurndownService from 'turndown';
 
 @Injectable()
 export class EditorService {
   private readonly logger = new Logger(EditorService.name);
+  private readonly turndownService = new TurndownService({
+    headingStyle: 'atx',
+  });
 
   constructor(private readonly aiModelFactory: AiModelFactory) {}
+
+  private htmlToMarkdown = (html: string) => {
+    return this.turndownService.turndown(html);
+  };
 
   async completion(body: EditorCompletionBody) {
     const model = this.aiModelFactory
@@ -16,7 +25,12 @@ export class EditorService {
         provider: ProviderType.OPENAI,
         model: 'gpt-4o-mini',
       })
+      // .setOptions({
+      //   structuredOutputs: false,
+      // })
       .getModel();
+
+    const markdownContext = this.htmlToMarkdown(body.context);
 
     const messages: CoreMessage[] = [
       {
@@ -46,10 +60,10 @@ You never provide any explanations to the user.
 You never provide any justifications to the user.
 You never provide any reasoning to the user.
 You never encapsulate the completion text in any other text or content or code blocks.
-You always keep the structure (heading, paragraph, lists and so on) of the completion text consistent with the structure of the document text.
+You always keep the structure (heading, paragraph, lists, spacer, empty lines and so on) of the completion text consistent with the structure of the document text.
 You always only use markdown syntax in the completion text.
 <documentText>
-${body.context}
+${markdownContext}
 </documentText>`,
       },
       {
@@ -68,6 +82,22 @@ ${body.selectedText}
       maxRetries: 3,
     });
 
-    return text.trim();
+    this.logger.debug(`Completion Text: ${text}`);
+
+    return text;
+
+    /*const responseSchema = z.object({
+      markdownText: z
+        .string()
+        .describe('The completion text in markdown format.'),
+    });
+
+    const { object } = await generateObject({
+      model,
+      schema: responseSchema,
+      messages,
+    });
+
+    return object?.markdownText ?? '';*/
   }
 }

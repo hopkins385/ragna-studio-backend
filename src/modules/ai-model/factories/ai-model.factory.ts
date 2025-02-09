@@ -2,7 +2,10 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createMistral } from '@ai-sdk/mistral';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { AiModelProvider } from '@/modules/ai-model/schemas/aiModelProvider';
+import {
+  AiModelProvider,
+  AiModelProviderOptions,
+} from '@/modules/ai-model/schemas/aiModelProvider';
 import { ConfigService } from '@nestjs/config';
 import {
   ProviderClass,
@@ -18,7 +21,9 @@ class OpenAIProvider extends AiModelProvider {
       compatibility: 'strict',
       apiKey: this.config.get<string>('OPENAI_API_KEY'),
     });
-    return openai(this.model, { structuredOutputs: false });
+    return openai(this.model, {
+      structuredOutputs: this.options.structuredOutputs,
+    });
   }
 }
 
@@ -75,6 +80,7 @@ class GoogleProvider extends AiModelProvider {
 export class AiModelFactory {
   private provider: ProviderType;
   private model: string;
+  private options: AiModelProviderOptions = { structuredOutputs: false };
 
   // Provider mapping
   private static readonly providerMap: Record<ProviderType, ProviderClass> = {
@@ -107,12 +113,21 @@ export class AiModelFactory {
     return this;
   }
 
+  setOptions(options: AiModelProviderOptions): AiModelFactory {
+    this.options = options;
+    return this;
+  }
+
   getModel(): LanguageModelV1 {
     const ProviderClass = AiModelFactory.providerMap[this.provider];
     if (!ProviderClass) {
       throw new Error(`Provider ${this.provider} not supported`);
     }
 
-    return new ProviderClass(this.model, this.config).createModel();
+    return new ProviderClass(
+      this.model,
+      this.config,
+      this.options,
+    ).createModel();
   }
 }
