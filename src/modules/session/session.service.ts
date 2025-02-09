@@ -6,6 +6,7 @@ type SessionId = string;
 type UserId = string;
 
 export interface SessionUser {
+  id: SessionId;
   user: {
     id: UserId;
   };
@@ -30,6 +31,7 @@ export class SessionService {
     // create a new session id
     const sessionId = randomCUID2();
     const sessionData = {
+      id: sessionId,
       user: {
         id: payload.user.id,
       },
@@ -58,6 +60,7 @@ export class SessionService {
     }
 
     return {
+      id: sessionId,
       user: sessionData.user,
     };
   }
