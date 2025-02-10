@@ -48,31 +48,6 @@ export class TextToImageService {
     private readonly imageConversionQueue: Queue,
   ) {}
 
-  public async downloadImage(imageId: string) {
-    const image = await this.textToImageRepo.prisma.textToImage.findUnique({
-      select: {
-        id: true,
-        path: true,
-      },
-      where: {
-        id: imageId,
-      },
-    });
-
-    if (!image) {
-      throw new Error('Image not found');
-    }
-
-    // image path example: https://images.ragna.io/re293wl5kyslbum92agwwcid/tti/l1aymowaaoggvezcte34l2ws/image-e3349e0f-9ddb-40fa-8bd0-0eeed0813d69.jpeg
-    // bucket path without https://images.ragna.io/
-    const bucketPath = image.path.split('https://images.ragna.io/')[1];
-
-    return this.storageService.downloadFromBucket({
-      bucket: 'images',
-      bucketPath,
-    });
-  }
-
   public async createFolder(payload: { teamId: string; folderName: string }) {
     return this.textToImageRepo.prisma.textToImageFolder.create({
       data: {
@@ -158,6 +133,31 @@ export class TextToImageService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+  }
+
+  public async downloadImage(imageId: string) {
+    const image = await this.textToImageRepo.prisma.textToImage.findUnique({
+      select: {
+        id: true,
+        path: true,
+      },
+      where: {
+        id: imageId,
+      },
+    });
+
+    if (!image) {
+      throw new Error('Image not found');
+    }
+
+    // image path example: https://images.ragna.io/re293wl5kyslbum92agwwcid/tti/l1aymowaaoggvezcte34l2ws/image-e3349e0f-9ddb-40fa-8bd0-0eeed0813d69.jpeg
+    // bucket path without https://images.ragna.io/
+    const bucketPath = image.path.split('https://images.ragna.io/')[1];
+
+    return this.storageService.downloadFromBucket({
+      bucket: 'images',
+      bucketPath,
     });
   }
 
