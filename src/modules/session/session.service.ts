@@ -2,6 +2,7 @@ import { isCUID2, randomCUID2 } from '@/common/utils/random-cuid2';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { SessionRepository } from './repositories/session.repository';
+import { DeviceInfo } from './entities/device-info.entity';
 
 type SessionId = string;
 type UserId = string;
@@ -41,11 +42,26 @@ export class SessionService {
       },
     };
 
+    const deviceInfo: DeviceInfo = {
+      os: 'Unknown',
+      browser: 'Unknown',
+      device: 'Unknown',
+    };
+
     await this.cacheManager.set(
       SESSION_PREFIX + sessionId,
       sessionData,
       SESSION_TTL_MS,
     );
+
+    await this.createDBSession({
+      sessionId,
+      userId: payload.user.id,
+      // @ts-ignore
+      deviceInfo,
+      ipAddress: 'Unknown',
+      expires: new Date(Date.now() + SESSION_TTL_MS),
+    });
 
     return sessionId;
   }
@@ -101,6 +117,7 @@ export class SessionService {
     if (!isCUID2(sessionId)) {
       return false;
     }
+    await this.deleteDBSession({ sessionId });
     await this.cacheManager.del(SESSION_PREFIX + sessionId);
     return true;
   }
@@ -133,8 +150,17 @@ export class SessionService {
   }
 
   async deleteDBSession({ sessionId }: { sessionId: string }) {
-    return this.sessionRepo.prisma.session.delete({
+    // abort if the session id is not in the database
+    const session = await this.sessionRepo.prisma.session.findUnique({
       where: { sessionId },
+    });
+
+    if (!session) {
+      return;
+    }
+
+    return this.sessionRepo.prisma.session.delete({
+      where: { id: session.id },
     });
   }
 
@@ -160,5 +186,36 @@ export class SessionService {
         },
       },
     });
+  }
+
+  async cleanupOldDBSessionsInBatches(payload: {
+    olderThan: Date;
+    batchSize: number;
+  }) {
+    throw new Error('Not implemented');
+    let deletedCount = 0;
+    let continueDeleting = true;
+
+    while (continueDeleting) {
+      const result = await this.sessionRepo.prisma.session.deleteMany({
+        where: {
+          expires: {
+            lt: payload.olderThan,
+          },
+        },
+        // take: payload.batchSize, // Not supported by Prisma
+      });
+
+      deletedCount += result.count;
+
+      if (result.count < payload.batchSize) {
+        continueDeleting = false;
+      }
+
+      // Optional: Add a small delay to reduce database load
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    return deletedCount;
   }
 }

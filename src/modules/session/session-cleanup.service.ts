@@ -14,7 +14,7 @@ export class SessionCleanupService {
     this.logger.log('Starting session cleanup');
 
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 30); // Example: Remove sessions older than 30 days
+    cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 3);
 
     try {
       const result = await this.sessionService.cleanupOldDBSessions({
