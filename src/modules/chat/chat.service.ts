@@ -299,49 +299,6 @@ export class ChatService {
     });
   }
 
-  /*
-  public async createMessage(
-    userId: string,
-    chatId: string,
-    messages: ChatMessage[],
-  ): Promise<ChatMessage> {
-    throw new Error('Method no longer used.');
-    const lastMessage = this.getLastChatMessage(messages);
-    const { tokenCount } = await this.tokenizerService.getTokens(
-      lastMessage.content,
-    );
-    try {
-      const message = await this.chatRepository.prisma.chatMessage.create({
-        data: {
-          chatId: chatId,
-          type: lastMessage.type,
-          role: lastMessage.role,
-          content: lastMessage.content,
-          visionContent: lastMessage.visionContent,
-          tokenCount,
-        },
-      });
-
-      // Update chat title if it's the first message of the chat
-      if (messages.length === 1) {
-        this.event.emit(
-          ChatEvent.FIRST_USERMESSAGE,
-          FirstUserMessageEventDto.fromInput({
-            chatId,
-            userId,
-            messageContent: lastMessage.content,
-          }),
-        );
-      }
-
-      return message;
-    } catch (error) {
-      logger.error(error);
-      throw error;
-    }
-  }
-    */
-
   public async createMessage(payload: CreateChatMessageDto) {
     let tokenCount = 0;
     try {
