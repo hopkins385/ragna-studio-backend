@@ -86,7 +86,7 @@ model UserRole {
   @@map("user_roles")
 }
 
-// Authentication (NextAuth)
+// Session and Authentication for NextAuth, Google, etc
 
 model Account {
   id                String  @id @default(cuid())
@@ -113,12 +113,19 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
+  sessionToken String?  @unique @map("session_token")
   userId       String   @map("user_id")
+  sessionId    String   @unique @map("session_id")
   expires      DateTime
+  ipAddress    String?  @map("ip_address")
+  deviceInfo   Json?    @map("device_info")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([sessionToken])
   @@map("sessions")
 }
 
@@ -131,7 +138,7 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-// end of NextAuth
+// end of Authentication
 
 model Organisation {
   id          String    @id @default(cuid())

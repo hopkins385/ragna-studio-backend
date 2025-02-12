@@ -11,6 +11,7 @@ import { JwtRefreshStrategy } from './strategies/auth.refreshToken.strategy';
 import { AuthGoogleService } from './google/auth-google.service';
 import { SessionService } from '@/modules/session/session.service';
 import { QueueModule } from '@/modules/queue/queue.module';
+import { SessionRepository } from '@/modules/session/repositories/session.repository';
 
 const jwtFactory = {
   useFactory: (configService: ConfigService) => ({
@@ -36,6 +37,7 @@ const jwtFactory = {
     JwtStrategy,
     JwtRefreshStrategy,
     AuthGoogleService,
+    SessionRepository,
     SessionService,
   ],
 })

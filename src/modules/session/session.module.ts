@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SessionService } from './session.service';
+import { SessionRepository } from './repositories/session.repository';
 
 @Module({
-  providers: [SessionService],
+  providers: [SessionRepository, SessionService],
 })
 export class SessionModule {}

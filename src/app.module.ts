@@ -52,6 +52,7 @@ import { PromptWizardModule } from './modules/prompt-wizard/prompt-wizard.module
 import { createKeyv } from '@keyv/redis';
 import { CacheManagerModule } from './modules/cache-manager/cache-manager.module';
 import { EditorModule } from './modules/editor/editor.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -65,6 +66,8 @@ import { EditorModule } from './modules/editor/editor.module';
     }),
     // Database
     DatabaseModule,
+    // Schedule
+    ScheduleModule.forRoot(),
     // EventEmitter
     EventEmitterModule.forRoot(),
     // Queue
