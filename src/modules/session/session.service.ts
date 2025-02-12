@@ -46,6 +46,7 @@ export class SessionService {
       os: 'Unknown',
       browser: 'Unknown',
       device: 'Unknown',
+      location: 'Unknown',
     };
 
     await this.cacheManager.set(
@@ -54,13 +55,16 @@ export class SessionService {
       SESSION_TTL_MS,
     );
 
+    const expires = new Date();
+    expires.setTime(expires.getTime() + SESSION_TTL_MS);
+
     await this.createDBSession({
       sessionId,
       userId: payload.user.id,
       // @ts-ignore
       deviceInfo,
       ipAddress: 'Unknown',
-      expires: new Date(Date.now() + SESSION_TTL_MS),
+      expires,
     });
 
     return sessionId;
@@ -110,6 +114,15 @@ export class SessionService {
       sessionData,
       SESSION_TTL_MS,
     );
+
+    const expires = new Date();
+    expires.setTime(expires.getTime() + SESSION_TTL_MS);
+
+    await this.updateLastAccessed({
+      sessionId,
+      expires,
+    });
+
     return sessionId;
   }
 
@@ -164,10 +177,13 @@ export class SessionService {
     });
   }
 
-  async updateLastAccessed(sessionId: string) {
+  async updateLastAccessed(payload: { sessionId: string; expires: Date }) {
     return this.sessionRepo.prisma.session.update({
-      where: { sessionId },
-      data: { updatedAt: new Date() },
+      where: { sessionId: payload.sessionId },
+      data: {
+        updatedAt: new Date(),
+        expires: payload.expires,
+      },
     });
   }
 
