@@ -1,4 +1,4 @@
-import { SlackService } from './../../slack/slack.service';
+import { SlackService } from '@/modules/slack/slack.service';
 import { MailService } from '@/modules/mail/mail.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';

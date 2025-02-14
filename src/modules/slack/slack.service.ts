@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SLACK_CLIENT } from './constants';
-import { SlackClient } from './slack.module';
-import { ChatPostMessageResponse } from '@slack/web-api';
+import type { SlackClient } from './slack.module';
+import type { ChatPostMessageResponse } from '@slack/web-api';
 
 interface SlackMessagePayload {
   channel: string; // This argument can be a channel ID, a DM ID, a MPDM ID, or a group ID

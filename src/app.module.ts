@@ -104,6 +104,9 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
     }),
 
+    // Slack
+    SlackModule,
+
     // Payment
     StripeModule,
 
@@ -173,8 +176,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     HttpClientModule,
 
     UserFavoriteModule,
-
-    SlackModule,
 
     PromptWizardModule,
 

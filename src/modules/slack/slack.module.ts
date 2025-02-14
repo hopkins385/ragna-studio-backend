@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SLACK_CLIENT, SLACK_CONFIG } from './constants';
 import { ConfigService } from '@nestjs/config';
 import { WebClient } from '@slack/web-api';
@@ -11,7 +11,6 @@ interface SlackConfig {
   slackRetries: number;
 }
 
-@Global()
 @Module({
   providers: [
     {

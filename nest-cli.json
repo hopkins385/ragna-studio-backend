@@ -6,6 +6,7 @@
     "baseDir": "modules"
   },
   "compilerOptions": {
+    "builder": "swc",
     "deleteOutDir": true,
     "watchAssets": true,
     "plugins": [
