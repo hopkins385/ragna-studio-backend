@@ -188,7 +188,7 @@ export class CreatesNewUserAction {
 
     const date = new Date();
 
-    const tools = await this.getAllTools().then((t) =>
+    /*const tools = await this.getAllTools().then((t) =>
       t.map((tool) => ({
         toolId: tool.id,
         createdAt: date,
@@ -198,7 +198,7 @@ export class CreatesNewUserAction {
 
     if (!tools.length) {
       throw new Error('No tools found');
-    }
+    }*/
 
     const assistant = await this.prisma.assistant.create({
       data: {
@@ -211,11 +211,11 @@ export class CreatesNewUserAction {
         systemPromptTokenCount: 10,
         createdAt: date,
         updatedAt: date,
-        tools: {
-          createMany: {
-            data: tools,
-          },
-        },
+        // tools: {
+        //   createMany: {
+        //     data: tools,
+        //   },
+        // },
       },
     });
 

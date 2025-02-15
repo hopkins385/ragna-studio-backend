@@ -11,7 +11,7 @@ import {
   ProviderClass,
   ProviderModelConfig,
 } from '@/modules/ai-model/interfaces/provider-model.interface';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import type { LanguageModelV1 } from 'ai';
 
@@ -23,6 +23,8 @@ class OpenAIProvider extends AiModelProvider {
     });
     return openai(this.model, {
       structuredOutputs: this.options.structuredOutputs,
+      simulateStreaming: this.options.simulateStreaming,
+      parallelToolCalls: this.options.parallelToolCalls,
     });
   }
 }
@@ -47,6 +49,8 @@ class GroqProvider extends AiModelProvider {
     });
     return groq(this.model, {
       structuredOutputs: this.options.structuredOutputs,
+      simulateStreaming: this.options.simulateStreaming,
+      parallelToolCalls: this.options.parallelToolCalls,
     });
   }
 }
@@ -71,6 +75,8 @@ class NvidiaProvider extends AiModelProvider {
     });
     return nvidia(this.model, {
       structuredOutputs: this.options.structuredOutputs,
+      simulateStreaming: this.options.simulateStreaming,
+      parallelToolCalls: this.options.parallelToolCalls,
     });
   }
 }
@@ -88,6 +94,7 @@ class GoogleProvider extends AiModelProvider {
 
 @Injectable()
 export class AiModelFactory {
+  private readonly logger = new Logger(AiModelFactory.name);
   private provider: ProviderType;
   private model: string;
   private options: AiModelProviderOptions;
@@ -108,6 +115,7 @@ export class AiModelFactory {
     this.options = {
       structuredOutputs: false,
       simulateStreaming: false,
+      parallelToolCalls: false,
     };
   }
 
@@ -137,6 +145,12 @@ export class AiModelFactory {
     if (!ProviderClass) {
       throw new Error(`Provider ${this.provider} not supported`);
     }
+
+    this.logger.debug(`getModel()`, {
+      provider: this.provider,
+      model: this.model,
+      options: this.options,
+    });
 
     return new ProviderClass(
       this.model,

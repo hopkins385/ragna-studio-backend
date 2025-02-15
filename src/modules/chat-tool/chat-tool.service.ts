@@ -78,47 +78,22 @@ export class ChatToolService {
   // Define tool configurations
   toolConfigs: ToolConfig[] = [
     {
-      id: 4,
-      name: 'directions',
-      description:
-        'Get directions between two or more locations and optional including waypoints',
+      id: 1,
+      name: 'searchWeb',
+      description: 'Search the web',
       parameters: {
-        start: z.string().min(1).max(100).describe('The starting location'),
-        destination: z
+        query: z
           .string()
-          .min(1)
+          .min(3)
           .max(100)
-          .describe('The destination location'),
-        waypoints: z
-          .array(z.string().min(1).max(100))
-          .optional()
-          .describe('The waypoints to visit along the way'),
+          .describe('The query to search the web for'),
       },
-      execute: async ({ start, destination, waypoints }, emitToolInfoData) => {
-        emitToolInfoData({
-          toolName: 'directions',
-          toolInfo: `${start} to ${destination}`,
-        });
+      execute: async ({ query }, emitToolInfoData) => {
+        emitToolInfoData({ toolName: 'searchWeb', toolInfo: `${query}` });
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await this.getGoogleMapsDirections(
-          start,
-          destination,
-          waypoints,
-        );
+        return await this.searchWeb(query);
       },
     },
-    // {
-    //   id: 3,
-    //   name: 'imageGenerator',
-    //   description: 'Generates an image by describing it',
-    //   parameters: {
-    //     imageDescription: z.string().min(1).max(4000).describe('The text to describe an image'),
-    //   },
-    //   execute: async ({ imageDescription }, emitToolInfoData) => {
-    //     emitToolInfoData({ toolName: 'imageGenerator', toolInfo: `${imageDescription}` });
-    //     return await generateImage(imageDescription);
-    //   },
-    // },
     {
       id: 2,
       name: 'website',
@@ -139,23 +114,6 @@ export class ChatToolService {
         emitToolInfoData({ toolName: 'website', toolInfo: `${newUrl.href}` });
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return await this.scrapeWebsite(newUrl);
-      },
-    },
-    {
-      id: 1,
-      name: 'searchWeb',
-      description: 'Search the web',
-      parameters: {
-        query: z
-          .string()
-          .min(3)
-          .max(100)
-          .describe('The query to search the web for'),
-      },
-      execute: async ({ query }, emitToolInfoData) => {
-        emitToolInfoData({ toolName: 'searchWeb', toolInfo: `${query}` });
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await this.searchWeb(query);
       },
     },
   ];
@@ -250,3 +208,46 @@ export class ChatToolService {
     }
   }
 }
+
+/**
+ * Backup
+ */
+
+// {
+//   id: 4,
+//   name: 'directions',
+//   description:
+//     'Get directions between two or more locations and optional including waypoints',
+//   parameters: {
+//     start: z.string().describe('The starting location'),
+//     destination: z.string().describe('The destination location'),
+//     waypoints: z
+//       .array(z.string())
+//       .optional()
+//       .describe('The waypoints to visit along the way'),
+//   },
+//   execute: async ({ start, destination, waypoints }, emitToolInfoData) => {
+//     emitToolInfoData({
+//       toolName: 'directions',
+//       toolInfo: `${start} to ${destination}`,
+//     });
+//     await new Promise((resolve) => setTimeout(resolve, 1000));
+//     return await this.getGoogleMapsDirections(
+//       start,
+//       destination,
+//       waypoints,
+//     );
+//   },
+// },
+// {
+//   id: 3,
+//   name: 'imageGenerator',
+//   description: 'Generates an image by describing it',
+//   parameters: {
+//     imageDescription: z.string().min(1).max(4000).describe('The text to describe an image'),
+//   },
+//   execute: async ({ imageDescription }, emitToolInfoData) => {
+//     emitToolInfoData({ toolName: 'imageGenerator', toolInfo: `${imageDescription}` });
+//     return await generateImage(imageDescription);
+//   },
+// },
