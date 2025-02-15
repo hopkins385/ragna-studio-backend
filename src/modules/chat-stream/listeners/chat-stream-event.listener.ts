@@ -8,13 +8,14 @@ import { CoreMessage, generateText } from 'ai';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ChatStreamEventListener {
   constructor(
     private readonly socket: SocketService,
     private readonly chatService: ChatService,
-    private readonly aiModelFactory: AiModelFactory,
+    private readonly configService: ConfigService,
   ) {}
 
   @OnEvent(ChatEvent.TOOL_START_CALL)
@@ -56,14 +57,16 @@ export class ChatStreamEventListener {
       },
     ] satisfies CoreMessage[];
 
+    const modelFactory = new AiModelFactory(this.configService);
+
+    modelFactory.setConfig({
+      provider: ProviderType.OPENAI,
+      model: 'gpt-4o-mini',
+    });
+
     try {
       const { text } = await generateText({
-        model: this.aiModelFactory
-          .setConfig({
-            provider: ProviderType.OPENAI,
-            model: 'gpt-4o-mini',
-          })
-          .getModel(),
+        model: modelFactory.getModel(),
         messages,
         maxTokens: 20,
       });

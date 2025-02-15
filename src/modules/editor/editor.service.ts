@@ -5,6 +5,7 @@ import { ProviderType } from '../ai-model/enums/provider.enum';
 import { CoreMessage, generateObject, generateText } from 'ai';
 import { z } from 'zod';
 import TurndownService from 'turndown';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EditorService {
@@ -13,14 +14,15 @@ export class EditorService {
     headingStyle: 'atx',
   });
 
-  constructor(private readonly aiModelFactory: AiModelFactory) {}
+  constructor(private readonly configService: ConfigService) {}
 
   private htmlToMarkdown = (html: string) => {
     return this.turndownService.turndown(html);
   };
 
   async completion(body: EditorCompletionBody) {
-    const model = this.aiModelFactory
+    const modelFactory = new AiModelFactory(this.configService);
+    const model = modelFactory
       .setConfig({
         provider: ProviderType.OPENAI,
         model: 'gpt-4o-mini',

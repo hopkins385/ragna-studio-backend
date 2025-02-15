@@ -107,6 +107,7 @@ export class AiModelFactory {
     this.model = 'gpt-4o-mini';
     this.options = {
       structuredOutputs: false,
+      simulateStreaming: false,
     };
   }
 

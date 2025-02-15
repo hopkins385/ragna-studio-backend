@@ -6,20 +6,13 @@ import { SocketModule } from '@/modules/socket/socket.module';
 import { ChatToolService } from '../chat-tool/chat-tool.service';
 import { AssistantModule } from '../assistant/assistant.module';
 import { TokenizerService } from '../tokenizer/tokenizer.service';
-import { AiModelFactory } from '../ai-model/factories/ai-model.factory';
 import { CollectionModule } from '../collection/collection.module';
 import { EmbeddingModule } from '../embedding/embedding.module';
 
 @Module({
   imports: [SocketModule, AssistantModule, CollectionModule, EmbeddingModule],
   controllers: [ChatController],
-  providers: [
-    ChatRepository,
-    ChatService,
-    ChatToolService,
-    TokenizerService,
-    AiModelFactory,
-  ],
+  providers: [ChatRepository, ChatService, ChatToolService, TokenizerService],
   exports: [ChatService],
 })
 export class ChatModule {}

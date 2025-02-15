@@ -1,4 +1,3 @@
-import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { Module } from '@nestjs/common';
 import { ChatStreamService } from './chat-stream.service';
 import { SocketModule } from '../socket/socket.module';
@@ -9,12 +8,7 @@ import { ChatStreamEventListener } from './listeners/chat-stream-event.listener'
 
 @Module({
   imports: [SocketModule, ChatModule],
-  providers: [
-    AiModelFactory,
-    ChatStreamService,
-    ChatToolService,
-    ChatStreamEventListener,
-  ],
+  providers: [ChatStreamService, ChatToolService, ChatStreamEventListener],
   controllers: [ChatStreamController],
 })
 export class ChatStreamModule {}

@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger } from '@nestjs/common';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CoreMessage, generateText } from 'ai';
@@ -12,7 +13,7 @@ import {
 export class PromptWizardService {
   private readonly logger = new Logger(PromptWizardService.name);
 
-  constructor(private readonly aiModelFactory: AiModelFactory) {}
+  constructor(private readonly configService: ConfigService) {}
 
   async createPrompt(payload: any) {
     try {
@@ -32,7 +33,9 @@ export class PromptWizardService {
   }
 
   private async critiquePromptAgent(payload: { input: string }) {
-    const aiModel = this.aiModelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService);
+
+    modelFactory.setConfig({
       provider: ProviderType.ANTHROPIC,
       model: 'claude-3-5-sonnet-latest',
     });
@@ -52,7 +55,7 @@ export class PromptWizardService {
 
     const { text } = await generateText({
       // abortSignal: signal,
-      model: aiModel.getModel(),
+      model: modelFactory.getModel(),
       messages,
       maxSteps: 1,
       maxRetries: 3,
@@ -62,7 +65,9 @@ export class PromptWizardService {
   }
 
   private async refinePromptAgent(payload: { input: string }) {
-    const aiModel = this.aiModelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService);
+
+    modelFactory.setConfig({
       provider: ProviderType.OPENAI,
       model: 'gpt-4o-mini',
     });
@@ -82,7 +87,7 @@ export class PromptWizardService {
 
     const { text } = await generateText({
       // abortSignal: signal,
-      model: aiModel.getModel(),
+      model: modelFactory.getModel(),
       messages,
       maxSteps: 1,
       maxRetries: 3,
@@ -95,7 +100,9 @@ export class PromptWizardService {
     inputPrompt: string;
     critique: string;
   }) {
-    const aiModel = this.aiModelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService);
+
+    modelFactory.setConfig({
       provider: ProviderType.OPENAI,
       model: 'gpt-4o-mini',
     });
@@ -115,7 +122,7 @@ export class PromptWizardService {
 
     const { text } = await generateText({
       // abortSignal: signal,
-      model: aiModel.getModel(),
+      model: modelFactory.getModel(),
       messages,
       maxSteps: 1,
       maxRetries: 3,

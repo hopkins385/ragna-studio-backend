@@ -5,6 +5,6 @@ import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 
 @Module({
   controllers: [PromptWizardController],
-  providers: [AiModelFactory, PromptWizardService],
+  providers: [PromptWizardService],
 })
 export class PromptWizardModule {}

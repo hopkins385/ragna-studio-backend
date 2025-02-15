@@ -21,6 +21,7 @@ import { ChatToolService } from '@/modules/chat-tool/chat-tool.service';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
+import { ConfigService } from '@nestjs/config';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -58,9 +59,9 @@ export class ChatStreamService {
   private readonly DEFAULT_STREAM_DELAY_MS = 10;
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly chatService: ChatService,
     private readonly chatToolService: ChatToolService,
-    private readonly aiModelFactory: AiModelFactory,
     private readonly event: EventEmitter2,
   ) {}
 
@@ -69,15 +70,27 @@ export class ChatStreamService {
     payload: CreateChatStreamDto,
     abortController: AbortController,
   ): Promise<Readable> {
-    const model = this.aiModelFactory
-      .setConfig({
-        provider: payload.provider,
-        model: payload.model,
-      })
-      .getModel();
+    this.logger.debug('Creating chat message stream:', payload);
+
+    const modelFactory = new AiModelFactory(this.configService);
+
+    modelFactory.setConfig({
+      provider: payload.provider,
+      model: payload.model,
+    });
+
+    if (
+      (payload.provider === ProviderType.OPENAI &&
+        payload.model.startsWith('o1-')) ||
+      payload.model.startsWith('o3-')
+    ) {
+      modelFactory.setOptions({
+        reasoningEffort: 'high',
+      });
+    }
 
     const context: StreamContext = {
-      model,
+      model: modelFactory.getModel(),
       chat,
       isCancelled: false,
       chunks: [],
@@ -192,7 +205,7 @@ export class ChatStreamService {
       payload,
     );
 
-    this.logger.debug(`[generateStream] payload: ${JSON.stringify(payload)}`);
+    this.logger.debug(`[generateStream] payload:`, payload);
 
     const initialResult = streamText({
       abortSignal: signal,
@@ -253,6 +266,10 @@ export class ChatStreamService {
             );
             break;
         }
+      }
+
+      if (chunk.type === 'reasoning') {
+        yield chunk.textDelta;
       }
 
       if (chunk.type === 'text-delta') {
@@ -430,7 +447,7 @@ export class ChatStreamService {
     context: StreamContext,
     payload: CreateChatStreamDto,
   ) {
-    const isPreview = payload.model.startsWith('o1-');
+    const isPreview = false; //payload.model.startsWith('o1-');
 
     const availableTools = this.chatToolService.getTools({
       llmProvider: payload.provider,
