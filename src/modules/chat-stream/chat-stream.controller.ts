@@ -21,6 +21,7 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
 import { ChatEntity } from '@/modules/chat/entities/chat.entity';
 import { pipeline } from 'node:stream/promises';
+import { defaultAnswerProtocolPrompt } from './prompts/default-system.prompt';
 
 interface StreamHandlers {
   onClose: () => void;
@@ -89,40 +90,16 @@ export class ChatStreamController {
     body: CreateChatStreamBody,
     chat: ChatEntity,
   ): CreateChatStreamDto {
-    let assistantSystemPrompt = chat.assistant.systemPrompt;
-
-    //
-    // RAG implementation
-    //
-    /*
-    if (chat.assistant.hasKnowledgeBase === true) {
-      // TODO: emit event that assistant has knowledge base and is using RAG
-
-      // debug logging
-      this.logger.debug('Assistant is using RAG');
-      const lastMessage = chat.messages[chat.messages.length - 1];
-      const systemPrompt = await this.chatService.getContextAwareSystemPrompt({
-        assistantId: chat.assistant.id,
-        lastMessageContent: lastMessage.content,
-        assistantSystemPrompt: assistantSystemPrompt,
-      });
-
-      if (!systemPrompt) {
-        this.logger.error('No system prompt returned from RAG');
-        return;
-      }
-
-      assistantSystemPrompt = systemPrompt;
-    }
-      */
-
     // timestamp
     const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
+
+    const systemPrompt =
+      chat.assistant.systemPrompt + defaultAnswerProtocolPrompt + timestamp;
 
     return CreateChatStreamDto.fromInput({
       provider: body.provider,
       model: body.model,
-      systemPrompt: assistantSystemPrompt + timestamp,
+      systemPrompt,
       messages: this.chatService.formatChatMessages(body.messages as any),
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
       maxTokens: body.maxTokens,

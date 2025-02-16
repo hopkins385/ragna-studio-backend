@@ -14,6 +14,8 @@ import {
 } from './interfaces/assistant-tool-function.interface';
 import { getJson } from 'serpapi';
 import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interface';
+import { CollectionAbleDto } from '../collection-able/dto/collection-able.dto';
+import { CollectionService } from '../collection/collection.service';
 
 @Injectable()
 export class AssistantToolFunctionService {
@@ -65,9 +67,13 @@ export class AssistantToolFunctionService {
     {
       id: 3,
       name: 'retrieveSimilarDocuments',
-      description: 'Search for similar documents',
+      description: 'Search in the users knowledge base',
       parameters: z.object({
-        searchQuery: z.string().min(3).max(100).describe('The search query'),
+        searchQuery: z
+          .string()
+          .min(3)
+          .max(100)
+          .describe('The improved user query to search the knowledge base for'),
       }),
       handler: async (
         params: { searchQuery: string },
@@ -82,6 +88,7 @@ export class AssistantToolFunctionService {
   constructor(
     private readonly config: ConfigService,
     private readonly embeddingService: EmbeddingService,
+    private readonly collectionService: CollectionService,
     @Inject(HTTP_CLIENT) private readonly httpClient: AxiosInstance,
   ) {}
 
@@ -138,12 +145,16 @@ export class AssistantToolFunctionService {
     options?: ToolOptions,
   ): Promise<any> {
     try {
-      return await getJson({
+      const response = await getJson({
         engine: 'google',
         api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
         q: params.query,
         location: 'Berlin,Berlin,Germany',
       });
+
+      this.logger.debug(`Searched web: ${response}`);
+
+      return response;
     } catch (error) {
       this.logger.error(`Failed to search web: ${error}`);
       return { message: 'cannot search the web' };
@@ -173,6 +184,8 @@ export class AssistantToolFunctionService {
         throw new Error('Failed to scrape');
       }
 
+      this.logger.debug(`Scraped website: ${response.data.body}`);
+
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to scrape website: ${error}`);
@@ -191,22 +204,44 @@ export class AssistantToolFunctionService {
     if (!context.assistantId) {
       throw new Error('Assistant ID is required');
     }
-    /*
-    const { recordIds } = options;
 
-    if (!recordIds?.length) {
-      throw new Error('Record IDs are required');
-    }
+    this.logger.debug(
+      `Retrieving similar documents for query: ${params.searchQuery}`,
+    );
 
     try {
-      return await this.embeddingService.searchDocsByQuery({
-        query,
+      const collections = await this.collectionService.findAllWithRecordsFor(
+        CollectionAbleDto.fromInput({
+          id: context.assistantId,
+          type: 'assistant',
+        }),
+      );
+
+      if (collections.length < 1) {
+        this.logger.error('No collections found');
+        return { content: '' };
+      }
+
+      const recordIds = collections
+        .map((c) => c.records.map((r) => r.id))
+        .flat();
+
+      const res = await this.embeddingService.searchDocsByQuery({
+        query: params.searchQuery,
         recordIds,
       });
+
+      this.logger.debug(`Retrieved similar documents`, res);
+
+      const mergedDocTexts = res.map((r) => r?.text || '').join('\n\n');
+
+      this.logger.debug(`Retrieved similar documents`, { mergedDocTexts });
+
+      return { content: mergedDocTexts };
+      //
     } catch (error) {
       this.logger.error(`Failed to retrieve similar documents: ${error}`);
-      return [];
+      return { content: '' };
     }
-      */
   }
 }
