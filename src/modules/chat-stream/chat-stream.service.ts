@@ -21,6 +21,7 @@ import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
 import { ConfigService } from '@nestjs/config';
+import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -60,6 +61,7 @@ export class ChatStreamService {
   constructor(
     private readonly configService: ConfigService,
     private readonly chatService: ChatService,
+    private readonly toolFunctionService: AssistantToolFunctionService,
     private readonly event: EventEmitter2,
   ) {}
 
@@ -447,16 +449,13 @@ export class ChatStreamService {
   ) {
     const isPreview = false; //payload.model.startsWith('o1-');
 
-    /*
-    const availableTools = this.chatToolService.getTools({
+    const availableTools = this.toolFunctionService.getTools({
       llmProvider: payload.provider,
       llmName: payload.model,
       functionIds: payload.functionIds,
+      assistantId: context.chat.assistant.id,
       emitToolInfoData: this.toolStartCallback(context),
     });
-    */
-
-    const availableTools = {};
 
     return {
       availableTools,

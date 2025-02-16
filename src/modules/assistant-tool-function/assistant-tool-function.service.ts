@@ -6,9 +6,10 @@ import { HTTP_CLIENT } from '../http-client/constants';
 import { tool } from 'ai';
 import { z } from 'zod';
 import {
-  EmitToolInfoData,
   GetToolPayload,
-  RagToolOptions,
+  ToolContext,
+  ToolDefinition,
+  ToolOptions,
   Tools,
 } from './interfaces/assistant-tool-function.interface';
 import { getJson } from 'serpapi';
@@ -18,56 +19,10 @@ import { ScrapeWebsiteResult } from './interfaces/scrape-website-result.interfac
 export class AssistantToolFunctionService {
   private readonly logger = new Logger(AssistantToolFunctionService.name);
 
-  private availableTools: Record<string, ReturnType<any>> = {};
-
-  constructor(
-    private readonly config: ConfigService,
-    private readonly embeddingService: EmbeddingService,
-    @Inject(HTTP_CLIENT) private readonly httpClient: AxiosInstance,
-  ) {
-    this.availableTools = [
-      {
-        id: 1,
-        name: 'searchWeb',
-        tool: this.createWebSearchTool,
-      },
-      {
-        id: 2,
-        name: 'website',
-        tool: this.createScrapeWebsiteTool,
-      },
-      {
-        id: 3,
-        name: 'retrieveSimilarDocuments',
-        tool: this.createRagTool,
-      },
-    ];
-  }
-
-  public getTools(payload: GetToolPayload, options?: any): Tools | undefined {
-    const tools: Tools = {};
-
-    if (!payload.functionIds || payload.functionIds.length < 1) {
-      return undefined;
-    }
-
-    const filteredTools = this.availableTools.filter((tool) =>
-      payload.functionIds.includes(tool.id),
-    );
-
-    for (const toolConfig of filteredTools) {
-      tools[toolConfig.name] = toolConfig.tool(
-        payload.emitToolInfoData,
-        options,
-      );
-    }
-
-    return tools;
-  }
-
-  // Web Search Tool
-  createWebSearchTool(emitToolInfoData: EmitToolInfoData, options?: any) {
-    return tool({
+  private readonly toolDefinitions: ToolDefinition[] = [
+    {
+      id: 1,
+      name: 'searchWeb',
       description: 'Search the web',
       parameters: z.object({
         query: z
@@ -76,31 +31,17 @@ export class AssistantToolFunctionService {
           .max(100)
           .describe('The query to search the web for'),
       }),
-      execute: async ({ query }) => {
-        emitToolInfoData({ toolName: 'searchWeb', toolInfo: `${query}` });
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await this.searchWeb(query);
+      handler: async (
+        params: { query: string },
+        context: ToolContext,
+        options?: ToolOptions,
+      ) => {
+        return this.searchWeb(params, context, options);
       },
-    });
-  }
-
-  async searchWeb(query: string, options?: any) {
-    try {
-      const response = await getJson({
-        engine: 'google',
-        api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
-        q: query,
-        location: 'Berlin,Berlin,Germany',
-      });
-      return response;
-    } catch (error: any) {
-      return { message: 'cannot search the web' };
-    }
-  }
-
-  // Scrape Tool
-  createScrapeWebsiteTool(emitToolInfoData: EmitToolInfoData, options?: any) {
-    return tool({
+    },
+    {
+      id: 2,
+      name: 'website',
       description: 'Get information about a website',
       parameters: z.object({
         url: z
@@ -113,37 +54,128 @@ export class AssistantToolFunctionService {
           })
           .describe('The URL of the website to scrape'),
       }),
-      execute: async ({ url }) => {
-        emitToolInfoData({ toolName: 'website', toolInfo: `${url}` });
+      handler: async (
+        params: { url: string },
+        context: ToolContext,
+        options?: ToolOptions,
+      ) => {
+        return this.scrapeWebsite(params, context, options);
+      },
+    },
+    {
+      id: 3,
+      name: 'retrieveSimilarDocuments',
+      description: 'Search for similar documents',
+      parameters: z.object({
+        searchQuery: z.string().min(3).max(100).describe('The search query'),
+      }),
+      handler: async (
+        params: { searchQuery: string },
+        context: ToolContext,
+        options?: ToolOptions,
+      ) => {
+        return this.retrieveSimilarDocuments(params, context, options);
+      },
+    },
+  ];
+
+  constructor(
+    private readonly config: ConfigService,
+    private readonly embeddingService: EmbeddingService,
+    @Inject(HTTP_CLIENT) private readonly httpClient: AxiosInstance,
+  ) {}
+
+  public getTools(
+    payload: GetToolPayload,
+    options?: ToolOptions,
+  ): Tools | undefined {
+    if (!payload.functionIds?.length) {
+      return undefined;
+    }
+
+    const context: ToolContext = {
+      assistantId: payload.assistantId,
+      emitToolInfoData: payload.emitToolInfoData,
+    };
+
+    const tools: Tools = {};
+
+    for (const availableTool of this.toolDefinitions) {
+      if (payload.functionIds.includes(availableTool.id)) {
+        tools[availableTool.name] = this.createTool(
+          availableTool,
+          context,
+          options,
+        );
+      }
+    }
+
+    return tools;
+  }
+
+  private createTool(
+    toolDef: ToolDefinition,
+    context: ToolContext,
+    options: ToolOptions,
+  ) {
+    return tool({
+      description: toolDef.description,
+      parameters: toolDef.parameters,
+      execute: async (params: any) => {
+        context.emitToolInfoData({
+          toolName: toolDef.name,
+          toolInfo: JSON.stringify(params),
+        });
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await this.scrapeWebsite(new URL(url));
+        return await toolDef.handler.bind(this)(params, context, options);
       },
     });
   }
 
-  async scrapeWebsite(
-    websiteURL: URL,
-    options?: any,
+  private async searchWeb(
+    params: { query: string },
+    context: ToolContext,
+    options?: ToolOptions,
+  ): Promise<any> {
+    try {
+      return await getJson({
+        engine: 'google',
+        api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
+        q: params.query,
+        location: 'Berlin,Berlin,Germany',
+      });
+    } catch (error) {
+      this.logger.error(`Failed to search web: ${error}`);
+      return { message: 'cannot search the web' };
+    }
+  }
+
+  private async scrapeWebsite(
+    params: { url: string },
+    context: ToolContext,
+    options?: ToolOptions,
   ): Promise<ScrapeWebsiteResult> {
     const scrapeServerUrl = this.config.getOrThrow('SCRAPE_SERVER_URL');
+    const websiteURL = new URL(params.url);
     try {
-      // check if its a valid url
-      const isValidUrl = websiteURL.protocol === 'https:';
-      if (!isValidUrl) {
-        throw new Error('Invalid URL');
+      if (websiteURL.protocol !== 'https:') {
+        throw new Error('Invalid URL protocol - must be HTTPS');
       }
-      // scrape the website
-      // `${scrapeServerUrl}/scrape?url=${url.toString()}`;
-      const scrapeUrl = new URL(
-        `${scrapeServerUrl}/scrape?url=${websiteURL.toString()}`,
+
+      const scrapeUrl = new URL(`${scrapeServerUrl}/scrape`);
+      scrapeUrl.searchParams.set('url', websiteURL.toString());
+
+      const response = await this.httpClient.get<ScrapeWebsiteResult>(
+        scrapeUrl.toString(),
       );
-      const response = await this.httpClient.get(scrapeUrl.toString());
+
       if (response.status !== 200) {
         throw new Error('Failed to scrape');
       }
+
       return response.data;
-    } catch (error: any) {
-      this.logger.error(`Failed to scrape website: ${error}; ${error?.errors}`);
+    } catch (error) {
+      this.logger.error(`Failed to scrape website: ${error}`);
       return {
         meta: null,
         body: 'cannot visit website. does it exist?',
@@ -151,37 +183,30 @@ export class AssistantToolFunctionService {
     }
   }
 
-  // RAG Tool
-  createRagTool(emitToolInfoData: EmitToolInfoData, options: RagToolOptions) {
-    return tool({
-      description: 'Search for similar documents',
-      parameters: z.object({
-        searchQuery: z.string().min(3).max(100).describe('The search query'),
-      }),
-      execute: async ({ searchQuery }) => {
-        emitToolInfoData({
-          toolName: 'retrieveSimilarDocuments',
-          toolInfo: `${searchQuery}`,
-        });
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await this.retrieveSimilarDocuments(searchQuery, options);
-      },
-    });
-  }
+  private async retrieveSimilarDocuments(
+    params: { searchQuery: string },
+    context: ToolContext,
+    options?: ToolOptions,
+  ) {
+    if (!context.assistantId) {
+      throw new Error('Assistant ID is required');
+    }
+    /*
+    const { recordIds } = options;
 
-  async retrieveSimilarDocuments(query: string, options: RagToolOptions) {
-    const recordIds = options.recordIds;
-    if (!recordIds) {
+    if (!recordIds?.length) {
       throw new Error('Record IDs are required');
     }
+
     try {
       return await this.embeddingService.searchDocsByQuery({
         query,
         recordIds,
       });
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error(`Failed to retrieve similar documents: ${error}`);
       return [];
     }
+      */
   }
 }

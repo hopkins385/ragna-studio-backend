@@ -9,10 +9,10 @@ import {
   OpenaiGpt4oMiniProcessor,
   OpenaiGpt4oProcessor,
 } from './processors/ai-models.processor';
-import { EmbeddingModule } from '../embedding/embedding.module';
+import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
 
 @Module({
-  imports: [DocumentItemModule, EmbeddingModule],
+  imports: [DocumentItemModule, AssistantToolFunctionModule],
   providers: [
     AssistantJobService,
     // processors

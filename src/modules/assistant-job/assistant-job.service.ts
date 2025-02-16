@@ -1,3 +1,4 @@
+import { AssistantToolFunctionService } from './../assistant-tool-function/assistant-tool-function.service';
 import { WorkflowExecutionEventDto } from '@/modules/workflow-execution/dto/workflow-execution-event.dto';
 import { Injectable, Logger } from '@nestjs/common';
 import {
@@ -26,9 +27,12 @@ export class AssistantJobService {
     private readonly event: EventEmitter2,
     private readonly configService: ConfigService,
     private readonly documentItemService: DocumentItemService,
+    private readonly toolFunctionService: AssistantToolFunctionService,
   ) {}
 
   async processWorkflowJob(payload: AssistantJobDto) {
+    const aiModelFactory = new AiModelFactory(this.configService);
+
     this.logger.debug('Processing workflow job', payload);
 
     const documentItem = await this.documentItemService.findFirst(
@@ -85,24 +89,18 @@ export class AssistantJobService {
       },
     ];
 
-    const aiModelFactory = new AiModelFactory(this.configService);
-    const model = aiModelFactory
-      .setConfig({
-        provider: payload.llmProvider as any, // TODO: fix typing
-        model: payload.llmNameApi,
-      })
-      .getModel();
+    aiModelFactory.setConfig({
+      provider: payload.llmProvider as any, // TODO: fix typing
+      model: payload.llmNameApi,
+    });
 
-    /*
-      const availableTools = this.chatToolService.getTools({
+    const availableTools = this.toolFunctionService.getTools({
       llmName: payload.llmNameApi,
       llmProvider: payload.llmProvider,
       functionIds: payload.functionIds,
+      assistantId: payload.assistantId,
       emitToolInfoData: (data) => {},
     });
-    */
-
-    const availableTools = {};
 
     const {
       text: initialText,
@@ -111,7 +109,7 @@ export class AssistantJobService {
       toolCalls,
       toolResults,
     } = await generateText({
-      model,
+      model: aiModelFactory.getModel(),
       maxTokens: payload.maxTokens,
       temperature: payload.temperature,
       messages: initialMessages,
@@ -136,7 +134,7 @@ export class AssistantJobService {
         ];
 
         const text = await this.handleToolCall({
-          model,
+          model: aiModelFactory.getModel(),
           availableTools,
           initialMessages,
           toolMessages,

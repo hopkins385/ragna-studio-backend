@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod';
+import type { ZodObject, ZodType } from 'zod';
 
 // Define a type for the emitToolInfoData function
 export type EmitToolInfoData = (toolInfoData: ToolInfoData) => void;
@@ -15,6 +15,12 @@ export interface GetToolPayload {
   llmProvider: string;
   llmName: string;
   functionIds: number[] | null;
+  assistantId: string;
+  emitToolInfoData: EmitToolInfoData;
+}
+
+export interface ToolContext {
+  assistantId: string;
   emitToolInfoData: EmitToolInfoData;
 }
 
@@ -27,6 +33,16 @@ export interface ToolConfig {
   execute: (params: any, emitToolInfoData: EmitToolInfoData) => Promise<any>;
 }
 
-export interface RagToolOptions {
-  recordIds: string[];
+export interface ToolOptions {}
+
+export interface ToolDefinition {
+  id: number;
+  name: string;
+  description: string;
+  parameters: ZodObject<any>;
+  handler: (
+    params: any,
+    context: ToolContext,
+    options?: ToolOptions,
+  ) => Promise<any>;
 }
