@@ -9,13 +9,12 @@ import {
   OpenaiGpt4oMiniProcessor,
   OpenaiGpt4oProcessor,
 } from './processors/ai-models.processor';
-import { ChatToolService } from '../chat-tool/chat-tool.service';
+import { EmbeddingModule } from '../embedding/embedding.module';
 
 @Module({
-  imports: [DocumentItemModule],
+  imports: [DocumentItemModule, EmbeddingModule],
   providers: [
     AssistantJobService,
-    ChatToolService,
     // processors
     AnthropicClaudeSonnetProcessor,
     AnthropicClaudeSonnetLatestProcessor,

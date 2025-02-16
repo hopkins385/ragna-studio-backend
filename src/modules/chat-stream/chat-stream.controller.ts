@@ -62,7 +62,7 @@ export class ChatStreamController {
     // Set stream headers
     this.setStreamHeaders(res);
 
-    const payload = await this.createChatStreamPayload(body, chat);
+    const payload = this.createChatStreamPayload(body, chat);
 
     try {
       const readableStream = await this.chatStreamService.createMessageStream(
@@ -85,15 +85,16 @@ export class ChatStreamController {
     }
   }
 
-  private async createChatStreamPayload(
+  private createChatStreamPayload(
     body: CreateChatStreamBody,
     chat: ChatEntity,
-  ): Promise<CreateChatStreamDto> {
+  ): CreateChatStreamDto {
     let assistantSystemPrompt = chat.assistant.systemPrompt;
 
     //
     // RAG implementation
     //
+    /*
     if (chat.assistant.hasKnowledgeBase === true) {
       // TODO: emit event that assistant has knowledge base and is using RAG
 
@@ -113,6 +114,7 @@ export class ChatStreamController {
 
       assistantSystemPrompt = systemPrompt;
     }
+      */
 
     // timestamp
     const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();

@@ -17,7 +17,6 @@ import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-mes
 import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
-import { ChatToolService } from '@/modules/chat-tool/chat-tool.service';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
@@ -61,7 +60,6 @@ export class ChatStreamService {
   constructor(
     private readonly configService: ConfigService,
     private readonly chatService: ChatService,
-    private readonly chatToolService: ChatToolService,
     private readonly event: EventEmitter2,
   ) {}
 
@@ -449,12 +447,16 @@ export class ChatStreamService {
   ) {
     const isPreview = false; //payload.model.startsWith('o1-');
 
+    /*
     const availableTools = this.chatToolService.getTools({
       llmProvider: payload.provider,
       llmName: payload.model,
       functionIds: payload.functionIds,
       emitToolInfoData: this.toolStartCallback(context),
     });
+    */
+
+    const availableTools = {};
 
     return {
       availableTools,

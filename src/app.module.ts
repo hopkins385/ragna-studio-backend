@@ -12,7 +12,6 @@ import { QueueModule } from './modules/queue/queue.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ChatToolModule } from './modules/chat-tool/chat-tool.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { AssistantToolModule } from './modules/assistant-tool/assistant-tool.module';
 import { ChatStreamModule } from './modules/chat-stream/chat-stream.module';
@@ -117,7 +116,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     AccountModule,
     // Chat
     ChatModule,
-    ChatToolModule,
     ChatStreamModule,
     // Assistant
     AssistantModule,

@@ -115,7 +115,6 @@ export class AiModelFactory {
     this.options = {
       structuredOutputs: false,
       simulateStreaming: false,
-      parallelToolCalls: false,
     };
   }
 

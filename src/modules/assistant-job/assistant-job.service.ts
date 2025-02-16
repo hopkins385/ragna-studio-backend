@@ -17,7 +17,6 @@ import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import { WorkflowEvent } from '@/modules/workflow/enums/workflow-event.enum';
 import { DocumentProcessingStatus } from '@/modules/document-item/interfaces/processing-status.interface';
-import { ChatToolService } from '../chat-tool/chat-tool.service';
 
 @Injectable()
 export class AssistantJobService {
@@ -27,7 +26,6 @@ export class AssistantJobService {
     private readonly event: EventEmitter2,
     private readonly configService: ConfigService,
     private readonly documentItemService: DocumentItemService,
-    private readonly chatToolService: ChatToolService,
   ) {}
 
   async processWorkflowJob(payload: AssistantJobDto) {
@@ -95,12 +93,16 @@ export class AssistantJobService {
       })
       .getModel();
 
-    const availableTools = this.chatToolService.getTools({
+    /*
+      const availableTools = this.chatToolService.getTools({
       llmName: payload.llmNameApi,
       llmProvider: payload.llmProvider,
       functionIds: payload.functionIds,
       emitToolInfoData: (data) => {},
     });
+    */
+
+    const availableTools = {};
 
     const {
       text: initialText,

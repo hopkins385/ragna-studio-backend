@@ -4,19 +4,13 @@ import { ChatRepository } from './repositories/chat.repository';
 import { ChatMessage } from '@prisma/client';
 import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
 import { CreateChatMessageDto } from '../chat-message/dto/create-chat-message.dto';
-import { ChatEvent } from './enums/chat-event.enum';
 import { VisionImageUrlContent } from '../chat-message/interfaces/vision-image.interface';
-import { FirstUserMessageEventDto } from './events/first-user-message.event';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   UpsertChat,
   UpsertChatMessages,
 } from './interfaces/chat-upsert.interface';
 import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
-import { CollectionAbleDto } from '../collection-able/dto/collection-able.dto';
-import { CollectionService } from '../collection/collection.service';
-import { EmbeddingService } from '../embedding/embedding.service';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
@@ -29,9 +23,6 @@ export class ChatService {
   constructor(
     private readonly tokenizerService: TokenizerService,
     private readonly chatRepository: ChatRepository,
-    private readonly collectionService: CollectionService,
-    private readonly embeddingService: EmbeddingService,
-    private readonly event: EventEmitter2,
   ) {}
 
   public async upsertMessages(payload: UpsertChatMessages) {
@@ -469,6 +460,7 @@ export class ChatService {
     });
   }
 
+  /*
   public async getContextAwareSystemPrompt(payload: {
     assistantId: string;
     lastMessageContent: string;
@@ -497,6 +489,7 @@ export class ChatService {
       payload.assistantSystemPrompt + '\n\n<context>' + context + '</context>'
     );
   }
+  */
 
   // POLICIES
 
