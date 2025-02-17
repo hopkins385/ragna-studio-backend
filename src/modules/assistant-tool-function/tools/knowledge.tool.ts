@@ -38,7 +38,7 @@ export class KnowledgeTool extends ToolProvider<
   ) {
     super({
       name: 'knowledge',
-      description: 'Get information about a topic',
+      description: 'Search the users knowledge base',
       parameters: z.object(knowledgeSchema),
     });
   }
@@ -77,8 +77,6 @@ export class KnowledgeTool extends ToolProvider<
         query: params.searchQuery,
         recordIds,
       });
-
-      this.logger.debug(`Retrieved similar documents`, res);
 
       const mergedDocTexts = res.map((r) => r?.text || '').join('\n\n');
 

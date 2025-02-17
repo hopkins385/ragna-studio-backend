@@ -213,6 +213,7 @@ export class ChatStreamService {
       messages: payload.messages,
       maxSteps: 1,
       maxRetries: 3,
+      toolChoice: 'auto',
       ...callSettings,
     });
 
@@ -324,6 +325,7 @@ export class ChatStreamService {
       messages: followUpMessages,
       maxTokens: payload.maxTokens,
       tools: availableTools,
+      toolChoice: 'none',
       maxSteps: 1,
       maxRetries: 3,
     });

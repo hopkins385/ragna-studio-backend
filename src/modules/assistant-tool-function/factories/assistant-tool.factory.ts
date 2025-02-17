@@ -24,10 +24,10 @@ export class AssistantToolFactory {
     private readonly restApiTool: RestApiTool,
   ) {
     const entries: Array<[number, ToolProvider]> = [
-      [1, webSearchTool],
-      [2, webScrapeTool],
-      [3, knowledgeTool],
-      [4, restApiTool],
+      [1, this.webSearchTool],
+      [2, this.webScrapeTool],
+      [3, this.knowledgeTool],
+      // [4, this.restApiTool],
     ];
 
     this.toolProviders = new Map<number, ToolProvider>(entries);
@@ -46,11 +46,19 @@ export class AssistantToolFactory {
       emitToolInfoData: payload.emitToolInfoData,
     };
 
+    // Filter out unwanted tool providers
     const entries = payload.functionIds
       .map((id) => this.toolProviders.get(id))
-      .filter((provider): provider is ToolProvider => provider !== undefined)
-      .reduce<Tools>((acc, provider) => {
-        acc[provider.name] = this.createTool(provider, context, options);
+      .filter(
+        (toolProvider): toolProvider is ToolProvider =>
+          toolProvider !== undefined,
+      )
+      .reduce<Tools>((acc, toolProvider) => {
+        acc[toolProvider.name] = this.createTool(
+          toolProvider,
+          context,
+          options,
+        );
         return acc;
       }, {});
 
@@ -58,20 +66,23 @@ export class AssistantToolFactory {
   }
 
   private createTool(
-    provider: ToolProvider,
+    toolProvider: ToolProvider,
     context: ToolContext,
     options: ToolOptions,
   ) {
     return tool({
-      description: provider.description,
-      parameters: provider.parameters,
+      description: toolProvider.description,
+      parameters: toolProvider.parameters,
       execute: async (params: any) => {
+        // Emit tool info data
         context.emitToolInfoData({
-          toolName: provider.name,
+          toolName: toolProvider.name,
           toolInfo: Object.values(params)?.[0].toString() || '',
         });
+        // Slight delay to give frontend time to render
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await provider.execute(params, context, options);
+        // Execute the tool
+        return await toolProvider.execute(params, context, options);
       },
     });
   }
