@@ -325,7 +325,7 @@ export class ChatStreamService {
       messages: followUpMessages,
       maxTokens: payload.maxTokens,
       tools: availableTools,
-      toolChoice: 'none',
+      toolChoice: 'auto',
       maxSteps: 1,
       maxRetries: 3,
     });
