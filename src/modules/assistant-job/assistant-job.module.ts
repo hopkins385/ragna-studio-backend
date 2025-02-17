@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AssistantJobService } from './assistant-job.service';
 import { DocumentItemModule } from '../document-item/document-item.module';
+import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
 import {
   AnthropicClaudeSonnetLatestProcessor,
   AnthropicClaudeSonnetProcessor,
-  GroqLlamaVisionProcessor,
-  MistralLargeProcessor,
+} from './processors/anthropic.processor';
+import { MistralLargeProcessor } from './processors/mistral.processor';
+import {
   OpenaiGpt4oMiniProcessor,
   OpenaiGpt4oProcessor,
-} from './processors/ai-models.processor';
-import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
+  OpenaiO1Processor,
+  OpenaiO3MiniProcessor,
+} from './processors/openai.processor';
 
 @Module({
   imports: [DocumentItemModule, AssistantToolFunctionModule],
@@ -18,10 +21,11 @@ import { AssistantToolFunctionModule } from '../assistant-tool-function/assistan
     // processors
     AnthropicClaudeSonnetProcessor,
     AnthropicClaudeSonnetLatestProcessor,
-    GroqLlamaVisionProcessor,
     MistralLargeProcessor,
     OpenaiGpt4oProcessor,
     OpenaiGpt4oMiniProcessor,
+    OpenaiO1Processor,
+    OpenaiO3MiniProcessor,
   ],
 })
 export class AssistantJobModule {}

@@ -12,14 +12,6 @@ const claudeReqPerMin = 4 * 1000;
 
 export const workflowProcessors = [
   {
-    name: LLM_MODEL.LLAMA_3_2_11B_LATEST,
-    title: 'GroqLlamaVision',
-    options: {
-      concurrency: workerConcurrency,
-      limiter: { max: groqReqPerMin, duration: rateLimitDuration },
-    },
-  },
-  {
     name: LLM_MODEL.MISTRAL_LATEST,
     title: 'MistralLarge',
     options: {
@@ -38,6 +30,22 @@ export const workflowProcessors = [
   {
     name: LLM_MODEL.GPT_4O_MINI,
     title: 'OpenaiGpt4oMini',
+    options: {
+      concurrency: workerConcurrency,
+      limiter: { max: openaiReqPerMin, duration: rateLimitDuration },
+    },
+  },
+  {
+    name: LLM_MODEL.GPT_O1,
+    title: 'OpenaiO1',
+    options: {
+      concurrency: workerConcurrency,
+      limiter: { max: openaiReqPerMin, duration: rateLimitDuration },
+    },
+  },
+  {
+    name: LLM_MODEL.GPT_O3_MINI,
+    title: 'OpenaiO3Mini',
     options: {
       concurrency: workerConcurrency,
       limiter: { max: openaiReqPerMin, duration: rateLimitDuration },
