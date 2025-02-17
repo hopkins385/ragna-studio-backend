@@ -11,7 +11,7 @@ import {
   ProviderClass,
   ProviderModelConfig,
 } from '@/modules/ai-model/interfaces/provider-model.interface';
-import { Injectable, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import type { LanguageModelV1 } from 'ai';
 
@@ -92,7 +92,6 @@ class GoogleProvider extends AiModelProvider {
   }
 }
 
-@Injectable()
 export class AiModelFactory {
   private readonly logger = new Logger(AiModelFactory.name);
   private provider: ProviderType;
