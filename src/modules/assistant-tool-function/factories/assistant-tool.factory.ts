@@ -1,4 +1,3 @@
-import { RestApiTool } from './../tools/rest-api.tool';
 import { Injectable, Logger } from '@nestjs/common';
 import { tool } from 'ai';
 import {
@@ -21,13 +20,11 @@ export class AssistantToolFactory {
     private readonly webSearchTool: WebSearchTool,
     private readonly webScrapeTool: WebScrapeTool,
     private readonly knowledgeTool: KnowledgeTool,
-    private readonly restApiTool: RestApiTool,
   ) {
     const entries: Array<[number, ToolProvider]> = [
       [1, this.webSearchTool],
       [2, this.webScrapeTool],
       [3, this.knowledgeTool],
-      // [4, this.restApiTool],
     ];
 
     this.toolProviders = new Map<number, ToolProvider>(entries);
@@ -54,11 +51,8 @@ export class AssistantToolFactory {
           toolProvider !== undefined,
       )
       .reduce<Tools>((acc, toolProvider) => {
-        acc[toolProvider.name] = this.createTool(
-          toolProvider,
-          context,
-          options,
-        );
+        const metadata = toolProvider.getMetadata();
+        acc[metadata.name] = this.createTool(toolProvider, context, options);
         return acc;
       }, {});
 
@@ -70,19 +64,27 @@ export class AssistantToolFactory {
     context: ToolContext,
     options: ToolOptions,
   ) {
+    const meta = toolProvider.getMetadata();
     return tool({
-      description: toolProvider.description,
-      parameters: toolProvider.parameters,
+      description: meta.description,
+      parameters: meta.parameters,
       execute: async (params: any) => {
         // Emit tool info data
         context.emitToolInfoData({
-          toolName: toolProvider.name,
+          toolName: meta.name,
           toolInfo: Object.values(params)?.[0].toString() || '',
         });
         // Slight delay to give frontend time to render
         await new Promise((resolve) => setTimeout(resolve, 1000));
         // Execute the tool
-        return await toolProvider.execute(params, context, options);
+        try {
+          return await toolProvider.execute(params, context, options);
+        } catch (error) {
+          this.logger.error(`Error executing tool: ${meta.name}`, error);
+          return {
+            message: 'An error occurred while executing the tool',
+          };
+        }
       },
     });
   }

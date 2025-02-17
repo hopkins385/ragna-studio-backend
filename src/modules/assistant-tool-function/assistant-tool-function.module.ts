@@ -6,7 +6,6 @@ import { AssistantToolFactory } from './factories/assistant-tool.factory';
 import { WebSearchTool } from './tools/websearch.tool';
 import { WebScrapeTool } from './tools/webscrape.tool';
 import { KnowledgeTool } from './tools/knowledge.tool';
-import { RestApiTool } from './tools/rest-api.tool';
 
 @Module({
   imports: [EmbeddingModule, CollectionModule],
@@ -16,7 +15,6 @@ import { RestApiTool } from './tools/rest-api.tool';
     WebSearchTool,
     WebScrapeTool,
     KnowledgeTool,
-    RestApiTool,
     // Services
     AssistantToolFunctionService,
   ],
