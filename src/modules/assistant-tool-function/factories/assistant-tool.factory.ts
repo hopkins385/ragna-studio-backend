@@ -49,12 +49,12 @@ export class AssistantToolFactory {
     const entries = payload.functionIds
       .map((id) => this.toolProviders.get(id))
       .filter((provider): provider is ToolProvider => provider !== undefined)
-      .map((provider) => [
-        provider.name,
-        this.createTool(provider, context, options),
-      ]);
+      .reduce<Tools>((acc, provider) => {
+        acc[provider.name] = this.createTool(provider, context, options);
+        return acc;
+      }, {});
 
-    return Object.fromEntries(entries);
+    return entries;
   }
 
   private createTool(

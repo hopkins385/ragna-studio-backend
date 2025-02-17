@@ -11,11 +11,13 @@ import { RestApiTool } from './tools/rest-api.tool';
 @Module({
   imports: [EmbeddingModule, CollectionModule],
   providers: [
+    // Tools
     AssistantToolFactory,
     WebSearchTool,
     WebScrapeTool,
     KnowledgeTool,
     RestApiTool,
+    // Services
     AssistantToolFunctionService,
   ],
   exports: [AssistantToolFunctionService],
