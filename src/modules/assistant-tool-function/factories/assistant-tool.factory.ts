@@ -27,6 +27,17 @@ export class AssistantToolFactory {
       [3, this.knowledgeTool],
     ];
 
+    // Validate all tools implement ToolProvider interface
+    entries.forEach(([id, provider]) => {
+      if (
+        !provider ||
+        typeof provider.execute !== 'function' ||
+        typeof provider.getMetadata !== 'function'
+      ) {
+        throw new Error(`Invalid tool provider for ID ${id}`);
+      }
+    });
+
     this.toolProviders = new Map<number, ToolProvider>(entries);
   }
 
@@ -34,7 +45,27 @@ export class AssistantToolFactory {
     payload: GetToolPayload,
     options?: ToolOptions,
   ): Tools | undefined {
+    // Add validation for payload
+    if (!payload || typeof payload !== 'object') {
+      this.logger.error('Invalid payload provided to getTools');
+      return undefined;
+    }
+
+    if (!Array.isArray(payload.functionIds)) {
+      this.logger.warn('functionIds is not an array');
+      return undefined;
+    }
+
     if (!payload.functionIds?.length) {
+      this.logger.warn('No function IDs provided in payload');
+      return undefined;
+    }
+
+    // Validate function IDs are numbers
+    if (!payload.functionIds.every((id) => typeof id === 'number')) {
+      this.logger.error(
+        `Invalid function ID type in payload. Numbers expected but received: ${payload.functionIds}`,
+      );
       return undefined;
     }
 
@@ -64,25 +95,54 @@ export class AssistantToolFactory {
     context: ToolContext,
     options: ToolOptions,
   ) {
+    if (!toolProvider || !context) {
+      throw new Error('Invalid toolProvider or context');
+    }
+
     const meta = toolProvider.getMetadata();
+    if (!meta || !meta.name || !meta.parameters) {
+      throw new Error('Invalid tool metadata');
+    }
+
     return tool({
-      description: meta.description,
+      description: meta.description || 'No description provided',
       parameters: meta.parameters,
       execute: async (params: any) => {
-        // Emit tool info data
-        context.emitToolInfoData({
-          toolName: meta.name,
-          toolInfo: Object.values(params)?.[0].toString() || '',
-        });
-        // Slight delay to give frontend time to render
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        // Execute the tool
+        let timeoutId: NodeJS.Timeout;
         try {
-          return await toolProvider.execute(params, context, options);
+          // Validate params
+          if (!params || typeof params !== 'object') {
+            throw new Error('Invalid parameters provided to tool');
+          }
+
+          context.emitToolInfoData({
+            toolName: meta.name,
+            toolInfo: Object.values(params)?.[0]?.toString() || '',
+          });
+
+          // Add timeout to prevent hanging
+          const timeoutMs = options?.timeoutMs || 30000;
+          const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(
+              () => reject(new Error('Tool execution timeout')),
+              timeoutMs,
+            );
+          });
+
+          const result = await Promise.race([
+            toolProvider.execute(params, context, options),
+            timeoutPromise,
+          ]);
+
+          // Clear the timeout if execution completed successfully
+          clearTimeout(timeoutId);
+
+          return result;
         } catch (error) {
           this.logger.error(`Error executing tool: ${meta.name}`, error);
           return {
             message: 'An error occurred while executing the tool',
+            error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
       },

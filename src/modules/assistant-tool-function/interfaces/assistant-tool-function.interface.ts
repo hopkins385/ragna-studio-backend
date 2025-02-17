@@ -1,3 +1,4 @@
+import { timeout } from 'rxjs/operators';
 import type { ZodObject, ZodType } from 'zod';
 
 // Define a type for the emitToolInfoData function
@@ -33,7 +34,9 @@ export interface ToolConfig {
   execute: (params: any, emitToolInfoData: EmitToolInfoData) => Promise<any>;
 }
 
-export interface ToolOptions {}
+export interface ToolOptions {
+  timeoutMs?: number;
+}
 
 export interface ToolDefinition {
   id: number;
