@@ -47,17 +47,14 @@ export class AssistantToolFactory {
   ): Tools | undefined {
     // Add validation for payload
     if (!payload || typeof payload !== 'object') {
-      this.logger.error('Invalid payload provided to getTools');
       return undefined;
     }
 
     if (!Array.isArray(payload.functionIds)) {
-      this.logger.warn('functionIds is not an array');
       return undefined;
     }
 
     if (!payload.functionIds?.length) {
-      this.logger.warn('No function IDs provided in payload');
       return undefined;
     }
 
