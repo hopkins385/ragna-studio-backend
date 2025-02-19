@@ -1,16 +1,18 @@
 import { StorageService } from '@/modules/storage/storage.service';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import sharp from 'sharp';
 import { ImageConversionJobDataDto } from '../dto/image-conversion-job-data.dto';
 import { Inject, Logger } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import { AxiosInstance } from 'axios';
 import { HTTP_CLIENT } from '@/modules/http-client/constants';
+import { join } from 'node:path';
+import { Worker } from 'worker_threads';
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
   private readonly logger = new Logger(ImageConversionProcessor.name);
+  private imageWorker: Worker;
 
   constructor(
     private readonly storageService: StorageService,
@@ -18,6 +20,9 @@ export class ImageConversionProcessor extends WorkerHost {
     private readonly httpClient: AxiosInstance,
   ) {
     super();
+    this.imageWorker = new Worker(
+      join(__dirname, '../workers/image-conversion.worker.js'),
+    );
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
@@ -41,8 +46,38 @@ export class ImageConversionProcessor extends WorkerHost {
     );
 
     // resize and convert to avif and webp
-    const avifBuffer = await sharp(fileBuffer).resize(300).avif().toBuffer();
-    const webpBuffer = await sharp(fileBuffer).resize(300).webp().toBuffer();
+    // const avifBuffer = await sharp(fileBuffer).resize(300).avif().toBuffer();
+    // const webpBuffer = await sharp(fileBuffer).resize(300).webp().toBuffer();
+
+    this.imageWorker.postMessage(fileBuffer);
+
+    const result = await new Promise<{
+      avifBuffer: Buffer;
+      webpBuffer: Buffer;
+      error: any;
+    }>((resolve, reject) => {
+      this.imageWorker.on(
+        'message',
+        (message: { avifBuffer: Buffer; webpBuffer: Buffer; error: any }) => {
+          if (message.error) {
+            reject(message.error);
+          } else {
+            resolve(message);
+          }
+        },
+      );
+      this.imageWorker.on('error', reject);
+      this.imageWorker.on('exit', (code) => {
+        if (code !== 0)
+          reject(new Error(`Worker stopped with exit code ${code}`));
+      });
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    const { avifBuffer, webpBuffer } = result;
 
     const newBucketPath = `${oldBucketPath}/converted`;
     // remove file extension (e.g. abc-file.jpg -> abc-file)
