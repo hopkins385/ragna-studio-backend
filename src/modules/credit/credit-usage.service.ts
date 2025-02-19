@@ -6,6 +6,13 @@ import { CreditUsageRepository } from './repositories/credit-usage.repository';
 export class CreditUsageService {
   constructor(private creditUsageRepo: CreditUsageRepository) {}
 
+  async logCreditUsage(payload: {
+    userId: string;
+    creditAmount: number;
+  }): Promise<void> {
+    await this.creditUsageRepo.logCreditUsage(payload);
+  }
+
   async getCreditBalance(userId: string): Promise<number> {
     const user = await this.creditUsageRepo.prisma.user.findUnique({
       where: { id: userId },

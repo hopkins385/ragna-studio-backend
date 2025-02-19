@@ -14,7 +14,7 @@ import { CreditController } from './credit.controller';
     CreditUsageService,
     CreditService,
   ],
-  exports: [CreditEventEmitter, CreditUsageService],
+  exports: [CreditEventEmitter, CreditUsageService, CreditService],
   controllers: [CreditController],
 })
 export class CreditModule {}
