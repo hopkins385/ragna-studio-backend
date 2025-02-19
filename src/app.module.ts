@@ -15,7 +15,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { AssistantToolModule } from './modules/assistant-tool/assistant-tool.module';
 import { ChatStreamModule } from './modules/chat-stream/chat-stream.module';
-import { CreditModule } from './modules/credit/credit.module';
 import { TokenizerModule } from './modules/tokenizer/tokenizer.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
 import { ChatMessageController } from './modules/chat-message/chat-message.controller';
@@ -52,6 +51,7 @@ import { createKeyv } from '@keyv/redis';
 import { CacheManagerModule } from './modules/cache-manager/cache-manager.module';
 import { EditorModule } from './modules/editor/editor.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CreditModule } from './modules/credit/credit.module';
 
 @Module({
   imports: [
@@ -114,6 +114,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     // Account
     UserModule,
     AccountModule,
+    // Credit
+    CreditModule,
     // Chat
     ChatModule,
     ChatStreamModule,
@@ -124,8 +126,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     //
 
     SocketModule,
-
-    CreditModule,
 
     TokenizerModule,
 

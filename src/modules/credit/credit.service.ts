@@ -1,74 +1,85 @@
-import { CreditRepository } from './repositories/credit.repository';
+// credit.service.ts
 import { Injectable } from '@nestjs/common';
+import { CreditEventEmitter } from './events/credit-event.emitter';
+import { CreditUsageRepository } from './repositories/credit-usage.repository';
 
 @Injectable()
 export class CreditService {
-  constructor(private readonly creditRepo: CreditRepository) {}
+  constructor(
+    private creditUsageRepo: CreditUsageRepository,
+    private creditEventEmitter: CreditEventEmitter,
+  ) {}
 
-  createCredit(userId: string, amount: number) {
-    return this.creditRepo.prisma.credit.create({
-      data: {
-        userId: userId.toLowerCase(),
-        amount,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+  async getUserCredits(userId: string): Promise<number> {
+    const user = await this.creditUsageRepo.prisma.user.findUnique({
+      where: { id: userId },
+      select: { totalCredits: true },
     });
+    return user?.totalCredits || 0;
   }
 
-  getCreditAmount(userId: string) {
-    return this.creditRepo.prisma.credit.findFirst({
-      select: {
-        amount: true,
-      },
-      where: {
-        userId: userId.toLowerCase(),
-      },
+  async useCredits(
+    userId: string,
+    amount: number,
+    action: string,
+  ): Promise<void> {
+    const user = await this.creditUsageRepo.prisma.user.findUnique({
+      where: { id: userId },
     });
-  }
+    if (!user || user.totalCredits < amount) {
+      throw new Error('Insufficient credits');
+    }
 
-  updateCredit(userId: string, amount: number) {
-    return this.creditRepo.prisma.credit.update({
-      where: {
-        userId: userId.toLowerCase(),
-      },
-      data: {
-        amount,
-        updatedAt: new Date(),
-      },
-    });
-  }
+    await this.creditUsageRepo.prisma.$transaction(async (prisma) => {
+      // Update user's total credits
+      await prisma.user.update({
+        where: { id: userId },
+        data: { totalCredits: { decrement: amount } },
+      });
 
-  reduceCredit(userId: string, amount: number) {
-    return this.creditRepo.prisma.credit.update({
-      where: {
-        userId: userId.toLowerCase(),
-      },
-      data: {
-        amount: {
-          decrement: amount,
+      // Log credit usage
+      await prisma.creditUsage.create({
+        data: {
+          userId,
+          amount,
         },
-        updatedAt: new Date(),
-      },
+      });
     });
+
+    // Emit credit usage event
+    this.creditEventEmitter.emitCreditUsage(userId, amount, action);
   }
 
-  deleteCredit(userId: string) {
-    return this.creditRepo.prisma.credit.delete({
-      where: {
-        userId: userId.toLowerCase(),
-      },
+  async purchaseCredits(
+    userId: string,
+    amount: number,
+    cost: number,
+  ): Promise<void> {
+    await this.creditUsageRepo.prisma.$transaction(async (prisma) => {
+      // Update user's total credits
+      await prisma.user.update({
+        where: { id: userId },
+        data: { totalCredits: { increment: amount } },
+      });
+
+      // Log credit purchase
+      await prisma.creditPurchase.create({
+        data: {
+          userId,
+          amount,
+          cost,
+        },
+      });
     });
+
+    // You might want to emit an event here as well
   }
 
-  softDeleteCredit(userId: string) {
-    return this.creditRepo.prisma.credit.update({
-      where: {
-        userId: userId.toLowerCase(),
-      },
-      data: {
-        deletedAt: new Date(),
-      },
+  async getCreditUsageHistory(userId: string) {
+    return this.creditUsageRepo.prisma.creditUsage.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10, // Get last 10 usage records
     });
   }
 }

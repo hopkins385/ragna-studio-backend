@@ -34,12 +34,8 @@ export class UserRepository extends BaseRepository<User> {
         firstName: true,
         lastName: true,
         email: true,
+        totalCredits: true,
         onboardedAt: true,
-        credit: {
-          select: {
-            amount: true,
-          },
-        },
         teams: {
           select: {
             teamId: true,

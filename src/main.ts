@@ -14,6 +14,7 @@ async function bootstrap() {
       process.env.APP_ENV !== 'dev'
         ? ['log', 'error', 'warn']
         : ['log', 'error', 'warn', 'debug'],
+    snapshot: false,
     // bufferLogs: true,
     // bodyParser: false,
   });

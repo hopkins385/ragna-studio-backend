@@ -1,5 +1,3 @@
-import { Credit, Team } from '@prisma/client';
-
 export class SessionUser {
   id: string;
 
@@ -10,6 +8,8 @@ export class SessionUser {
   firstName: string;
 
   lastName: string;
+
+  totalCredits: number;
 
   lastLoginAt: Date;
 
@@ -30,11 +30,11 @@ export class SessionUser {
     name: string;
     firstName: string;
     lastName: string;
+    totalCredits: number;
     lastLoginAt: Date;
     hasEmailVerified: Boolean;
     hasOnboarded: Boolean;
     firstTeamId: string;
-    credits: number;
     roles: string[];
     teams: string[];
   }) {
@@ -43,11 +43,11 @@ export class SessionUser {
     this.name = input.name;
     this.firstName = input.firstName;
     this.lastName = input.lastName;
+    this.totalCredits = input.totalCredits;
     this.lastLoginAt = input.lastLoginAt;
     this.hasEmailVerified = input.hasEmailVerified;
     this.hasOnboarded = input.hasOnboarded;
     this.firstTeamId = input.firstTeamId;
-    this.credits = input.credits;
     this.roles = input.roles;
     this.teams = input.teams;
   }
@@ -58,11 +58,11 @@ export class SessionUser {
     name: string;
     firstName: string;
     lastName: string;
+    totalCredits: number;
     lastLoginAt: Date;
     hasEmailVerified: Boolean;
     hasOnboarded: Boolean;
     firstTeamId: string;
-    credits: number;
     roles: string[];
     teams: string[];
   }): SessionUser {

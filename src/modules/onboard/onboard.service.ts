@@ -2,11 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CreateOnboardDto } from './dto/create-onboard.dto';
 import { UpdateOnboardDto } from './dto/update-onboard.dto';
 import { OnboardRepository } from './repositories/onboard.repository';
-import { CreatesNewUserAction } from './actions/createsNewUserAction';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnboardingCompletedDto } from './events/onboarding.event';
 import { OnboardingEvent } from './enums/onboarding-event.enum';
+import { CreatesNewUserAction } from '../user/actions/createsNewUserAction';
 
 @Injectable()
 export class OnboardService {

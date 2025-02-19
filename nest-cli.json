@@ -7,6 +7,7 @@
   },
   "compilerOptions": {
     "builder": "swc",
+    "typeCheck": false,
     "deleteOutDir": true,
     "watchAssets": true,
     "plugins": [

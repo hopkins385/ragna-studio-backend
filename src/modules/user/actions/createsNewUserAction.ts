@@ -109,18 +109,6 @@ export class CreatesNewUserAction {
     return { teamId: team.id, userId };
   }
 
-  async createCredits({ userId, teamId, amount }: NewCreditsDto) {
-    const result = await this.prisma.credit.create({
-      data: {
-        userId,
-        amount,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-    return { teamId, userId };
-  }
-
   async assignAdminRoleToUser({
     userId,
     teamId,
@@ -272,11 +260,6 @@ export class CreatesNewUserAction {
           name: 'Default Team',
           organisationId,
         });
-      });
-      p.addStep(async ({ userId, teamId }: PipelineStepResult) => {
-        if (!userId || !teamId)
-          throw new Error('Missing required fields: userId or teamId');
-        return this.createCredits({ teamId, userId, amount: 1000 });
       });
       p.addStep(async ({ userId, teamId }: PipelineStepResult) => {
         if (!userId || !teamId)

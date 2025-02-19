@@ -237,11 +237,7 @@ export class ChatService {
         user: {
           select: {
             id: true,
-            credit: {
-              select: {
-                amount: true,
-              },
-            },
+            totalCredits: true,
           },
         },
         assistant: {

@@ -15,6 +15,7 @@ async function defaultUsers(prisma: SeedPrismaClient) {
         lastName: 'Stadhouders',
         email: process.env.ADMIN_EMAIL,
         password: adminPassword,
+        totalCredits: 1000,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -29,6 +30,7 @@ async function defaultUsers(prisma: SeedPrismaClient) {
         lastName: 'User',
         email: process.env.TESTER_EMAIL,
         password: testerPassword,
+        totalCredits: 1000,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -110,26 +112,6 @@ async function teamUser(prisma: SeedPrismaClient, teams: any[], users: any[]) {
   console.log('Assigned users to teams');
 }
 
-async function usersCredits(prisma: SeedPrismaClient, users: any[]) {
-  // credits for each default user
-  await prisma.credit.createMany({
-    data: [
-      {
-        id: createId(),
-        userId: users[0].id,
-        amount: 1000,
-      },
-      {
-        id: createId(),
-        userId: users[1].id,
-        amount: 1000,
-      },
-    ],
-  });
-
-  console.log('Assigned credits to users');
-}
-
 async function truncate(prisma: SeedPrismaClient) {
   await prisma.teamUser.deleteMany();
 
@@ -137,7 +119,6 @@ async function truncate(prisma: SeedPrismaClient) {
     prisma.organisation.deleteMany(),
     prisma.team.deleteMany(),
     prisma.user.deleteMany(),
-    prisma.credit.deleteMany(),
   ]);
 }
 
@@ -146,7 +127,6 @@ async function seedData(prisma: SeedPrismaClient) {
   const organisations = await defaultOrganisations(prisma);
   const teams = await defaultTeams(prisma, organisations);
   await teamUser(prisma, teams, users);
-  await usersCredits(prisma, users);
 }
 
 async function seedDefaultUsers() {

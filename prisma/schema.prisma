@@ -21,6 +21,7 @@ model User {
   deviceId        String?   @map("device_id")
   email           String    @unique
   name            String
+  totalCredits    Int       @default(0) @map("total_credits")
   image           String?
   firstName       String?   @map("first_name")
   lastName        String?   @map("last_name")
@@ -33,15 +34,16 @@ model User {
   deletedAt       DateTime? @map("deleted_at")
   onboardedAt     DateTime? @map("onboarded_at")
 
-  roles         UserRole[]
-  chats         Chat[]
-  credit        Credit[]
-  teams         TeamUser[]
-  accounts      Account[]
-  sessions      Session[]
-  tokenUsages   TokenUsage[]
-  providerAuths ProviderAuth[]
-  favorites     UserFavorite[]
+  roles           UserRole[]
+  chats           Chat[]
+  teams           TeamUser[]
+  accounts        Account[]
+  sessions        Session[]
+  tokenUsages     TokenUsage[]
+  providerAuths   ProviderAuth[]
+  favorites       UserFavorite[]
+  creditUsages    CreditUsage[]
+  creditPurchases CreditPurchase[]
 
   @@unique([deviceId, email])
   @@index([email])
@@ -359,7 +361,9 @@ model LargeLangModel {
   @@map("llms")
 }
 
-model Credit {
+// Credit Usage and Purchase
+
+model CreditUsage {
   id        String    @id @default(cuid())
   userId    String    @unique @map("user_id")
   amount    Int
@@ -370,8 +374,24 @@ model Credit {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@map("credits")
+  @@map("credit_usages")
 }
+
+model CreditPurchase {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  amount    Int
+  cost      Decimal
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("credit_purchases")
+}
+
+// TokenUsage
 
 model TokenUsage {
   id               String    @id @default(cuid())

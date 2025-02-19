@@ -1,4 +1,4 @@
-import { Credit, Team } from '@prisma/client';
+import { Team } from '@prisma/client';
 
 export class UserEntity {
   id: string;
@@ -10,6 +10,8 @@ export class UserEntity {
   firstName: string;
 
   lastName: string;
+
+  totalCredits: number;
 
   lastLoginAt: Date;
 
@@ -25,10 +27,8 @@ export class UserEntity {
 
   // custom
   firstTeamId: string;
-  totalCredits: number;
 
   // required relations after onboarding
-  credit?: Partial<Credit>[];
   roles?: string[];
   teams?: {
     team?: Partial<Team>;
@@ -40,17 +40,16 @@ export class UserEntity {
     this.name = input.name;
     this.firstName = input.firstName;
     this.lastName = input.lastName;
+    this.totalCredits = input.totalCredits;
     this.lastLoginAt = input.lastLoginAt;
     this.emailVerified = input.emailVerified;
     this.createdAt = input.createdAt;
     this.updatedAt = input.updatedAt;
     this.deletedAt = input.deletedAt;
     this.onboardedAt = input.onboardedAt;
-    this.credit = input.credit;
     this.roles = input.roles;
     this.teams = input.teams;
     this.firstTeamId = input.teams?.[0]?.team.id || '';
-    this.totalCredits = input.credit.reduce((acc, c) => acc + c.amount, 0);
   }
 
   static fromInput(input: any) {

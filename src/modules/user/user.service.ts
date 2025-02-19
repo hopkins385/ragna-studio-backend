@@ -67,14 +67,10 @@ export class UserService {
         firstName: true,
         lastName: true,
         email: true,
+        totalCredits: true,
         onboardedAt: true,
         lastLoginAt: true,
         emailVerifiedAt: true,
-        credit: {
-          select: {
-            amount: true,
-          },
-        },
         teams: {
           select: {
             teamId: true,
@@ -108,10 +104,10 @@ export class UserService {
       firstName: user.firstName,
       lastName: user.lastName,
       lastLoginAt: user.lastLoginAt,
+      totalCredits: user.totalCredits,
       hasEmailVerified: user.emailVerifiedAt !== null,
       hasOnboarded: user.onboardedAt !== null,
       firstTeamId: user.teams?.[0]?.team.id || '',
-      credits: user.credit.reduce((acc, c) => acc + c.amount, 0),
       roles: user.roles.map((r) => r.role.name),
       teams: user.teams.map((t) => t.team.id),
     });
