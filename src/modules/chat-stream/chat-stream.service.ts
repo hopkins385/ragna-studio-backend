@@ -374,6 +374,10 @@ export class ChatStreamService {
         }
       }
 
+      if (chunk.type === 'reasoning') {
+        yield chunk.textDelta;
+      }
+
       if (chunk.type === 'text-delta') {
         yield chunk.textDelta;
       }
@@ -448,8 +452,6 @@ export class ChatStreamService {
     context: StreamContext,
     payload: CreateChatStreamDto,
   ) {
-    const isPreview = false; //payload.model.startsWith('o1-');
-
     const availableTools = this.toolFunctionService.getTools({
       llmProvider: payload.provider,
       llmName: payload.model,
@@ -460,14 +462,12 @@ export class ChatStreamService {
 
     return {
       availableTools,
-      settings: isPreview
-        ? {}
-        : {
-            system: payload.systemPrompt,
-            tools: availableTools,
-            maxTokens: payload.maxTokens,
-            temperature: payload.temperature,
-          },
+      settings: {
+        system: payload.systemPrompt,
+        tools: availableTools,
+        maxTokens: payload.maxTokens,
+        temperature: payload.temperature,
+      },
     };
   }
 
