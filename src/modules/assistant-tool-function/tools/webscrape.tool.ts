@@ -47,6 +47,7 @@ export class WebScrapeTool extends ToolProvider<
   async execute(params: WebScrapeParams): Promise<WebScrapeResponse> {
     const scrapeServerUrl = this.config.getOrThrow('SCRAPE_SERVER_URL');
     const websiteURL = new URL(params.url);
+
     try {
       if (websiteURL.protocol !== 'https:') {
         throw new Error('Invalid URL protocol - must be HTTPS');
@@ -54,6 +55,8 @@ export class WebScrapeTool extends ToolProvider<
 
       const scrapeUrl = new URL(`${scrapeServerUrl}/scrape`);
       scrapeUrl.searchParams.set('url', websiteURL.toString());
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const response = await this.httpClient.get<WebScrapeResponse>(
         scrapeUrl.toString(),

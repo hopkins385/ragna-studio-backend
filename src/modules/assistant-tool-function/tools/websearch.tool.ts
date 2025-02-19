@@ -39,6 +39,8 @@ export class WebSearchTool extends ToolProvider<
     options?: ToolOptions,
   ): Promise<WebSearchResponse> {
     try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const response = await getJson({
         engine: 'google',
         api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
