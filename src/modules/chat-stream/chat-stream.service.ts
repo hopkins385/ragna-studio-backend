@@ -14,7 +14,6 @@ import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
-import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
@@ -22,6 +21,9 @@ import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
 import { ConfigService } from '@nestjs/config';
 import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
+import { ChatStreamEventEmitter } from './events/chat-stream-event.emitter';
+import { FirstUserMessageEventDto } from '../chat/events/first-user-message.event';
+import { ChatToolCallEventEmitter } from './events/tool-call-event.emitter';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -62,7 +64,8 @@ export class ChatStreamService {
     private readonly configService: ConfigService,
     private readonly chatService: ChatService,
     private readonly toolFunctionService: AssistantToolFunctionService,
-    private readonly event: EventEmitter2,
+    private readonly chatStreamEvent: ChatStreamEventEmitter,
+    private readonly chatToolEvent: ChatToolCallEventEmitter,
   ) {}
 
   async createMessageStream(
@@ -330,12 +333,11 @@ export class ChatStreamService {
       maxRetries: 3,
     });
 
-    const toolName = toolResults[0]?.toolName || '';
-    this.onToolEndCall(
+    this.chatToolEvent.emitToolEndCall(
       ChatToolCallEventDto.fromInput({
         userId: context.chat.userId,
         chatId: context.chat.id,
-        toolName,
+        toolName: toolResults[0]?.toolName || '',
       }),
     );
 
@@ -400,27 +402,28 @@ export class ChatStreamService {
     },
   ) {
     this.logger.debug('Saving message:', messageData);
-    // Update chat title if it's the first message of the chat
+    // FirstMessage Event
     if (messageData.isFirstMessage) {
-      this.event.emit(
-        ChatEvent.FIRST_USERMESSAGE,
+      this.chatStreamEvent.emitIsFirstChatMessage(
         FirstUserMessageEventDto.fromInput({
-          chatId,
           userId: messageData.userId,
+          chatId,
           messageContent: messageData.content,
         }),
       );
     }
-    const payload = CreateChatMessageDto.fromInput({
-      userId: messageData.userId,
-      chatId,
-      message: {
-        type: ChatMessageType.TEXT,
-        role: messageData.role,
-        content: messageData.content,
-      },
-    });
-    await this.chatService.createMessageAndReduceCredit(payload);
+    // Create message and reduce credit
+    await this.chatService.createMessageAndReduceCredit(
+      CreateChatMessageDto.fromInput({
+        userId: messageData.userId,
+        chatId,
+        message: {
+          type: ChatMessageType.TEXT,
+          role: messageData.role,
+          content: messageData.content,
+        },
+      }),
+    );
   }
 
   // UTILS
@@ -474,7 +477,7 @@ export class ChatStreamService {
 
   private toolStartCallback(context: StreamContext) {
     return (toolInfoData: ToolInfoData) =>
-      this.onToolStartCall(
+      this.chatToolEvent.emitToolStartCall(
         ChatToolCallEventDto.fromInput({
           userId: context.chat.userId,
           chatId: context.chat.id,
@@ -482,13 +485,5 @@ export class ChatStreamService {
           toolInfo: toolInfoData.toolInfo,
         }),
       );
-  }
-
-  private onToolEndCall(payload: ChatToolCallEventDto) {
-    this.event.emit(ChatEvent.TOOL_END_CALL, payload);
-  }
-
-  private onToolStartCall(payload: ChatToolCallEventDto) {
-    this.event.emit(ChatEvent.TOOL_START_CALL, payload);
   }
 }
