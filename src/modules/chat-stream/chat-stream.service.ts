@@ -276,7 +276,7 @@ export class ChatStreamService {
         yield chunk.textDelta;
       }
 
-      await this.delayStream();
+      await this.sleep();
     }
 
     // usage
@@ -382,7 +382,7 @@ export class ChatStreamService {
         yield chunk.textDelta;
       }
 
-      await this.delayStream();
+      await this.sleep();
     }
 
     // usage
@@ -428,7 +428,7 @@ export class ChatStreamService {
 
   // UTILS
 
-  private async delayStream() {
+  private async sleep() {
     return new Promise((resolve) => {
       setTimeout(resolve, this.DEFAULT_STREAM_DELAY_MS);
     });
