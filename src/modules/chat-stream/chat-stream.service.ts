@@ -9,9 +9,7 @@ import {
   streamText,
   StreamTextResult,
 } from 'ai';
-import { ChatEvent } from '@/modules/chat/enums/chat-event.enum';
 import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
@@ -21,9 +19,8 @@ import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
 import { ConfigService } from '@nestjs/config';
 import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
-import { ChatStreamEventEmitter } from './events/chat-stream-event.emitter';
 import { FirstUserMessageEventDto } from '../chat/events/first-user-message.event';
-import { ChatToolCallEventEmitter } from './events/tool-call-event.emitter';
+import { ChatEventEmitter } from '../chat/events/chat-event.emitter';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -63,9 +60,8 @@ export class ChatStreamService {
   constructor(
     private readonly configService: ConfigService,
     private readonly chatService: ChatService,
+    private readonly chatEvent: ChatEventEmitter,
     private readonly toolFunctionService: AssistantToolFunctionService,
-    private readonly chatStreamEvent: ChatStreamEventEmitter,
-    private readonly chatToolEvent: ChatToolCallEventEmitter,
   ) {}
 
   async createMessageStream(
@@ -333,7 +329,7 @@ export class ChatStreamService {
       maxRetries: 3,
     });
 
-    this.chatToolEvent.emitToolEndCall(
+    this.chatEvent.emitToolEndCall(
       ChatToolCallEventDto.fromInput({
         userId: context.chat.userId,
         chatId: context.chat.id,
@@ -404,7 +400,7 @@ export class ChatStreamService {
     this.logger.debug('Saving message:', messageData);
     // FirstMessage Event
     if (messageData.isFirstMessage) {
-      this.chatStreamEvent.emitIsFirstChatMessage(
+      this.chatEvent.emitIsFirstChatMessage(
         FirstUserMessageEventDto.fromInput({
           userId: messageData.userId,
           chatId,
@@ -477,7 +473,7 @@ export class ChatStreamService {
 
   private toolStartCallback(context: StreamContext) {
     return (toolInfoData: ToolInfoData) =>
-      this.chatToolEvent.emitToolStartCall(
+      this.chatEvent.emitToolStartCall(
         ChatToolCallEventDto.fromInput({
           userId: context.chat.userId,
           chatId: context.chat.id,

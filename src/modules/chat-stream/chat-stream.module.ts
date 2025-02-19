@@ -4,10 +4,7 @@ import { ChatStreamService } from './chat-stream.service';
 import { SocketModule } from '@/modules/socket/socket.module';
 import { ChatStreamController } from './chat-stream.controller';
 import { ChatModule } from '@/modules/chat/chat.module';
-import { ChatStreamEventListener } from './listeners/chat-stream-event.listener';
 import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
-import { ChatStreamEventEmitter } from './events/chat-stream-event.emitter';
-import { ChatToolCallEventEmitter } from './events/tool-call-event.emitter';
 
 @Module({
   imports: [
@@ -16,12 +13,7 @@ import { ChatToolCallEventEmitter } from './events/tool-call-event.emitter';
     ChatModule,
     AssistantToolFunctionModule,
   ],
-  providers: [
-    ChatToolCallEventEmitter,
-    ChatStreamEventEmitter,
-    ChatStreamEventListener,
-    ChatStreamService,
-  ],
+  providers: [ChatStreamService],
   controllers: [ChatStreamController],
 })
 export class ChatStreamModule {}

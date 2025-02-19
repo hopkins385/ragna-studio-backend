@@ -11,7 +11,7 @@ import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-messa
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class ChatStreamEventListener {
+export class ChatEventListener {
   constructor(
     private readonly socket: SocketService,
     private readonly chatService: ChatService,
