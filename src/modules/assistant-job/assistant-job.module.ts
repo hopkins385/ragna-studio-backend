@@ -1,3 +1,4 @@
+import { TokenUsageModule } from './../token-usage/token-usage.module';
 import { Module } from '@nestjs/common';
 import { AssistantJobService } from './assistant-job.service';
 import { DocumentItemModule } from '../document-item/document-item.module';
@@ -15,7 +16,7 @@ import {
 } from './processors/openai.processor';
 
 @Module({
-  imports: [DocumentItemModule, AssistantToolFunctionModule],
+  imports: [TokenUsageModule, DocumentItemModule, AssistantToolFunctionModule],
   providers: [
     AssistantJobService,
     // processors

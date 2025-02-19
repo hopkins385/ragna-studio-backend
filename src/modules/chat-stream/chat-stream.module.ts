@@ -5,10 +5,11 @@ import { SocketModule } from '@/modules/socket/socket.module';
 import { ChatStreamController } from './chat-stream.controller';
 import { ChatModule } from '@/modules/chat/chat.module';
 import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
+import { TokenUsageModule } from '../token-usage/token-usage.module';
 
 @Module({
   imports: [
-    CreditModule,
+    TokenUsageModule,
     SocketModule,
     ChatModule,
     AssistantToolFunctionModule,

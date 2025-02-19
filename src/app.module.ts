@@ -52,6 +52,7 @@ import { CacheManagerModule } from './modules/cache-manager/cache-manager.module
 import { EditorModule } from './modules/editor/editor.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CreditModule } from './modules/credit/credit.module';
+import { TokenUsageModule } from './modules/token-usage/token-usage.module';
 
 @Module({
   imports: [
@@ -180,6 +181,8 @@ import { CreditModule } from './modules/credit/credit.module';
     CacheManagerModule,
 
     EditorModule,
+
+    TokenUsageModule,
     // ,
   ],
   controllers: [ChatMessageController],

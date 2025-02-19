@@ -2,14 +2,16 @@
 import { Injectable } from '@nestjs/common';
 import { CreditUsageRepository } from './repositories/credit-usage.repository';
 
+interface LogCreditUsagePayload {
+  userId: string;
+  creditAmount: number;
+}
+
 @Injectable()
 export class CreditUsageService {
   constructor(private creditUsageRepo: CreditUsageRepository) {}
 
-  async logCreditUsage(payload: {
-    userId: string;
-    creditAmount: number;
-  }): Promise<void> {
+  async logCreditUsage(payload: LogCreditUsagePayload): Promise<void> {
     await this.creditUsageRepo.logCreditUsage(payload);
   }
 

@@ -199,6 +199,7 @@ export class ChatService {
             },
             llm: {
               select: {
+                id: true,
                 provider: true,
                 displayName: true,
                 apiName: true,

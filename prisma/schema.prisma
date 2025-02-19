@@ -340,6 +340,8 @@ model AssistantTemplateCategoryItem {
   @@map("assistant_template_category_items")
 }
 
+// Large Language Models
+
 model LargeLangModel {
   id           String    @id @default(cuid())
   provider     String
@@ -356,9 +358,28 @@ model LargeLangModel {
 
   assistants         Assistant[]
   assistantTemplates AssistantTemplate[]
+  tokenUsages        TokenUsage[]
+  llmPrices          LLMPrice[]
 
   @@index([apiName])
   @@map("llms")
+}
+
+model LLMPrice {
+  id               String    @id @default(cuid())
+  modelId          String    @map("model_id")
+  inputTokenPrice  Int       @map("input_token_price")
+  outputTokenPrice Int       @map("output_token_price")
+  currency         String
+  effectiveDate    DateTime  @map("effective_date")
+  expirationDate   DateTime? @map("expiration_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  models LargeLangModel @relation(fields: [modelId], references: [id])
+
+  @@map("llm_prices")
 }
 
 // Credit Usage and Purchase
@@ -396,19 +417,18 @@ model CreditPurchase {
 model TokenUsage {
   id               String    @id @default(cuid())
   userId           String    @map("user_id")
-  llmProvider      String    @map("llm_provider")
-  llmModel         String    @map("llm_model")
+  modelId          String    @map("model_id")
   promptTokens     Int       @map("prompt_tokens")
   completionTokens Int       @map("completion_tokens")
+  reasoningTokens  Int?      @map("reasoning_tokens")
   totalTokens      Int       @map("total_tokens")
-  cost             Int       @map("cost")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  largeLangModel LargeLangModel @relation(fields: [modelId], references: [id])
 
-  @@index([userId, llmProvider, llmModel], name: "token_usages_user_id_llm_provider_llm_model_index")
   @@map("token_usages")
 }
 

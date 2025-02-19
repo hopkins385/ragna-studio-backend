@@ -63,6 +63,7 @@ export class WorkflowExecutionService {
         stepIndex,
         rowIndex,
         stepName: name,
+        llmId: assistant.llm.id,
         assistantId: assistant.id,
         functionIds: assistant.tools.map((t) => t.tool.functionId),
         llmProvider: assistant.llm.provider,

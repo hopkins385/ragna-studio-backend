@@ -1,7 +1,6 @@
 import { AssistantEntity } from '@/modules/assistant/entities/assistant.entity';
 import { ChatMessageEntity } from '@/modules/chat-message/entities/chat-message.entity';
 import { UserEntity } from '@/modules/user/entities/user.entity';
-import { ApiProperty } from '@nestjs/swagger';
 import { Chat as ChatModel } from '@prisma/client';
 
 export class ChatEntity implements ChatModel {

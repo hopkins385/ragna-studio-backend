@@ -1,3 +1,4 @@
+import { TokenUsageEventEmitter } from './../token-usage/events/token-usage-event.emitter';
 import { ChatService } from '@/modules/chat/chat.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ChatEntity } from '@/modules/chat/entities/chat.entity';
@@ -21,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
 import { FirstUserMessageEventDto } from '../chat/events/first-user-message.event';
 import { ChatEventEmitter } from '../chat/events/chat-event.emitter';
+import { TokenUsageEventDto } from '../token-usage/events/token-usage-event.dto';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -61,6 +63,7 @@ export class ChatStreamService {
     private readonly configService: ConfigService,
     private readonly chatService: ChatService,
     private readonly chatEvent: ChatEventEmitter,
+    private readonly tokenUsageEvent: TokenUsageEventEmitter,
     private readonly toolFunctionService: AssistantToolFunctionService,
   ) {}
 
@@ -182,6 +185,37 @@ export class ChatStreamService {
       // TODO: token usage for incomplete messages
       this.logger.debug(`[finalize] aborted: ${signal.aborted}`);
     }
+
+    const usage = {
+      tokens: context.usages.reduce(
+        (acc, curr) => {
+          acc.prompt += curr.tokens.promptTokens;
+          acc.completion += curr.tokens.completionTokens;
+          acc.reasoning = 0;
+          acc.total += curr.tokens.totalTokens;
+          return acc;
+        },
+        {
+          prompt: 0,
+          completion: 0,
+          reasoning: 0,
+          total: 0,
+        },
+      ),
+    };
+
+    const llmId = context.chat.assistant?.llm.id;
+    if (!llmId) {
+      this.logger.error('[finalize] LLM ID not found');
+    }
+
+    this.tokenUsageEvent.emitTokenUsage(
+      TokenUsageEventDto.fromInput({
+        userId: context.chat.userId,
+        modelId: llmId,
+        tokens: usage.tokens,
+      }),
+    );
 
     return this.saveMessage(context.chat.id, {
       userId: context.chat.userId,

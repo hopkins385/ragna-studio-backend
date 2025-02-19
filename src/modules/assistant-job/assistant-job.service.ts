@@ -1,3 +1,4 @@
+import { TokenUsageEventEmitter } from './../token-usage/events/token-usage-event.emitter';
 import { AssistantToolFunctionService } from './../assistant-tool-function/assistant-tool-function.service';
 import { WorkflowExecutionEventDto } from '@/modules/workflow-execution/dto/workflow-execution-event.dto';
 import { Injectable, Logger } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import { WorkflowEvent } from '@/modules/workflow/enums/workflow-event.enum';
 import { DocumentProcessingStatus } from '@/modules/document-item/interfaces/processing-status.interface';
+import { TokenUsageEventDto } from '../token-usage/events/token-usage-event.dto';
 
 @Injectable()
 export class AssistantJobService {
@@ -28,6 +30,7 @@ export class AssistantJobService {
     private readonly configService: ConfigService,
     private readonly documentItemService: DocumentItemService,
     private readonly toolFunctionService: AssistantToolFunctionService,
+    private readonly tokenUsageEvent: TokenUsageEventEmitter,
   ) {}
 
   async processWorkflowJob(payload: AssistantJobDto) {
@@ -108,6 +111,7 @@ export class AssistantJobService {
       finishReason,
       toolCalls,
       toolResults,
+      usage,
     } = await generateText({
       model: aiModelFactory.getModel(),
       maxTokens: payload.maxTokens,
@@ -155,17 +159,33 @@ export class AssistantJobService {
         break;
     }
 
+    // Token usage
+    this.tokenUsageEvent.emitTokenUsage(
+      TokenUsageEventDto.fromInput({
+        userId: payload.userId,
+        modelId: payload.llmId,
+        tokens: {
+          prompt: usage.promptTokens || 0,
+          completion: usage.completionTokens || 0,
+          reasoning: 0,
+          total: usage.totalTokens || 0,
+        },
+      }),
+    );
+
+    const agrMessagesContents = initialMessages
+      .map((m) => {
+        if (m.role === 'assistant') {
+          return m.content;
+        }
+        return '';
+      })
+      .join('\n')
+      .trim();
+
     const update = await this.documentItemService.update({
       documentItemId: payload.documentItemId,
-      content: initialMessages
-        .map((m) => {
-          if (m.role === 'assistant') {
-            return m.content;
-          }
-          return '';
-        })
-        .join('\n')
-        .trim(),
+      content: agrMessagesContents,
       status: 'completed',
     });
 
@@ -174,31 +194,6 @@ export class AssistantJobService {
       workflowId: payload.workflowId,
       progress: this.getProgress(payload),
     });*/
-
-    /*
-    this.event.emit(
-      UsageEvent.TRACKTOKENS,
-      TrackTokensDto.fromInput({
-        userId,
-        llm: {
-          provider: llmProvider,
-          model: llmNameApi,
-        },
-        usage: {
-          promptTokens: usage.promptTokens || -1,
-          completionTokens: usage.completionTokens || -1,
-          totalTokens: usage.totalTokens || -1,
-        },
-      }),
-    );
-
-    const updateCreditsData = {
-      userId,
-      credits: 1,
-    } satisfies IUpdateCreditsEvent;
-
-    this.event.emit(UsageEvent.UPDATE_CREDITS, updateCreditsData);
-    */
   }
 
   async updateWorkflowJobStatus(
@@ -269,7 +264,11 @@ export class AssistantJobService {
     this.logger.debug('Follow-up messages', followUpMessages);
 
     try {
-      const { text: text2, steps: steps2 } = await generateText({
+      const {
+        text: text2,
+        steps: steps2,
+        usage,
+      } = await generateText({
         model,
         maxTokens: payload.maxTokens,
         temperature: payload.temperature,
@@ -277,6 +276,20 @@ export class AssistantJobService {
         tools: availableTools,
         maxSteps: 1,
       });
+
+      // Token usage
+      this.tokenUsageEvent.emitTokenUsage(
+        TokenUsageEventDto.fromInput({
+          userId: payload.userId,
+          modelId: payload.llmId,
+          tokens: {
+            prompt: usage.promptTokens || 0,
+            completion: usage.completionTokens || 0,
+            reasoning: 0,
+            total: usage.totalTokens || 0,
+          },
+        }),
+      );
 
       return text2;
     } catch (error: any) {

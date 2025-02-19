@@ -6,6 +6,8 @@ import { CoreMessage, generateObject, generateText } from 'ai';
 import { z } from 'zod';
 import TurndownService from 'turndown';
 import { ConfigService } from '@nestjs/config';
+import { TokenUsageEventEmitter } from '../token-usage/events/token-usage-event.emitter';
+import { TokenUsageEventDto } from '../token-usage/events/token-usage-event.dto';
 
 @Injectable()
 export class EditorService {
@@ -14,7 +16,10 @@ export class EditorService {
     headingStyle: 'atx',
   });
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly tokenUsageEvent: TokenUsageEventEmitter,
+  ) {}
 
   private htmlToMarkdown = (html: string) => {
     return this.turndownService.turndown(html);
@@ -77,7 +82,7 @@ ${body.selectedText}
       },
     ];
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       messages,
       maxSteps: 1,
@@ -85,6 +90,15 @@ ${body.selectedText}
     });
 
     this.logger.debug(`Completion Text: ${text}`);
+
+    // TODO: enable tokenUsage
+    /*this.tokenUsageEvent.emitTokenUsage(
+      TokenUsageEventDto.fromInput({
+        userId: context.chat.userId,
+        modelId: llmId,
+        tokens: usage.tokens,
+      }),
+    );*/
 
     return text;
 

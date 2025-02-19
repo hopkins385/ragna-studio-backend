@@ -279,6 +279,7 @@ export class WorkflowService {
             systemPrompt: true,
             llm: {
               select: {
+                id: true,
                 displayName: true,
                 provider: true,
                 apiName: true,
