@@ -35,7 +35,7 @@ export class ImageConversionProcessor extends WorkerHost {
     private readonly httpClient: AxiosInstance,
   ) {
     super();
-    // this.imageWorker = this.createWorker();
+    this.imageWorker = this.createWorker();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
