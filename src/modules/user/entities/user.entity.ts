@@ -26,6 +26,9 @@ export class UserEntity {
   onboardedAt: Date;
 
   // custom
+  organisationId: string;
+  hasOnboarded: boolean;
+  hasEmailVerified: boolean;
   firstTeamId: string;
 
   // required relations after onboarding
@@ -49,7 +52,10 @@ export class UserEntity {
     this.onboardedAt = input.onboardedAt;
     this.roles = input.roles;
     this.teams = input.teams;
+    this.organisationId = input.teams?.[0]?.team.organisationId || '';
     this.firstTeamId = input.teams?.[0]?.team.id || '';
+    this.hasOnboarded = input.onboardedAt !== null;
+    this.hasEmailVerified = input.emailVerified !== null;
   }
 
   static fromInput(input: any) {

@@ -27,7 +27,7 @@ export class CreditUsageRepository {
 
   async getTotalCreditUsage(userId: string): Promise<number> {
     const result = await this.prisma.creditUsage.aggregate({
-      where: { userId },
+      where: { userId, deletedAt: null },
       _sum: { amount: true },
     });
     return result._sum.amount || 0;

@@ -44,11 +44,13 @@ export class UserService {
     });
   }
 
-  async findOne(id: string): Promise<Partial<UserEntity>> {
-    if (!id) throw new Error('User ID is required');
+  async findOne(payload: { userId: string }): Promise<Partial<UserEntity>> {
+    if (!payload.userId) throw new Error('User ID is required');
 
-    const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException(`User ${id} not found`);
+    const user = await this.userRepository.findById({
+      userId: payload.userId,
+    });
+    if (!user) throw new NotFoundException(`User ${payload.userId} not found`);
 
     // flatten the user.roles array
     const roles = user.roles.map((r) => r.role.name);
@@ -78,6 +80,7 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
+                organisationId: true,
               },
             },
           },
@@ -107,6 +110,7 @@ export class UserService {
       totalCredits: user.totalCredits,
       hasEmailVerified: user.emailVerifiedAt !== null,
       hasOnboarded: user.onboardedAt !== null,
+      organisationId: user.teams?.[0]?.team.organisationId || '',
       firstTeamId: user.teams?.[0]?.team.id || '',
       roles: user.roles.map((r) => r.role.name),
       teams: user.teams.map((t) => t.team.id),
@@ -123,9 +127,15 @@ export class UserService {
     return users.map((user) => new UserEntity(user as any));
   }
 
-  async findAllPaginated() {
-    const [users, meta] = await this.userRepository.findAllPaginated();
+  async findAllPaginated({ organisationId }: { organisationId: string }) {
+    const [users, meta] = await this.userRepository.findAllPaginated({
+      organisationId,
+    });
     return [users.map((user) => new UserEntity(user as any)), meta]; // TODO: fix types
+  }
+
+  async userExists({ userId }: { userId: string }) {
+    return this.userRepository.exists(userId);
   }
 
   async updateUserName(
@@ -173,7 +183,7 @@ export class UserService {
   ): Promise<Partial<UserEntity>> {
     if (!id) throw new Error('User ID is required');
 
-    const exists = await this.userRepository.exists(id);
+    const exists = await this.userExists({ userId: id });
     if (!exists) throw new NotFoundException(`User ${id} not found`);
 
     if (updateUserDto.password) {
@@ -207,7 +217,7 @@ export class UserService {
     return this.userRepository.softDelete(userId);
   }
 
-  async createInviteToken(payload: any) {
+  async createInviteToken(payload: any): Promise<string> {
     return new Promise((resolve, reject) => {
       const signOptions = {
         expiresIn: this.configService.get('JWT_INVITE_EXPIRES_IN', '1h'),
@@ -222,5 +232,10 @@ export class UserService {
         },
       );
     });
+  }
+
+  // POLICIES
+  canAccessUser(sessionUser: UserEntity, user: UserEntity) {
+    return sessionUser.organisationId === user.organisationId;
   }
 }

@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Session,
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
@@ -34,9 +33,12 @@ export class UserController {
   @Roles(Role.ADMIN)
   async createInviteToken(@ReqUser() user: UserEntity) {
     try {
-      return await this.userService.createInviteToken({ userId: user.id });
-    } catch (error: any) {
-      this.logger.error(`Error creating invite token: ${error?.message}`);
+      const token = await this.userService.createInviteToken({
+        userId: user.id,
+      });
+      return { token };
+    } catch (error: unknown) {
+      this.logger.error(`Error creating invite token`, error);
       throw new InternalServerErrorException('Error creating invite token');
     }
   }
@@ -46,38 +48,55 @@ export class UserController {
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       return await this.userService.create(createUserDto);
-    } catch (error) {
+    } catch (error: unknown) {
+      this.logger.error(`Error creating user`, error);
       throw new InternalServerErrorException('Error creating user');
     }
   }
 
   @Get()
   @Roles(Role.ADMIN)
-  async findAll() {
+  async findAll(@ReqUser() user: UserEntity) {
     try {
-      const [users, meta] = await this.userService.findAllPaginated();
+      const [users, meta] = await this.userService.findAllPaginated({
+        organisationId: user.organisationId,
+      });
       return { users, meta };
-    } catch (error) {
+    } catch (error: unknown) {
+      this.logger.error(`Error getting users`, error);
       throw new NotFoundException('Users not found');
     }
   }
 
   @Get(':id')
   @Roles(Role.ADMIN)
-  async findOne(@Param() { id }: IdParam) {
+  async findOne(@ReqUser() reqUser: UserEntity, @Param() { id }: IdParam) {
+    let user: Partial<UserEntity>;
+
     try {
-      return await this.userService.findOne(id);
-    } catch (error) {
+      user = await this.userService.findOne({
+        userId: id,
+      });
+    } catch (error: unknown) {
+      this.logger.error(`Error getting user`, error);
+      throw new InternalServerErrorException('Error getting user');
+    }
+
+    if (!user || !this.userService.canAccessUser(reqUser, user as any)) {
       throw new NotFoundException('User not found');
     }
+
+    return { user };
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN)
   async update(@Param() { id }: IdParam, @Body() updateUserDto: UpdateUserDto) {
     try {
-      return await this.userService.update(id, updateUserDto);
-    } catch (error) {
+      const result = await this.userService.update(id, updateUserDto);
+      return { result };
+    } catch (error: unknown) {
+      this.logger.error(`Error updating user`, error);
       throw new InternalServerErrorException('Error updating user');
     }
   }
@@ -90,8 +109,10 @@ export class UserController {
       throw new ForbiddenException('You cannot delete yourself');
     }
     try {
-      return await this.userService.delete(id);
-    } catch (error) {
+      const result = await this.userService.delete(id);
+      return { result };
+    } catch (error: unknown) {
+      this.logger.error(`Error deleting user`, error);
       throw new InternalServerErrorException('Error deleting user');
     }
   }

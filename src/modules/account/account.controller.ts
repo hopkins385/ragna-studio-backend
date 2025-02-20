@@ -35,7 +35,7 @@ export class AccountController {
   async find(@ReqUser() user: UserEntity) {
     const { id: userId } = user;
     try {
-      const accountData = await this.userService.findOne(userId);
+      const accountData = await this.userService.findOne({ userId });
       return accountData;
     } catch (error) {
       throw new NotFoundException('Account not found');

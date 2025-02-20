@@ -44,7 +44,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException();
     }
 
-    const user = await this.userService.findOne(sessionData.user.id);
+    const user = await this.userService.findOne({
+      userId: sessionData.user.id,
+    });
 
     if (!user || user.id !== decodedUserId) {
       throw new UnauthorizedException();

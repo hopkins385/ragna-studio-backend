@@ -42,7 +42,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException();
     }
 
-    const user = await this.userService.findOne(sessionData.user.id);
+    const user = await this.userService.findOne({
+      userId: sessionData.user.id,
+    });
 
     if (!user || user.id !== decodedUserId) {
       this.logger.debug(`Invalid token, user not found`, user);

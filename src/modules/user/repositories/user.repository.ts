@@ -3,10 +3,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CustomPrismaService } from 'nestjs-prisma';
 import { ExtendedPrismaClient } from '@/modules/database/prisma.extension';
 import { User } from '@prisma/client';
-import {
-  BaseRepository,
-  PaginationOptions,
-} from '@/common/types/repository.types';
+
+interface PaginationOptions {
+  page: number;
+  limit: number;
+}
 
 interface CreateUser {
   name: string;
@@ -15,17 +16,16 @@ interface CreateUser {
 }
 
 @Injectable()
-export class UserRepository extends BaseRepository<User> {
+export class UserRepository {
   readonly prisma: ExtendedPrismaClient;
   constructor(
     @Inject('PrismaService')
     private db: CustomPrismaService<ExtendedPrismaClient>,
   ) {
-    super();
     this.prisma = this.db.client;
   }
 
-  async findById(id: string) {
+  async findById(payload: { userId: string }) {
     return this.prisma.user.findFirst({
       relationLoadStrategy: 'join',
       select: {
@@ -43,6 +43,7 @@ export class UserRepository extends BaseRepository<User> {
               select: {
                 id: true,
                 name: true,
+                organisationId: true,
               },
             },
           },
@@ -57,7 +58,10 @@ export class UserRepository extends BaseRepository<User> {
           },
         },
       },
-      where: { id },
+      where: {
+        id: payload.userId,
+        deletedAt: null,
+      },
     });
   }
 
@@ -101,6 +105,7 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findAllPaginated(
+    payload: { organisationId: string },
     { page, limit }: PaginationOptions = { page: 1, limit: 10 },
   ) {
     return this.prisma.user
@@ -113,9 +118,25 @@ export class UserRepository extends BaseRepository<User> {
           createdAt: true,
           updatedAt: true,
         },
-        where: { deletedAt: null },
+        where: {
+          teams: {
+            some: {
+              team: {
+                organisationId: payload.organisationId,
+              },
+            },
+          },
+          deletedAt: null,
+        },
       })
       .withPages({ page, limit });
+  }
+
+  async exists(userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
+    return !!user;
   }
 
   async create({ name, email, password }: CreateUser): Promise<User> {
