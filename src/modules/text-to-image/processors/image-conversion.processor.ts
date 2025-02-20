@@ -62,18 +62,34 @@ export class ImageConversionProcessor extends WorkerHost {
 
     const result: WorkerResult = await Promise.race([
       new Promise<WorkerResult>((resolve, reject) => {
-        this.imageWorker.on('message', (message: WorkerResult) => {
+        const messageListener = (message: WorkerResult) => {
           if (message.error) {
             reject(message.error);
           } else {
             resolve(message);
           }
-        });
-        this.imageWorker.on('error', reject);
-        this.imageWorker.on('exit', (code: number) => {
-          if (code !== 0)
-            reject(new Error(`Worker stopped with exit code ${code}`));
-        });
+          this.imageWorker.removeListener('message', messageListener);
+          this.imageWorker.removeListener('error', errorListener);
+          this.imageWorker.removeListener('exit', exitListener);
+        };
+
+        const errorListener = (err: any) => {
+          reject(err);
+          this.imageWorker.removeListener('message', messageListener);
+          this.imageWorker.removeListener('error', errorListener);
+          this.imageWorker.removeListener('exit', exitListener);
+        };
+
+        const exitListener = (code: number) => {
+          reject(new Error(`Worker stopped with exit code ${code}`));
+          this.imageWorker.removeListener('message', messageListener);
+          this.imageWorker.removeListener('error', errorListener);
+          this.imageWorker.removeListener('exit', exitListener);
+        };
+
+        this.imageWorker.on('message', messageListener);
+        this.imageWorker.on('error', errorListener);
+        this.imageWorker.on('exit', exitListener);
       }),
       new Promise<WorkerResult>((_, reject) =>
         setTimeout(() => {
@@ -144,19 +160,26 @@ export class ImageConversionProcessor extends WorkerHost {
   private createWorker(): Worker {
     const worker = new Worker(imageConversionWorkerPath);
 
-    worker.on('exit', (code: number) => {
+    const exitListener = (code: number) => {
       if (code !== 0 && !this.isWorkerRestarting) {
         this.logger.error(`Worker stopped with exit code ${code}`);
         this.restartWorker();
       }
-    });
+      worker.removeListener('exit', exitListener);
+      worker.removeListener('error', errorListener);
+    };
 
-    worker.on('error', (err: Error) => {
+    const errorListener = (err: Error) => {
       this.logger.error(`Worker error: ${err.message}`);
       if (!this.isWorkerRestarting) {
         this.restartWorker();
       }
-    });
+      worker.removeListener('exit', exitListener);
+      worker.removeListener('error', errorListener);
+    };
+
+    worker.on('exit', exitListener);
+    worker.on('error', errorListener);
 
     return worker;
   }
