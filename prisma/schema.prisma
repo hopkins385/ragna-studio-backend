@@ -426,8 +426,8 @@ model TokenUsage {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  largeLangModel LargeLangModel @relation(fields: [modelId], references: [id])
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  llm  LargeLangModel @relation(fields: [modelId], references: [id])
 
   @@map("token_usages")
 }

@@ -58,6 +58,32 @@ export class TokenUsageRepository {
     });
   }
 
+  async getAllTokenUsagesForUser(payload: {
+    userId: string;
+    period: { from: Date; to: Date };
+  }) {
+    return this.prisma.tokenUsage.findMany({
+      select: {
+        totalTokens: true,
+        createdAt: true,
+        llm: {
+          select: {
+            provider: true,
+            displayName: true,
+          },
+        },
+      },
+      where: {
+        userId: payload.userId,
+        createdAt: {
+          gte: payload.period.from,
+          lte: payload.period.to,
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   async getTotalTokenUsage(userId: string): Promise<number> {
     const result = await this.prisma.creditUsage.aggregate({
       where: { userId },

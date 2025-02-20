@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { TokenUsageService } from './token-usage.service';
 import { TokenUsageRepository } from './repositories/token-usage.repository';
 import { CreditModule } from '../credit/credit.module';
+import { TokenUsageController } from './token-usage.controller';
 
 @Module({
   imports: [CreditModule],
@@ -14,5 +15,6 @@ import { CreditModule } from '../credit/credit.module';
     TokenUsageService,
   ],
   exports: [TokenUsageEventEmitter, TokenUsageService],
+  controllers: [TokenUsageController],
 })
 export class TokenUsageModule {}
