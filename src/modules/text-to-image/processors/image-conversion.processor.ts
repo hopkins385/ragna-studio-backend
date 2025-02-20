@@ -9,6 +9,12 @@ import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { join } from 'node:path';
 import { Worker } from 'worker_threads';
 
+interface WorkerResult {
+  avifBuffer: Buffer;
+  webpBuffer: Buffer;
+  error: unknown;
+}
+
 const imageConversionWorkerPath = join(
   __dirname,
   '../workers/image-conversion.worker.js',
@@ -21,6 +27,7 @@ export class ImageConversionProcessor extends WorkerHost {
   private isWorkerRestarting: boolean = false;
   private restartAttempts: number = 0;
   private readonly maxRestartAttempts: number = 5;
+  private readonly imageConversionTimeout: number = 30000; // 30 seconds
 
   constructor(
     private readonly storageService: StorageService,
@@ -28,7 +35,7 @@ export class ImageConversionProcessor extends WorkerHost {
     private readonly httpClient: AxiosInstance,
   ) {
     super();
-    this.imageWorker = this.createWorker();
+    // this.imageWorker = this.createWorker();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
@@ -53,27 +60,27 @@ export class ImageConversionProcessor extends WorkerHost {
 
     this.imageWorker.postMessage(fileBuffer);
 
-    const result = await new Promise<{
-      avifBuffer: Buffer;
-      webpBuffer: Buffer;
-      error: any;
-    }>((resolve, reject) => {
-      this.imageWorker.on(
-        'message',
-        (message: { avifBuffer: Buffer; webpBuffer: Buffer; error: any }) => {
+    const result: WorkerResult = await Promise.race([
+      new Promise<WorkerResult>((resolve, reject) => {
+        this.imageWorker.on('message', (message: WorkerResult) => {
           if (message.error) {
             reject(message.error);
           } else {
             resolve(message);
           }
-        },
-      );
-      this.imageWorker.on('error', reject);
-      this.imageWorker.on('exit', (code) => {
-        if (code !== 0)
-          reject(new Error(`Worker stopped with exit code ${code}`));
-      });
-    });
+        });
+        this.imageWorker.on('error', reject);
+        this.imageWorker.on('exit', (code: number) => {
+          if (code !== 0)
+            reject(new Error(`Worker stopped with exit code ${code}`));
+        });
+      }),
+      new Promise<WorkerResult>((_, reject) =>
+        setTimeout(() => {
+          reject(new Error('Image conversion timed out'));
+        }, this.imageConversionTimeout),
+      ),
+    ]);
 
     if (result.error) {
       throw result.error;
