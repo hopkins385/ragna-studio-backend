@@ -8,14 +8,16 @@ interface WorkerResult {
 }
 
 if (!isMainThread && parentPort) {
+  console.log(`Image conversion worker process ID: ${process.pid}`);
+  // sharp.cache({ items: 20 }); // reduce cache items
   parentPort.on('message', async (fileBuffer: Buffer) => {
     try {
-      const avifBufferConv = sharp(fileBuffer).resize(300).avif().toBuffer();
-      const webpBufferConv = sharp(fileBuffer).resize(300).webp().toBuffer();
+      const avifBufferPromise = sharp(fileBuffer).resize(300).avif().toBuffer();
+      const webpBufferPromise = sharp(fileBuffer).resize(300).webp().toBuffer();
 
       const [avifBuffer, webpBuffer] = await Promise.all([
-        avifBufferConv,
-        webpBufferConv,
+        avifBufferPromise,
+        webpBufferPromise,
       ]);
 
       const result: WorkerResult = { avifBuffer, webpBuffer };

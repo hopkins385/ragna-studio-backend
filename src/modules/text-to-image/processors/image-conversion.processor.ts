@@ -9,10 +9,18 @@ import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { join } from 'node:path';
 import { Worker } from 'worker_threads';
 
+const imageConversionWorkerPath = join(
+  __dirname,
+  '../workers/image-conversion.worker.js',
+);
+
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
   private readonly logger = new Logger(ImageConversionProcessor.name);
   private imageWorker: Worker;
+  private isWorkerRestarting: boolean = false;
+  private restartAttempts: number = 0;
+  private readonly maxRestartAttempts: number = 5;
 
   constructor(
     private readonly storageService: StorageService,
@@ -20,9 +28,7 @@ export class ImageConversionProcessor extends WorkerHost {
     private readonly httpClient: AxiosInstance,
   ) {
     super();
-    this.imageWorker = new Worker(
-      join(__dirname, '../workers/image-conversion.worker.js'),
-    );
+    this.imageWorker = this.createWorker();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
@@ -44,10 +50,6 @@ export class ImageConversionProcessor extends WorkerHost {
     this.logger.debug(
       `Processing image', oldBucketPath: ${oldBucketPath}, fileName: ${fileName}`,
     );
-
-    // resize and convert to avif and webp
-    // const avifBuffer = await sharp(fileBuffer).resize(300).avif().toBuffer();
-    // const webpBuffer = await sharp(fileBuffer).resize(300).webp().toBuffer();
 
     this.imageWorker.postMessage(fileBuffer);
 
@@ -130,5 +132,52 @@ export class ImageConversionProcessor extends WorkerHost {
       responseType: 'arraybuffer',
     });
     return Buffer.from(response.data);
+  }
+
+  private createWorker(): Worker {
+    const worker = new Worker(imageConversionWorkerPath);
+
+    worker.on('exit', (code: number) => {
+      if (code !== 0 && !this.isWorkerRestarting) {
+        this.logger.error(`Worker stopped with exit code ${code}`);
+        this.restartWorker();
+      }
+    });
+
+    worker.on('error', (err: Error) => {
+      this.logger.error(`Worker error: ${err.message}`);
+      if (!this.isWorkerRestarting) {
+        this.restartWorker();
+      }
+    });
+
+    return worker;
+  }
+
+  private restartWorker(): void {
+    if (this.isWorkerRestarting) {
+      return;
+    }
+
+    if (this.restartAttempts >= this.maxRestartAttempts) {
+      this.logger.error(
+        `Max restart attempts reached (${this.maxRestartAttempts}). Giving up on worker restarts.`,
+      );
+      return;
+    }
+
+    this.restartAttempts++;
+    this.logger.log(
+      `Restarting worker (attempt ${this.restartAttempts}/${this.maxRestartAttempts})...`,
+    );
+    this.isWorkerRestarting = true;
+
+    const backoffDelay = Math.min(this.restartAttempts * 1000, 10000); // Exponential backoff, max 10 seconds
+
+    setTimeout(() => {
+      this.imageWorker = this.createWorker();
+      this.isWorkerRestarting = false;
+      this.logger.log('Worker restarted.');
+    }, backoffDelay);
   }
 }
