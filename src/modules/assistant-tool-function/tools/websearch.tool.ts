@@ -48,8 +48,18 @@ export class WebSearchTool extends ToolProvider<
         location: 'Berlin,Berlin,Germany',
       });
 
-      this.logger.debug(`Searched web: ${response}`);
+      // remove unnecessary properties
+      delete response.search_metadata;
+      delete response.search_parameters;
+      delete response.related_searches;
+      delete response.related_questions;
+      delete response.pagination;
+      delete response.serpapi_pagination;
+
+      this.logger.debug(`Searched web: `, response);
+
       return response;
+      //
     } catch (error) {
       this.logger.error(`Failed to search web: ${error}`);
       return { message: 'cannot search the web' };
