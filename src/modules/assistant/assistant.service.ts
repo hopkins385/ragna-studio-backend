@@ -26,7 +26,7 @@ export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
 
   constructor(
-    private readonly assistantRepo: AssistantRepository,
+    private readonly repository: AssistantRepository,
     private readonly assistantToolService: AssistantToolService,
   ) {}
 
@@ -61,7 +61,7 @@ export class AssistantService {
     this.validateTeamId(payload.teamId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.createAssistant(payload);
+      const assistant = await this.repository.createAssistant(payload);
       return assistant;
     } catch (error) {
       this.handleError(error);
@@ -74,7 +74,7 @@ export class AssistantService {
     // Database call
     try {
       const assistant =
-        await this.assistantRepo.createAssistantFromTemplate(payload);
+        await this.repository.createAssistantFromTemplate(payload);
       return assistant;
     } catch (error) {
       this.handleError(error);
@@ -86,7 +86,7 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.getAssistantWithRelations({
+      const assistant = await this.repository.getAssistantWithRelations({
         assistantId,
       });
       if (!assistant) {
@@ -103,7 +103,7 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.getAssistantDetails({
+      const assistant = await this.repository.getAssistantDetails({
         assistantId,
       });
       if (!assistant) {
@@ -123,7 +123,7 @@ export class AssistantService {
       return defaultSystemPrompt.en;
     }
     try {
-      const assistant = await this.assistantRepo.getAssistant({
+      const assistant = await this.repository.getAssistant({
         assistantId,
       });
       if (!assistant) {
@@ -148,7 +148,7 @@ export class AssistantService {
     this.validateTeamId(teamId);
     // Database call
     try {
-      const [assistants, meta] = await this.assistantRepo.getAllAssistants({
+      const [assistants, meta] = await this.repository.getAllAssistants({
         teamId,
         page,
         limit,
@@ -181,7 +181,15 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.updateAssistant({
+      const assistant = await this.repository.getAssistant({
+        assistantId,
+      });
+
+      if (!assistant) {
+        throw new AssistantNotFoundException(assistantId);
+      }
+
+      const updatedAssistant = await this.repository.updateAssistant({
         teamId,
         assistantId,
         title,
@@ -193,7 +201,7 @@ export class AssistantService {
         hasWorkflow,
       });
       await this.assistantToolService.updateMany(assistantId, tools || []);
-      return assistant;
+      return updatedAssistant;
     } catch (error) {
       this.handleError(error);
     }
@@ -210,13 +218,21 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant =
-        await this.assistantRepo.updateAssistantHasKnowledgeBase({
+      // find assistant
+      const assistant = await this.repository.getAssistant({
+        assistantId,
+      });
+      if (!assistant) {
+        throw new AssistantNotFoundException(assistantId);
+      }
+
+      const updatedAssistant =
+        await this.repository.updateAssistantHasKnowledgeBase({
           teamId,
           assistantId,
           hasKnowledgeBase,
         });
-      return assistant;
+      return updatedAssistant;
     } catch (error) {
       this.handleError(error);
     }
@@ -229,11 +245,18 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.softDeleteAssistant({
+      const assistant = await this.repository.getAssistant({
+        assistantId,
+      });
+      if (!assistant) {
+        throw new AssistantNotFoundException(assistantId);
+      }
+
+      const updatedAssistant = await this.repository.softDeleteAssistant({
         teamId,
         assistantId,
       });
-      return assistant;
+      return updatedAssistant;
     } catch (error) {
       this.handleError(error);
     }
@@ -246,11 +269,18 @@ export class AssistantService {
     this.validateAssistantId(assistantId);
     // Database call
     try {
-      const assistant = await this.assistantRepo.hardDeleteAssistant({
+      const assistant = await this.repository.getAssistant({
+        assistantId,
+      });
+      if (!assistant) {
+        throw new AssistantNotFoundException(assistantId);
+      }
+
+      const result = await this.repository.hardDeleteAssistant({
         teamId,
         assistantId,
       });
-      return assistant;
+      return result;
     } catch (error) {
       this.handleError(error);
     }

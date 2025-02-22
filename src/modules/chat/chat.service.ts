@@ -5,10 +5,6 @@ import { ChatMessage } from '@prisma/client';
 import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
 import { CreateChatMessageDto } from '../chat-message/dto/create-chat-message.dto';
 import { VisionImageUrlContent } from '../chat-message/interfaces/vision-image.interface';
-import {
-  UpsertChat,
-  UpsertChatMessages,
-} from './interfaces/chat-upsert.interface';
 import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
 
@@ -22,43 +18,14 @@ export class ChatService {
 
   constructor(
     private readonly tokenizerService: TokenizerService,
-    private readonly chatRepository: ChatRepository,
+    private readonly chatRepo: ChatRepository,
   ) {}
-
-  public async upsertMessages(payload: UpsertChatMessages) {
-    throw new Error('Method not implemented.');
-    // update or create messages
-    /*const messages = payload.chatMessages.map(async (message) => {
-      const { tokenCount } = await this.tokenizerService.getTokens(message.content);
-      return this.chatRepository.prisma.chatMessage.upsert({
-        where: {
-          id: message.id,
-        },
-        create: {
-          id: message.id,
-          chatId: payload.chatId.toLowerCase(),
-          role: message.role,
-          content: message.content,
-          tokenCount,
-        },
-        update: {
-          content: message.content,
-          tokenCount,
-        },
-      });
-    });
-    return messages;*/
-  }
-
-  upsert(payload: UpsertChat) {
-    throw new Error('Method not implemented.');
-  }
 
   public async getFirst(chatId: string | undefined) {
     if (!chatId) {
       return null;
     }
-    return this.chatRepository.prisma.chat.findFirst({
+    return this.chatRepo.prisma.chat.findFirst({
       select: {
         id: true,
         title: true,
@@ -71,7 +38,7 @@ export class ChatService {
   }
 
   public async getAllForUser(userId: string) {
-    return this.chatRepository.prisma.chat.findMany({
+    return this.chatRepo.prisma.chat.findMany({
       select: {
         id: true,
         title: true,
@@ -85,7 +52,7 @@ export class ChatService {
   }
 
   public async getRecentForUser(userId: string) {
-    const chat = await this.chatRepository.prisma.chat.findFirst({
+    const chat = await this.chatRepo.prisma.chat.findFirst({
       select: {
         id: true,
         title: true,
@@ -108,7 +75,7 @@ export class ChatService {
     if (!page || page < 1) {
       throw new Error('Invalid page number');
     }
-    return this.chatRepository.prisma.chat
+    return this.chatRepo.prisma.chat
       .paginate({
         select: {
           id: true,
@@ -157,7 +124,7 @@ export class ChatService {
     if (!chatId || !userId) {
       return null;
     }
-    const chat = await this.chatRepository.prisma.chat.findFirstOrThrow({
+    const chat = await this.chatRepo.prisma.chat.findFirstOrThrow({
       relationLoadStrategy: 'join',
       select: {
         id: true,
@@ -230,7 +197,7 @@ export class ChatService {
     if (!chatId || !userId) {
       return null;
     }
-    return this.chatRepository.prisma.chat.findFirst({
+    return this.chatRepo.prisma.chat.findFirst({
       relationLoadStrategy: 'join',
       select: {
         id: true,
@@ -270,7 +237,7 @@ export class ChatService {
   }
 
   public async create(assistantId: string, userId: string) {
-    return this.chatRepository.prisma.chat.create({
+    return this.chatRepo.prisma.chat.create({
       data: {
         title: 'Chat',
         user: {
@@ -300,9 +267,9 @@ export class ChatService {
     }
 
     try {
-      const res = await this.chatRepository.prisma.$transaction([
+      const res = await this.chatRepo.prisma.$transaction([
         // create message
-        this.chatRepository.prisma.chatMessage.create({
+        this.chatRepo.prisma.chatMessage.create({
           data: {
             chatId: payload.chatId,
             type: payload.message.type,
@@ -313,7 +280,7 @@ export class ChatService {
           },
         }),
         // update chat updated at
-        this.chatRepository.prisma.chat.update({
+        this.chatRepo.prisma.chat.update({
           where: {
             id: payload.chatId,
           },
@@ -343,9 +310,9 @@ export class ChatService {
     }
 
     try {
-      const res = await this.chatRepository.prisma.$transaction([
+      const res = await this.chatRepo.prisma.$transaction([
         // create message
-        this.chatRepository.prisma.chatMessage.create({
+        this.chatRepo.prisma.chatMessage.create({
           data: {
             chatId: payload.chatId,
             type: payload.message.type,
@@ -357,7 +324,7 @@ export class ChatService {
         }),
         // TODO: enable reducing credit
         // reduce credit
-        /*this.chatRepository.prisma.credit.update({
+        /*this.chatRepo.prisma.credit.update({
           where: {
             userId: payload.userId,
           },
@@ -368,7 +335,7 @@ export class ChatService {
           },
         }),*/
         // update chat updated at
-        this.chatRepository.prisma.chat.update({
+        this.chatRepo.prisma.chat.update({
           where: {
             id: payload.chatId,
           },
@@ -385,7 +352,7 @@ export class ChatService {
   }
 
   public async clearMessages(chatId: string) {
-    return this.chatRepository.prisma.chatMessage.deleteMany({
+    return this.chatRepo.prisma.chatMessage.deleteMany({
       where: {
         chatId: chatId.toLowerCase(),
       },
@@ -393,7 +360,7 @@ export class ChatService {
   }
 
   public async getChatMessages(chatId: string) {
-    return this.chatRepository.prisma.chatMessage.findMany({
+    return this.chatRepo.prisma.chatMessage.findMany({
       where: {
         chatId: chatId.toLowerCase(),
       },
@@ -404,7 +371,7 @@ export class ChatService {
   }
 
   public async updateChatTitle(chatId: string, title: string) {
-    return this.chatRepository.prisma.chat.update({
+    return this.chatRepo.prisma.chat.update({
       where: {
         id: chatId.toLowerCase(),
         deletedAt: null,
@@ -416,7 +383,7 @@ export class ChatService {
   }
 
   public async softDelete(chatId: string, userId: string) {
-    return this.chatRepository.prisma.chat.update({
+    return this.chatRepo.prisma.chat.update({
       where: {
         id: chatId.toLowerCase(),
         userId: userId.toLowerCase(),
@@ -428,7 +395,7 @@ export class ChatService {
   }
 
   public async delete(chatId: string, userId: string) {
-    return this.chatRepository.prisma.chat.delete({
+    return this.chatRepo.prisma.chat.delete({
       where: {
         id: chatId.toLowerCase(),
         userId,
@@ -440,7 +407,7 @@ export class ChatService {
   }
 
   public async deleteAllChatsByUserId(userId: string) {
-    return this.chatRepository.prisma.chat.deleteMany({
+    return this.chatRepo.prisma.chat.deleteMany({
       where: {
         userId,
       },
@@ -448,7 +415,7 @@ export class ChatService {
   }
 
   public async deleteChatMessagesByUserId(userId: string) {
-    return this.chatRepository.prisma.chatMessage.deleteMany({
+    return this.chatRepo.prisma.chatMessage.deleteMany({
       where: {
         chat: {
           userId,

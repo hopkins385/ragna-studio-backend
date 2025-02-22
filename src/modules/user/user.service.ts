@@ -2,26 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
-import { UserRepository } from './repositories/user.repository';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import { SessionUser } from './entities/session-user.entity';
+import { UserRepository } from './repositories/user.repository';
+import { BaseService } from '@/common/service/base.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly userRepository: UserRepository,
+    private readonly repository: UserRepository,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // super(UserService.name);
+  }
 
   async create({ name, email, password }: CreateUserDto) {
     const exists = await this.findByEmail(email);
     if (exists) throw new Error('Email already registered');
 
     const hasedPassword = await hashPassword(password);
-    return this.userRepository.create({
+    return this.repository.create({
       name,
       email,
       password: hasedPassword,
@@ -38,7 +41,7 @@ export class UserService {
     const exists = await this.findByEmail(email);
     if (exists) throw new Error('Email already registered');
 
-    return this.userRepository.create({
+    return this.repository.create({
       name,
       email,
     });
@@ -47,7 +50,7 @@ export class UserService {
   async findOne(payload: { userId: string }): Promise<Partial<UserEntity>> {
     if (!payload.userId) throw new Error('User ID is required');
 
-    const user = await this.userRepository.findById({
+    const user = await this.repository.findById({
       userId: payload.userId,
     });
     if (!user) throw new NotFoundException(`User ${payload.userId} not found`);
@@ -61,7 +64,7 @@ export class UserService {
   async getSessionUser({ userId }: { userId: string }): Promise<SessionUser> {
     if (!userId) throw new Error('User ID is required');
 
-    const user = await this.userRepository.prisma.user.findFirst({
+    const user = await this.repository.prisma.user.findFirst({
       relationLoadStrategy: 'join',
       select: {
         id: true,
@@ -119,23 +122,23 @@ export class UserService {
 
   async findByEmail(email: string): Promise<Partial<User>> {
     if (!email || !email.includes('@')) throw new Error('Invalid email');
-    return this.userRepository.findByEmail(email);
+    return this.repository.findByEmail(email);
   }
 
   async findAll(): Promise<Partial<UserEntity>[]> {
-    const users = await this.userRepository.findAll();
+    const users = await this.repository.findAll();
     return users.map((user) => new UserEntity(user as any));
   }
 
   async findAllPaginated({ organisationId }: { organisationId: string }) {
-    const [users, meta] = await this.userRepository.findAllPaginated({
+    const [users, meta] = await this.repository.findAllPaginated({
       organisationId,
     });
     return [users.map((user) => new UserEntity(user as any)), meta]; // TODO: fix types
   }
 
   async userExists({ userId }: { userId: string }) {
-    return this.userRepository.exists(userId);
+    return this.repository.exists(userId);
   }
 
   async updateUserName(
@@ -145,7 +148,7 @@ export class UserService {
       lastName: string;
     },
   ) {
-    return this.userRepository.prisma.user.update({
+    return this.repository.prisma.user.update({
       where: { id: userId },
       data: {
         firstName: pay.firstName,
@@ -159,7 +162,7 @@ export class UserService {
     userId: string,
     pay: { oldPassword: string; newPassword: string },
   ) {
-    const user = await this.userRepository.findByIdWithPassword(userId);
+    const user = await this.repository.findByIdWithPassword(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
     const isPasswordMatch = await comparePassword(
@@ -169,7 +172,7 @@ export class UserService {
     if (!isPasswordMatch) throw new Error('Invalid password');
 
     const hashedPassword = await hashPassword(pay.newPassword);
-    return this.userRepository.prisma.user.update({
+    return this.repository.prisma.user.update({
       where: { id: userId },
       data: {
         password: hashedPassword,
@@ -190,13 +193,13 @@ export class UserService {
       updateUserDto.password = await hashPassword(updateUserDto.password);
     }
 
-    const user = await this.userRepository.update(id, updateUserDto);
+    const user = await this.repository.update(id, updateUserDto);
     return new UserEntity(user as any); // TODO: fix types
   }
 
   async updateLastLogin(userId: string) {
     if (!userId) throw new Error('User ID is required');
-    return this.userRepository.update(userId, { lastLoginAt: new Date() });
+    return this.repository.update(userId, { lastLoginAt: new Date() });
   }
 
   async delete(userId: string) {
@@ -204,17 +207,17 @@ export class UserService {
   }
 
   async softDelete(userId: string) {
-    return this.userRepository.softDelete(userId);
+    return this.repository.softDelete(userId);
   }
 
   async softDeleteUser(userId: string, pay: { password: string }) {
-    const user = await this.userRepository.findByIdWithPassword(userId);
+    const user = await this.repository.findByIdWithPassword(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
     const isPasswordMatch = await comparePassword(pay.password, user.password);
     if (!isPasswordMatch) throw new Error('Invalid password');
 
-    return this.userRepository.softDelete(userId);
+    return this.repository.softDelete(userId);
   }
 
   async createInviteToken(payload: any): Promise<string> {
