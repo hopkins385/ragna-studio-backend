@@ -42,7 +42,7 @@ interface LargeLangModelProvider extends LlmProviderBase {} // OEM of the model
  * @property {number} qualityIndex - Value between 0 and 100
  * @property {number} speedIndex - Value between 0 and 100
  */
-interface LargeLangModelFrontend {
+export interface LargeLangModelFrontend {
   id: string;
   displayName: string;
   description: string;
