@@ -56,7 +56,7 @@ export class AssistantService {
     throw new InternalServerErrorException('Unknown error');
   }
 
-  async create(payload: CreateAssistantDto) {
+  public async create(payload: CreateAssistantDto) {
     // Validate teamId
     this.validateTeamId(payload.teamId);
     // Database call
@@ -68,7 +68,7 @@ export class AssistantService {
     }
   }
 
-  async createFromTemplate(payload: CreateAssistantFromTemplatePayload) {
+  public async createFromTemplate(payload: CreateAssistantFromTemplatePayload) {
     // Validate teamId
     this.validateTeamId(payload.teamId);
     // Database call
@@ -81,7 +81,7 @@ export class AssistantService {
     }
   }
 
-  async getOne({ assistantId }: FindAssistantDto) {
+  public async getOne({ assistantId }: FindAssistantDto) {
     // Validate assistantId
     this.validateAssistantId(assistantId);
     // Database call
@@ -98,7 +98,7 @@ export class AssistantService {
     }
   }
 
-  async getDetails({ assistantId }: FindAssistantDto) {
+  public async getDetails({ assistantId }: FindAssistantDto) {
     // Validate assistantId
     this.validateAssistantId(assistantId);
     // Database call
@@ -115,7 +115,7 @@ export class AssistantService {
     }
   }
 
-  async getSystemPrompt(lang: string, assistantId?: string) {
+  public async getSystemPrompt(lang: string, assistantId?: string) {
     if (!assistantId) {
       if (lang === 'de') {
         return defaultSystemPrompt.de;
@@ -135,7 +135,7 @@ export class AssistantService {
     }
   }
 
-  async findAll({
+  public async findAll({
     teamId,
     page,
     limit,
@@ -163,7 +163,7 @@ export class AssistantService {
     }
   }
 
-  async update({
+  public async update({
     teamId,
     assistantId,
     title,
@@ -199,7 +199,7 @@ export class AssistantService {
     }
   }
 
-  async updateHasKnowledgeBase({
+  public async updateHasKnowledgeBase({
     teamId,
     assistantId,
     hasKnowledgeBase,
@@ -222,7 +222,7 @@ export class AssistantService {
     }
   }
 
-  async softDelete({ teamId, assistantId }: DeleteAssistantDto) {
+  public async softDelete({ teamId, assistantId }: DeleteAssistantDto) {
     // Validate teamId
     this.validateTeamId(teamId);
     // Validate assistantId
@@ -239,7 +239,7 @@ export class AssistantService {
     }
   }
 
-  async delete({ teamId, assistantId }: DeleteAssistantDto) {
+  public async delete({ teamId, assistantId }: DeleteAssistantDto) {
     // Validate teamId
     this.validateTeamId(teamId);
     // Validate assistantId
