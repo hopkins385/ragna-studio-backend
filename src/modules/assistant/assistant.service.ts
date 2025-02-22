@@ -64,7 +64,7 @@ export class AssistantService {
       const assistant = await this.assistantRepo.createAssistant(payload);
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -77,11 +77,11 @@ export class AssistantService {
         await this.assistantRepo.createAssistantFromTemplate(payload);
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
-  async findFirst({ assistantId }: FindAssistantDto) {
+  async getOne({ assistantId }: FindAssistantDto) {
     // Validate assistantId
     this.validateAssistantId(assistantId);
     // Database call
@@ -94,7 +94,7 @@ export class AssistantService {
       }
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -111,7 +111,7 @@ export class AssistantService {
       }
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -131,16 +131,24 @@ export class AssistantService {
       }
       return assistant?.systemPrompt || '';
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
-  async findAll({ teamId, page, limit, searchQuery }: FindAllAssistantsDto) {
+  async findAll({
+    teamId,
+    page,
+    limit,
+    searchQuery,
+  }: FindAllAssistantsDto): Promise<{
+    assistants: any[];
+    meta: any;
+  }> {
     // Validate teamId
     this.validateTeamId(teamId);
     // Database call
     try {
-      const assistants = await this.assistantRepo.getAllAssistants({
+      const [assistants, meta] = await this.assistantRepo.getAllAssistants({
         teamId,
         page,
         limit,
@@ -149,9 +157,9 @@ export class AssistantService {
       if (!assistants) {
         throw new AssistantNotFoundException('');
       }
-      return assistants;
+      return { assistants, meta };
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -187,7 +195,7 @@ export class AssistantService {
       await this.assistantToolService.updateMany(assistantId, tools || []);
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -210,7 +218,7 @@ export class AssistantService {
         });
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -227,7 +235,7 @@ export class AssistantService {
       });
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 
@@ -244,7 +252,7 @@ export class AssistantService {
       });
       return assistant;
     } catch (error) {
-      return this.handleError(error);
+      this.handleError(error);
     }
   }
 }

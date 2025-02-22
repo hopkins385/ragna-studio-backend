@@ -81,7 +81,7 @@ export class AssistantController {
     }
 
     try {
-      const [assistants, meta] = await this.assistantService.findAll(
+      const result = await this.assistantService.findAll(
         FindAllAssistantsDto.fromInput({
           teamId,
           page,
@@ -90,7 +90,14 @@ export class AssistantController {
         }),
       );
 
-      return { assistants, meta };
+      if (!result) {
+        throw new Error('Assistants not found');
+      }
+
+      return {
+        assistants: result.assistants,
+        meta: result.meta,
+      };
     } catch (error) {
       throw new NotFoundException('Assistants not found');
     }
@@ -105,7 +112,7 @@ export class AssistantController {
     }
 
     try {
-      const assistant = await this.assistantService.findFirst(
+      const assistant = await this.assistantService.getOne(
         FindAssistantDto.fromInput({
           id: assistantId,
         }),
@@ -130,7 +137,7 @@ export class AssistantController {
     }
 
     try {
-      const assistant = await this.assistantService.findFirst(
+      const assistant = await this.assistantService.getOne(
         FindAssistantDto.fromInput({
           id: assistantId,
         }),
@@ -172,7 +179,7 @@ export class AssistantController {
     }
 
     try {
-      const assistant = await this.assistantService.findFirst(
+      const assistant = await this.assistantService.getOne(
         FindAssistantDto.fromInput({
           id: assistantId,
         }),
@@ -201,7 +208,7 @@ export class AssistantController {
     }
 
     try {
-      const assistant = await this.assistantService.findFirst(
+      const assistant = await this.assistantService.getOne(
         FindAssistantDto.fromInput({
           id: assistantId,
         }),
