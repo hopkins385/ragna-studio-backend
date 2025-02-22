@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { comparePassword, hashPassword } from 'src/common/utils/bcrypt';
+import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
 import { UserRepository } from './repositories/user.repository';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';

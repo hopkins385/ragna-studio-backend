@@ -1,6 +1,6 @@
 import { UserService } from '@/modules/user/user.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { comparePassword } from 'src/common/utils/bcrypt';
+import { comparePassword } from '@/common/utils/bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User as UserModel } from '@prisma/client';

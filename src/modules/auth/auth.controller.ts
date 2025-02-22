@@ -19,7 +19,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { Request } from 'express';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RefreshJwtGuard } from './guards/refresh-jwt-auth.guard';
-import { Public } from 'src/common/decorators/public.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { CredentialsDto } from './dto/credentials.dto';
 import { UseZodGuard } from 'nestjs-zod';
