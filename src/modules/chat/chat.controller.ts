@@ -78,7 +78,7 @@ export class ChatController {
     const payload = FindAssistantDto.fromInput({ id: assistantId });
 
     try {
-      const assistant = await this.assistantService.findFirst(payload);
+      const assistant = await this.assistantService.getOne(payload);
 
       if (!assistant) {
         throw new Error('Assistant not found with Id: ' + assistantId);

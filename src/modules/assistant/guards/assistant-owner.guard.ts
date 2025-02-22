@@ -12,7 +12,7 @@ export class AssistantOwnerGuard implements CanActivate {
       params: { id: assistantId },
     } = request;
 
-    const assistant = await this.assistantService.findFirst(
+    const assistant = await this.assistantService.getOne(
       FindAssistantDto.fromInput({
         id: assistantId,
       }),

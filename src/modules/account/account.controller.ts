@@ -13,10 +13,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { AccountService } from './account.service';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { UpdateAccountNameBody } from './dto/update-account-name-body.dto';
-import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { UpdateAccountPasswordBody } from './dto/update-account-password-body.dto';
 import { DeleteAccountBody } from './dto/delete-account-body.dto';
 
