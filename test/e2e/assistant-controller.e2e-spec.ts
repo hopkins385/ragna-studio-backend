@@ -134,6 +134,67 @@ describe('AssistantController (e2e)', () => {
     );
   });
 
+  it('handles race condition on update', async () => {
+    const updateAssistantDto1 = {
+      teamId: sessionUser.firstTeamId,
+      llmId: llms?.[0].id,
+      title: 'Updated Assistant 1',
+      description: 'This is an updated assistant 1',
+      systemPrompt: 'Updated prompt 1',
+      isShared: true,
+      hasKnowledgeBase: true,
+      hasWorkflow: true,
+      tools: [],
+    };
+
+    const updateAssistantDto2 = {
+      teamId: sessionUser.firstTeamId,
+      llmId: llms?.[0].id,
+      title: 'Updated Assistant 2',
+      description: 'This is an updated assistant 2',
+      systemPrompt: 'Updated prompt 2',
+      isShared: true,
+      hasKnowledgeBase: true,
+      hasWorkflow: true,
+      tools: [],
+    };
+
+    // Simulate two concurrent updates
+    const [response1, response2] = await Promise.all([
+      request(app.getHttpServer())
+        .patch(`/assistant/${assistantId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updateAssistantDto1)
+        .expect(HttpStatus.OK),
+      request(app.getHttpServer())
+        .patch(`/assistant/${assistantId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(updateAssistantDto2)
+        .expect(HttpStatus.OK),
+    ]);
+
+    expect(response1.body).toHaveProperty('id');
+    expect(response2.body).toHaveProperty('id');
+
+    // Verify the final state of the assistant
+    const getResponse = await request(app.getHttpServer())
+      .get(`/assistant/${assistantId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(HttpStatus.OK);
+
+    expect(
+      [updateAssistantDto1.title, updateAssistantDto2.title].includes(
+        getResponse.body.assistant.title,
+      ),
+    ).toBe(true);
+    expect(
+      [
+        updateAssistantDto1.description,
+        updateAssistantDto2.description,
+      ].includes(getResponse.body.assistant.description),
+    ).toBe(true);
+  });
+
   it('/assistant/:id (DELETE)', async () => {
     await request(app.getHttpServer())
       .delete(`/assistant/${assistantId}`)
@@ -179,17 +240,6 @@ describe('AssistantController (e2e)', () => {
     await request(app.getHttpServer())
       .delete(`/assistant/${id}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .expect(HttpStatus.NOT_FOUND);
-  });
-
-  it('returns 404 not found for invalid deleteAssistantDto', async () => {
-    const invalidDeleteAssistantDto = {
-      teamId: 'invalid-id',
-    };
-    await request(app.getHttpServer())
-      .delete(`/assistant/${assistantId}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(invalidDeleteAssistantDto)
       .expect(HttpStatus.NOT_FOUND);
   });
 

@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Query,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { AssistantService } from './assistant.service';
 import {
@@ -77,7 +78,7 @@ export class AssistantController {
     const teamId = user.firstTeamId;
 
     if (!teamId) {
-      throw new NotFoundException('Team not found');
+      throw new BadRequestException('Team ID is required');
     }
 
     try {
@@ -108,7 +109,7 @@ export class AssistantController {
     const { id: assistantId } = param;
 
     if (!assistantId) {
-      throw new NotFoundException('Assistant not found');
+      throw new BadRequestException('Assistant ID is required');
     }
 
     try {
@@ -133,7 +134,7 @@ export class AssistantController {
     const { id: assistantId } = param;
 
     if (!assistantId) {
-      throw new NotFoundException('Assistant not found');
+      throw new BadRequestException('Assistant ID is required');
     }
 
     try {
@@ -175,7 +176,7 @@ export class AssistantController {
     const { id: assistantId } = param;
 
     if (!assistantId) {
-      throw new NotFoundException('Assistant not found');
+      throw new BadRequestException('Assistant ID is required');
     }
 
     try {
@@ -204,7 +205,7 @@ export class AssistantController {
     const { id: assistantId } = param;
 
     if (!assistantId) {
-      throw new NotFoundException('Assistant not found');
+      throw new BadRequestException('Assistant ID is required');
     }
 
     try {
