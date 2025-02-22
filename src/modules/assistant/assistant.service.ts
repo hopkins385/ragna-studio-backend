@@ -3,7 +3,6 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateAssistantDto } from './dto/create-assistant.dto';
@@ -14,6 +13,7 @@ import { DeleteAssistantDto } from './dto/delete-assistant.dto';
 import { AssistantToolService } from '../assistant-tool/assistant-tool.service';
 import { defaultSystemPrompt } from './constants/default-system-prompt.constant';
 import { AssistantNotFoundException } from './exceptions/assistant-not-found.exception';
+import { BaseService } from '@/common/service/base.service';
 
 interface CreateAssistantFromTemplatePayload {
   teamId: string;
@@ -22,24 +22,20 @@ interface CreateAssistantFromTemplatePayload {
 }
 
 @Injectable()
-export class AssistantService {
-  private readonly logger = new Logger(AssistantService.name);
-
+export class AssistantService extends BaseService<any> {
   constructor(
     private readonly repository: AssistantRepository,
     private readonly assistantToolService: AssistantToolService,
-  ) {}
+  ) {
+    super(AssistantService.name);
+  }
 
   private validateTeamId(teamId: string | undefined): void {
-    if (!teamId) {
-      throw new BadRequestException('Team ID is required');
-    }
+    this.validateId(teamId, 'Team ID');
   }
 
   private validateAssistantId(assistantId: string | undefined): void {
-    if (!assistantId) {
-      throw new BadRequestException('Assistant ID is required');
-    }
+    this.validateId(assistantId, 'Assistant ID');
   }
 
   private handleError(error: unknown) {
