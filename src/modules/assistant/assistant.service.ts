@@ -30,14 +30,6 @@ export class AssistantService extends BaseService<any> {
     super(AssistantService.name);
   }
 
-  private validateTeamId(teamId: string | undefined): void {
-    this.validateId(teamId, 'Team ID');
-  }
-
-  private validateAssistantId(assistantId: string | undefined): void {
-    this.validateId(assistantId, 'Assistant ID');
-  }
-
   private handleError(error: unknown) {
     if (error instanceof AssistantNotFoundException) {
       throw error;
@@ -53,8 +45,6 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async create(payload: CreateAssistantDto) {
-    // Validate teamId
-    this.validateTeamId(payload.teamId);
     // Database call
     try {
       const assistant = await this.repository.createAssistant(payload);
@@ -65,8 +55,6 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async createFromTemplate(payload: CreateAssistantFromTemplatePayload) {
-    // Validate teamId
-    this.validateTeamId(payload.teamId);
     // Database call
     try {
       const assistant =
@@ -78,9 +66,6 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async getOne({ assistantId }: FindAssistantDto) {
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       const assistant = await this.repository.getAssistantWithRelations({
         assistantId,
@@ -94,10 +79,28 @@ export class AssistantService extends BaseService<any> {
     }
   }
 
+  public async getMany({
+    teamId,
+    assistantIds,
+  }: {
+    teamId: string;
+    assistantIds: string[];
+  }) {
+    try {
+      const assistants = await this.repository.getManyAssistants({
+        teamId,
+        assistantIds,
+      });
+      if (!assistants) {
+        throw new AssistantNotFoundException('');
+      }
+      return assistants;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
   public async getDetails({ assistantId }: FindAssistantDto) {
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       const assistant = await this.repository.getAssistantDetails({
         assistantId,
@@ -140,8 +143,6 @@ export class AssistantService extends BaseService<any> {
     assistants: any[];
     meta: any;
   }> {
-    // Validate teamId
-    this.validateTeamId(teamId);
     // Database call
     try {
       const [assistants, meta] = await this.repository.getAllAssistants({
@@ -171,11 +172,6 @@ export class AssistantService extends BaseService<any> {
     hasWorkflow,
     tools,
   }: UpdateAssistantDto) {
-    // Validate teamId
-    this.validateTeamId(teamId);
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       const assistant = await this.repository.getAssistant({
         assistantId,
@@ -208,11 +204,6 @@ export class AssistantService extends BaseService<any> {
     assistantId,
     hasKnowledgeBase,
   }: Partial<UpdateAssistantDto>) {
-    // Validate teamId
-    this.validateTeamId(teamId);
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       // find assistant
       const assistant = await this.repository.getAssistant({
@@ -235,11 +226,6 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async softDelete({ teamId, assistantId }: DeleteAssistantDto) {
-    // Validate teamId
-    this.validateTeamId(teamId);
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       const assistant = await this.repository.getAssistant({
         assistantId,
@@ -248,22 +234,17 @@ export class AssistantService extends BaseService<any> {
         throw new AssistantNotFoundException(assistantId);
       }
 
-      const updatedAssistant = await this.repository.softDeleteAssistant({
+      const result = await this.repository.softDeleteAssistant({
         teamId,
         assistantId,
       });
-      return updatedAssistant;
+      return !!result;
     } catch (error) {
       this.handleError(error);
     }
   }
 
   public async delete({ teamId, assistantId }: DeleteAssistantDto) {
-    // Validate teamId
-    this.validateTeamId(teamId);
-    // Validate assistantId
-    this.validateAssistantId(assistantId);
-    // Database call
     try {
       const assistant = await this.repository.getAssistant({
         assistantId,
@@ -276,7 +257,7 @@ export class AssistantService extends BaseService<any> {
         teamId,
         assistantId,
       });
-      return result;
+      return !!result;
     } catch (error) {
       this.handleError(error);
     }

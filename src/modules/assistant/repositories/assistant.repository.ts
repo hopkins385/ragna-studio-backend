@@ -104,6 +104,23 @@ export class AssistantRepository {
     });
   }
 
+  async getManyAssistants({
+    teamId,
+    assistantIds,
+  }: {
+    teamId: string;
+    assistantIds: string[];
+  }) {
+    return this.prisma.assistant.findMany({
+      where: {
+        teamId,
+        id: {
+          in: assistantIds,
+        },
+      },
+    });
+  }
+
   async getAssistantWithRelations(payload: { assistantId: string }) {
     return this.prisma.assistant.findFirst({
       relationLoadStrategy: 'join',

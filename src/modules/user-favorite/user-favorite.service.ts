@@ -1,86 +1,105 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserFavoriteRepository } from './repositories/user-favorite.repository';
 import { UserFavorite } from './interfaces/user-favorite.interface';
-import { UserEntity } from '../user/entities/user.entity';
+import { BaseService } from '@/common/service/base.service';
+import { UserFavoriteNotFoundException } from './exceptions/user-favorite-not-found.exception';
+import { UserFavoriteDto } from './dto/user-favorite.dto';
+import { GetAllFavoritesDto } from './dto/get-all-user-favorites.dto';
+import { GetManyUserFavoritesDto } from './dto/get-many-user-favorite.dto';
 
 @Injectable()
-export class UserFavoriteService {
-  private readonly logger = new Logger(UserFavoriteService.name);
+export class UserFavoriteService extends BaseService<UserFavorite> {
+  constructor(private readonly repository: UserFavoriteRepository) {
+    super(UserFavoriteService.name);
+  }
 
-  constructor(private readonly repo: UserFavoriteRepository) {}
-
-  async addFavorite(
-    userId: string,
-    favoriteId: string,
-    favoriteType: string,
-  ): Promise<UserFavorite> {
-    const existingFavorite = await this.repo.prisma.userFavorite.findFirst({
-      where: {
-        userId,
-        favoriteId,
-        favoriteType,
-      },
-    });
-
-    if (existingFavorite) {
-      return existingFavorite;
+  private handleError(error: unknown) {
+    if (error instanceof UserFavoriteNotFoundException) {
+      throw error;
     }
-
-    return this.repo.prisma.userFavorite.create({
-      data: {
-        userId,
-        favoriteId,
-        favoriteType,
-      },
-    });
+    if (error instanceof Error) {
+      this.logger.error(`Error: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(error.message);
+    }
+    throw new InternalServerErrorException('Unknown error');
   }
 
-  async removeFavorite({
-    id,
-    userId,
-    favoriteType,
-  }: {
-    id: string;
-    userId: string;
-    favoriteType: string;
-  }): Promise<void> {
-    await this.repo.prisma.userFavorite.delete({
-      where: {
-        id,
-        userId,
-        favoriteType,
-      },
-    });
+  async getOne(pyload: any): Promise<UserFavorite> {
+    throw new Error('Method not implemented.');
   }
 
-  async getAllFavorites(user: UserEntity) {
-    const favorites = await this.repo.prisma.userFavorite.findMany({
-      select: { id: true, userId: true, favoriteId: true, favoriteType: true },
-      where: { userId: user.id },
-    });
-    // fetch also the details of the favorite
-    const favoriteDetails = await this.getManyFavoriteDetails({
-      teamId: user.firstTeamId,
-      favorites,
-    });
+  async getMany(payload: any): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 
-    return favorites.map((favorite, index) => ({
-      id: favorite.id,
-      favoriteId: favorite.favoriteId,
-      favoriteType: favorite.favoriteType,
-      detail: favoriteDetails[index],
-    }));
+  async findAll(payload: any) {
+    throw new Error('Method not implemented.');
+  }
+
+  async update(payload: any): Promise<UserFavorite> {
+    throw new Error('Method not implemented.');
+  }
+
+  async create(payload: UserFavoriteDto): Promise<UserFavorite> {
+    const runPayload = {
+      userId: payload.userId,
+      favoriteId: payload.favoriteId,
+      favoriteType: payload.favoriteType,
+    };
+
+    try {
+      const existingFavorite =
+        await this.repository.getUserFavorite(runPayload);
+
+      if (existingFavorite) {
+        return existingFavorite;
+      }
+
+      return await this.repository.createUserFavorite(runPayload);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getAll(payload: GetAllFavoritesDto): Promise<any[]> {
+    // TODO: Define the return type
+
+    try {
+      const favorites = await this.repository.getAllFavoritesForUser({
+        userId: payload.userId,
+      });
+      if (!favorites) {
+        return [];
+      }
+
+      const getManyFavoriteDetailsDto = GetManyUserFavoritesDto.fromInput({
+        userId: payload.userId,
+        teamId: payload.teamId,
+        favorites,
+      });
+      // fetch also the details of the favorite
+      const favoriteDetails = await this.getManyFavoriteDetails(
+        getManyFavoriteDetailsDto,
+      );
+
+      return favorites.map((favorite, index) => ({
+        id: favorite.id,
+        favoriteId: favorite.favoriteId,
+        favoriteType: favorite.favoriteType,
+        detail: favoriteDetails[index],
+      }));
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   async getAllFavoritesByType(
     userId: string,
     favoriteType: string,
   ): Promise<UserFavorite[]> {
-    return this.repo.prisma.userFavorite.findMany({
-      where: {
-        userId,
-        favoriteType,
-      },
+    return this.repository.getAllFavoritesForUserByType({
+      userId,
+      favoriteType,
     });
   }
 
@@ -89,45 +108,36 @@ export class UserFavoriteService {
     favoriteId: string,
     favoriteType: string,
   ): Promise<boolean> {
-    const favorite = await this.repo.prisma.userFavorite.findFirst({
-      where: {
-        userId,
-        favoriteId,
-        favoriteType,
-      },
+    const favorite = await this.repository.getUserFavorite({
+      userId,
+      favoriteId,
+      favoriteType,
     });
 
     return !!favorite;
   }
 
-  async getFavoriteDetails(
-    teamId: string,
-    favoriteId: string,
-    favoriteType: string,
-  ) {
-    switch (favoriteType) {
+  async getFavoriteDetails(payload: UserFavoriteDto) {
+    throw new Error('Method not implemented.');
+    /*
+    switch (payload.favoriteType) {
       case 'assistant':
-        return this.repo.prisma.assistant.findFirst({
+        return this.repository.prisma.assistant.findFirst({
           select: { title: true },
-          where: { id: favoriteId, teamId },
+          where: { id: payload.favoriteId, teamId: payload.teamId },
         });
       case 'workflow':
-        return this.repo.prisma.workflow.findFirst({
+        return this.repository.prisma.workflow.findFirst({
           select: { name: true },
-          where: { id: favoriteId, teamId },
+          where: { id: payload.favoriteId, teamId: payload.teamId },
         });
       default:
         return null;
     }
+        */
   }
 
-  async getManyFavoriteDetails({
-    teamId,
-    favorites,
-  }: {
-    teamId: string;
-    favorites: UserFavorite[];
-  }) {
+  async getManyFavoriteDetails({ teamId, favorites }: GetManyUserFavoritesDto) {
     // Group favorites by type
     const groupedFavorites = favorites.reduce(
       (acc, favorite) => {
@@ -142,7 +152,7 @@ export class UserFavoriteService {
 
     // Fetch all assistants in one query
     const assistants = groupedFavorites['assistant']
-      ? await this.repo.prisma.assistant.findMany({
+      ? await this.repository.prisma.assistant.findMany({
           select: { id: true, title: true, description: true },
           where: {
             id: { in: groupedFavorites['assistant'] },
@@ -153,7 +163,7 @@ export class UserFavoriteService {
 
     // Fetch all workflows in one query
     const workflows = groupedFavorites['workflow']
-      ? await this.repo.prisma.workflow.findMany({
+      ? await this.repository.prisma.workflow.findMany({
           select: { id: true, name: true, description: true },
           where: {
             id: { in: groupedFavorites['workflow'] },
@@ -176,5 +186,22 @@ export class UserFavoriteService {
       }
       return null;
     });
+  }
+
+  async softDelete(payload: any): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+
+  async delete(payload: UserFavoriteDto): Promise<boolean> {
+    try {
+      const existingFavorite = await this.repository.getUserFavorite(payload);
+      if (!existingFavorite) {
+        throw new UserFavoriteNotFoundException(payload.favoriteId);
+      }
+      const result = await this.repository.deleteUserFavorite(payload);
+      return !!result;
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 }

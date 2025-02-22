@@ -35,18 +35,18 @@ export class AssistantController {
 
   @Post()
   async create(@Body() body: CreateAssistantBody) {
+    const createAssistantDto = CreateAssistantDto.fromInput({
+      teamId: body.teamId,
+      llmId: body.llmId,
+      title: body.title,
+      description: body.description,
+      systemPrompt: body.systemPrompt,
+      isShared: body.isShared,
+      tools: body.tools,
+    });
+
     try {
-      return await this.assistantService.create(
-        CreateAssistantDto.fromInput({
-          teamId: body.teamId,
-          llmId: body.llmId,
-          title: body.title,
-          description: body.description,
-          systemPrompt: body.systemPrompt,
-          isShared: body.isShared,
-          tools: body.tools,
-        }),
-      );
+      return await this.assistantService.create(createAssistantDto);
     } catch (error) {
       throw new InternalServerErrorException('Error creating assistant');
     }
@@ -71,17 +71,15 @@ export class AssistantController {
 
   @Get()
   async findAll(@ReqUser() user: UserEntity, @Query() query: PaginateQuery) {
-    const { page, limit, searchQuery } = query;
+    const findAllAssistantsDto = FindAllAssistantsDto.fromInput({
+      teamId: user.firstTeamId,
+      page: query.page,
+      limit: query.limit,
+      searchQuery: query.searchQuery,
+    });
 
     try {
-      const result = await this.assistantService.findAll(
-        FindAllAssistantsDto.fromInput({
-          teamId: user.firstTeamId,
-          page,
-          limit,
-          searchQuery,
-        }),
-      );
+      const result = await this.assistantService.findAll(findAllAssistantsDto);
 
       if (!result) {
         throw new Error('Assistants not found');
@@ -98,12 +96,12 @@ export class AssistantController {
 
   @Get(':id')
   async findOne(@Param() param: IdParam) {
+    const findAssistantDto = FindAssistantDto.fromInput({
+      id: param.id,
+    });
+
     try {
-      const assistant = await this.assistantService.getOne(
-        FindAssistantDto.fromInput({
-          id: param.id,
-        }),
-      );
+      const assistant = await this.assistantService.getOne(findAssistantDto);
 
       if (!assistant) {
         throw new Error('Assistant not found');
@@ -117,21 +115,21 @@ export class AssistantController {
 
   @Patch(':id')
   async update(@Param() param: IdParam, @Body() body: UpdateAssistantBody) {
+    const updateAssistantDto = UpdateAssistantDto.fromInput({
+      id: param.id,
+      teamId: body.teamId,
+      llmId: body.llmId,
+      title: body.title,
+      description: body.description,
+      systemPrompt: body.systemPrompt,
+      isShared: body.isShared,
+      hasKnowledgeBase: body.hasKnowledgeBase,
+      hasWorkflow: body.hasWorkflow,
+      tools: body.tools,
+    });
+
     try {
-      return await this.assistantService.update(
-        UpdateAssistantDto.fromInput({
-          id: param.id,
-          teamId: body.teamId,
-          llmId: body.llmId,
-          title: body.title,
-          description: body.description,
-          systemPrompt: body.systemPrompt,
-          isShared: body.isShared,
-          hasKnowledgeBase: body.hasKnowledgeBase,
-          hasWorkflow: body.hasWorkflow,
-          tools: body.tools,
-        }),
-      );
+      return await this.assistantService.update(updateAssistantDto);
     } catch (error) {
       throw new NotFoundException('Assistant not found');
     }
@@ -156,13 +154,12 @@ export class AssistantController {
 
   @Delete(':id')
   async delete(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+    const deleteAssistantDto = DeleteAssistantDto.fromInput({
+      id: param.id,
+      teamId: user.firstTeamId,
+    });
     try {
-      return await this.assistantService.softDelete(
-        DeleteAssistantDto.fromInput({
-          id: param.id,
-          teamId: user.firstTeamId,
-        }),
-      );
+      return await this.assistantService.softDelete(deleteAssistantDto);
     } catch (error) {
       throw new NotFoundException('Assistant not found');
     }

@@ -55,6 +55,12 @@ describe('AssistantController (e2e)', () => {
   });
 
   afterEach(async () => {
+    // logout user
+    await request(app.getHttpServer())
+      .post('/auth/logout')
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(HttpStatus.OK);
+
     await app.close();
   });
 

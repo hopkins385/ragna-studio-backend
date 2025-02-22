@@ -1,5 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Request } from 'express';
+import { Injectable, Logger } from '@nestjs/common';
 import { UploadFileDto } from './dto/file-upload.dto';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { StorageService } from '@/modules/storage/storage.service';

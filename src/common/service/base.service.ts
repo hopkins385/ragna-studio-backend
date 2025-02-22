@@ -15,8 +15,9 @@ export abstract class BaseService<T> {
 
   abstract create(payload: any): Promise<T>;
   abstract getOne(payload: any): Promise<T>;
+  abstract getMany(payload: any): Promise<T[]>;
   abstract findAll(payload: any): Promise<any>;
   abstract update(payload: any): Promise<T>;
-  abstract softDelete(payload: any): Promise<T>;
-  abstract delete(payload: any): Promise<T>;
+  abstract softDelete(payload: any): Promise<boolean>;
+  abstract delete(payload: any): Promise<boolean>;
 }
