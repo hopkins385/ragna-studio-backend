@@ -20,7 +20,7 @@ export class EditorController {
       context: body.context,
     });
     try {
-      const completion = await this.editorService.completion(editorCompletionDto);
+      const { completion } = await this.editorService.completion(editorCompletionDto);
       return { completion };
       //
     } catch (error: any) {

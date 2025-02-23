@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { randomCUID2 } from '@/common/utils/random-cuid2';
+import { AppModule } from '@/app.module';
 
 describe('UserFavortiteController (e2e)', () => {
   let app: INestApplication;
   let authToken: string;
+  let authUser: UserEntity;
   let configService: ConfigService;
-  let sessionUser: UserEntity;
   let assistantId: string;
 
   beforeEach(async () => {
@@ -32,16 +32,15 @@ describe('UserFavortiteController (e2e)', () => {
       .post('/auth/login')
       .send({ email: testerEmail, password: testerPassword })
       .expect(HttpStatus.CREATED);
-
     authToken = response.body.accessToken;
 
-    // Account User
+    // Auth User
     const accountUser = await request(app.getHttpServer())
       .get('/account')
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.OK);
     expect(accountUser.body).toHaveProperty('id');
-    sessionUser = accountUser.body;
+    authUser = accountUser.body;
 
     // Get the first assistantistant
     const assistantsResponse = await request(app.getHttpServer())

@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from '@/modules/user/entities/user.entity';
 import { LargeLangModelFrontend } from '@/modules/llm/dto/llm-list-response.dto';
 import { randomCUID2 } from '@/common/utils/random-cuid2';
+import { AppModule } from '@/app.module';
 
 describe('AssistantController (e2e)', () => {
   let app: INestApplication;
   let authToken: string;
+  let authUser: UserEntity;
   let configService: ConfigService;
-  let sessionUser: UserEntity;
   let llms: LargeLangModelFrontend[];
   let assistantId: string;
 
@@ -34,16 +34,15 @@ describe('AssistantController (e2e)', () => {
       .post('/auth/login')
       .send({ email: testerEmail, password: testerPassword })
       .expect(HttpStatus.CREATED);
-
     authToken = response.body.accessToken;
 
-    // Account User
+    // Auth User
     const accountUser = await request(app.getHttpServer())
       .get('/account')
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.OK);
     expect(accountUser.body).toHaveProperty('id');
-    sessionUser = accountUser.body;
+    authUser = accountUser.body;
 
     // Get available LLMs
     const llmResponse = await request(app.getHttpServer())
@@ -66,7 +65,7 @@ describe('AssistantController (e2e)', () => {
 
   it('/assistant (POST)', async () => {
     const createAssistantDto = {
-      teamId: sessionUser.firstTeamId,
+      teamId: authUser.firstTeamId,
       llmId: llms?.[0].id,
       title: 'Test Assistant',
       description: 'This is a test assistant',
@@ -109,7 +108,7 @@ describe('AssistantController (e2e)', () => {
 
   it('/assistant/:id (PATCH)', async () => {
     const updateAssistantDto = {
-      teamId: sessionUser.firstTeamId,
+      teamId: authUser.firstTeamId,
       llmId: llms?.[0].id,
       title: 'Updated Assistant',
       description: 'This is an updated assistant',
@@ -135,14 +134,12 @@ describe('AssistantController (e2e)', () => {
       .set('Authorization', `Bearer ${authToken}`)
       .expect(HttpStatus.OK);
     expect(getResponse.body.assistant.title).toEqual(updateAssistantDto.title);
-    expect(getResponse.body.assistant.description).toEqual(
-      updateAssistantDto.description,
-    );
+    expect(getResponse.body.assistant.description).toEqual(updateAssistantDto.description);
   });
 
   it('handles race condition on update', async () => {
     const updateAssistantDto1 = {
-      teamId: sessionUser.firstTeamId,
+      teamId: authUser.firstTeamId,
       llmId: llms?.[0].id,
       title: 'Updated Assistant 1',
       description: 'This is an updated assistant 1',
@@ -154,7 +151,7 @@ describe('AssistantController (e2e)', () => {
     };
 
     const updateAssistantDto2 = {
-      teamId: sessionUser.firstTeamId,
+      teamId: authUser.firstTeamId,
       llmId: llms?.[0].id,
       title: 'Updated Assistant 2',
       description: 'This is an updated assistant 2',
@@ -194,10 +191,9 @@ describe('AssistantController (e2e)', () => {
       ),
     ).toBe(true);
     expect(
-      [
-        updateAssistantDto1.description,
-        updateAssistantDto2.description,
-      ].includes(getResponse.body.assistant.description),
+      [updateAssistantDto1.description, updateAssistantDto2.description].includes(
+        getResponse.body.assistant.description,
+      ),
     ).toBe(true);
   });
 
@@ -224,7 +220,7 @@ describe('AssistantController (e2e)', () => {
   it('returns 404 not found for non-existing assistant on update', async () => {
     const id = randomCUID2();
     const updateAssistantDto = {
-      teamId: sessionUser.firstTeamId,
+      teamId: authUser.firstTeamId,
       llmId: llms?.[0].id,
       title: 'Updated Assistant',
       description: 'This is an updated assistant',

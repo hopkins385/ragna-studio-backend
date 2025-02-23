@@ -110,7 +110,9 @@ export class EditorService {
     this.tokenUsageEvent.emitTokenUsage(tokenUsageEventDto);
   }
 
-  public async completion(editorCompletionDto: EditorCompletionDto): Promise<string> {
+  public async completion(
+    editorCompletionDto: EditorCompletionDto,
+  ): Promise<{ completion: string }> {
     const llm = await this.getLargeLangModel();
 
     if (!llm) {
@@ -133,7 +135,7 @@ export class EditorService {
         messages,
       });
       //
-      return text;
+      return { completion: text };
       //
     } catch (error) {
       this.logError(error);
