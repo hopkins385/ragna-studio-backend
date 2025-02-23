@@ -11,10 +11,10 @@ import TurndownService from 'turndown';
 import { ConfigService } from '@nestjs/config';
 import { TokenUsageEventEmitter } from '@/modules/token-usage/events/token-usage-event.emitter';
 import { TokenUsageEventDto } from '@/modules/token-usage/events/token-usage-event.dto';
-import { EditorSystemPrompt } from './constants/editor-system-prompt';
-import { EditorUserPrompt } from './constants/editor-user-prompt';
-import { EditorCompletionDto } from './dto/editor-completion.dto';
 import { LlmService } from '@/modules/llm/llm.service';
+import { EditorCompletionDto } from '@/modules/editor/dto/editor-completion.dto';
+import { EditorSystemPrompt } from '@/modules/editor/constants/editor-system-prompt';
+import { EditorUserPrompt } from '@/modules/editor/constants/editor-user-prompt';
 
 @Injectable()
 export class EditorService {
