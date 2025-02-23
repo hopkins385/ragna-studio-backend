@@ -12,6 +12,42 @@ export class LlmService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  getModelById(payload: { modelId: string }) {
+    return this.llmRepo.prisma.largeLangModel.findFirst({
+      select: {
+        id: true,
+        provider: true,
+        apiName: true,
+        displayName: true,
+        capabilities: true,
+        infos: true,
+        hidden: true,
+        free: true,
+      },
+      where: {
+        id: payload.modelId,
+      },
+    });
+  }
+
+  getModelByApiName(payload: { apiName: string }) {
+    return this.llmRepo.prisma.largeLangModel.findFirst({
+      select: {
+        id: true,
+        provider: true,
+        apiName: true,
+        displayName: true,
+        capabilities: true,
+        infos: true,
+        hidden: true,
+        free: true,
+      },
+      where: {
+        apiName: payload.apiName,
+      },
+    });
+  }
+
   getModels() {
     return this.llmRepo.prisma.largeLangModel.findMany({
       select: {
