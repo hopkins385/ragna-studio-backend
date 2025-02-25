@@ -4,6 +4,7 @@ import { EditorCompletionBody } from './dto/editor-completion-body.dto';
 import { EditorCompletionDto } from './dto/editor-completion.dto';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
+import { InlineCompletionBody } from '@/modules/editor/dto/editor-inline-completion-body.dto';
 
 @Controller('editor')
 export class EditorController {
@@ -25,6 +26,21 @@ export class EditorController {
       //
     } catch (error: any) {
       this.logger.error(`Error in completion: ${error?.message}`);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  @Post('inline-completion')
+  async inlineCompletion(@ReqUser() user: UserEntity, @Body() body: InlineCompletionBody) {
+    const inlineCompletionDto = {
+      userId: user.id,
+      textContext: body.textContext,
+    };
+    try {
+      const result = await this.editorService.inlineCompletion(inlineCompletionDto);
+      return { inlineCompletion: result.inlineCompletion };
+    } catch (error: any) {
+      this.logger.error(`Error in inline-completion: ${error?.message}`);
       throw new InternalServerErrorException();
     }
   }

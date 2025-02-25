@@ -15,6 +15,8 @@ import { LlmService } from '@/modules/llm/llm.service';
 import { EditorCompletionDto } from '@/modules/editor/dto/editor-completion.dto';
 import { EditorSystemPrompt } from '@/modules/editor/constants/editor-system-prompt';
 import { EditorUserPrompt } from '@/modules/editor/constants/editor-user-prompt';
+import { EditorCompletionBody } from '@/modules/editor/dto/editor-completion-body.dto';
+import { InlineCompletionBody } from '@/modules/editor/dto/editor-inline-completion-body.dto';
 
 @Injectable()
 export class EditorService {
@@ -141,5 +143,46 @@ export class EditorService {
       this.logError(error);
       throw new InternalServerErrorException('Error generating text');
     }
+  }
+
+  public async inlineCompletion(
+    inlineCompletionBody: InlineCompletionBody,
+  ): Promise<{ inlineCompletion: string }> {
+    // return new Promise((resolve) => {
+    //   resolve({ inlineCompletion: 'mocked completion' });
+    // });
+
+    const messages: CoreMessage[] = [
+      {
+        role: 'system',
+        content:
+          'As an ACC embedded system engineer your are an expert in the continuation of a sentence.\nAlways only return the next phrase or sentence that the user is likely to type next.\nDo not add any additional information or context or marks.\nKeep the tone and style consistent.\nBe concise and relevant.\nContinue the sentence with a lower case if appropiate.\n',
+      },
+      {
+        role: 'user',
+        content: `<preceding_text>${inlineCompletionBody.textContext.precedingText}</preceding_text>
+<current_word>${inlineCompletionBody.textContext.currentWord}</current_word>
+<following_text>${inlineCompletionBody.textContext.followingText}</following_text>`,
+      },
+    ];
+
+    const modelFactory = new AiModelFactory(this.configService);
+    const aiModelFactory = modelFactory.setConfig({
+      provider: ProviderType.OPENAI,
+      // model: payload.llmApiName,
+      model: 'gpt-4o-mini',
+    });
+
+    const { text, usage } = await generateText({
+      model: aiModelFactory.getModel(),
+      messages,
+      maxRetries: 3,
+      temperature: 0.2,
+      maxTokens: 20,
+    });
+
+    // this.emitTokenUsage({ editorCompletionDto, llmId, usage });
+
+    return { inlineCompletion: text };
   }
 }
