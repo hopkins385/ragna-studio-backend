@@ -9,6 +9,7 @@ export class CreateChatStreamDto {
   functionIds: number[];
   maxTokens: number;
   temperature: number;
+  reasoningEffort?: number;
 
   constructor(
     provider: ProviderType,
@@ -18,6 +19,7 @@ export class CreateChatStreamDto {
     functionIds: number[],
     maxTokens: number,
     temperature: number,
+    reasoningEffort?: number,
   ) {
     this.provider = provider;
     this.model = model;
@@ -26,6 +28,7 @@ export class CreateChatStreamDto {
     this.functionIds = functionIds;
     this.maxTokens = maxTokens;
     this.temperature = temperature;
+    this.reasoningEffort = reasoningEffort;
   }
 
   static fromInput(input: any): CreateChatStreamDto {
@@ -37,6 +40,7 @@ export class CreateChatStreamDto {
       input.functionIds,
       input.maxTokens,
       input.temperature,
+      input.reasoningEffort,
     );
   }
 }

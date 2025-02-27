@@ -9,8 +9,7 @@ const createChatStreamSchema = z.object({
   provider: z.nativeEnum(ProviderType),
   maxTokens: z.number().int().min(1).max(4000),
   temperature: z.number().int().min(0).max(100),
+  reasoningEffort: z.number().int().min(0).max(3).optional(),
 });
 
-export class CreateChatStreamBody extends createZodDto(
-  createChatStreamSchema,
-) {}
+export class CreateChatStreamBody extends createZodDto(createChatStreamSchema) {}

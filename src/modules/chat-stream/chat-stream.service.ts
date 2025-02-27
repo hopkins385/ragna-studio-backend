@@ -3,13 +3,7 @@ import { ChatService } from '@/modules/chat/chat.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ChatEntity } from '@/modules/chat/entities/chat.entity';
 import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
-import {
-  CoreMessage,
-  LanguageModelUsage,
-  LanguageModelV1,
-  streamText,
-  StreamTextResult,
-} from 'ai';
+import { CoreMessage, LanguageModelUsage, LanguageModelV1, streamText, StreamTextResult } from 'ai';
 import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
@@ -82,8 +76,7 @@ export class ChatStreamService {
     });
 
     if (
-      (payload.provider === ProviderType.OPENAI &&
-        payload.model.startsWith('o1-')) ||
+      (payload.provider === ProviderType.OPENAI && payload.model.startsWith('o1-')) ||
       payload.model.startsWith('o3-')
     ) {
       modelFactory.setOptions({
@@ -100,11 +93,7 @@ export class ChatStreamService {
       usages: [],
     };
 
-    const stream = this.generateStream(
-      abortController.signal,
-      context,
-      payload,
-    );
+    const stream = this.generateStream(abortController.signal, context, payload);
 
     const readableStream = Readable.from(stream);
 
@@ -176,10 +165,7 @@ export class ChatStreamService {
     return readableStream.pipe(transform);
   }
 
-  private async finalize(
-    context: StreamContext,
-    signal: AbortSignal,
-  ): Promise<void> {
+  private async finalize(context: StreamContext, signal: AbortSignal): Promise<void> {
     context.isCancelled = true;
     if (signal.aborted) {
       // TODO: token usage for incomplete messages
@@ -228,15 +214,8 @@ export class ChatStreamService {
     });
   }
 
-  async *generateStream(
-    signal: AbortSignal,
-    context: StreamContext,
-    payload: CreateChatStreamDto,
-  ) {
-    const { settings: callSettings, availableTools } = this.createCallSettings(
-      context,
-      payload,
-    );
+  async *generateStream(signal: AbortSignal, context: StreamContext, payload: CreateChatStreamDto) {
+    const { settings: callSettings, availableTools } = this.createCallSettings(context, payload);
 
     this.logger.debug(`[generateStream] payload:`, payload);
 
@@ -250,13 +229,7 @@ export class ChatStreamService {
       ...callSettings,
     });
 
-    yield* this.handleStream(
-      signal,
-      initialResult,
-      payload,
-      context,
-      availableTools,
-    );
+    yield* this.handleStream(signal, initialResult, payload, context, availableTools);
   }
 
   private async *handleStream(
@@ -286,18 +259,10 @@ export class ChatStreamService {
             break;
           case 'tool-calls':
             // handle tool calls
-            yield* this.handleToolCalls(
-              signal,
-              result,
-              payload,
-              context,
-              availableTools,
-            );
+            yield* this.handleToolCalls(signal, result, payload, context, availableTools);
             break;
           default:
-            this.logger.warn(
-              `[handleStream] Unknown finish reason: ${chunk.finishReason}`,
-            );
+            this.logger.warn(`[handleStream] Unknown finish reason: ${chunk.finishReason}`);
             break;
         }
       }
@@ -346,10 +311,7 @@ export class ChatStreamService {
       { role: 'tool', content: toolResults },
     ];
 
-    const followUpMessages: CoreMessage[] = [
-      ...payload.messages,
-      ...toolMessages,
-    ];
+    const followUpMessages: CoreMessage[] = [...payload.messages, ...toolMessages];
 
     const result = streamText({
       abortSignal: signal,
@@ -392,18 +354,10 @@ export class ChatStreamService {
             break;
           case 'tool-calls':
             // call itself recursively
-            yield* this.handleToolCalls(
-              signal,
-              result,
-              payload,
-              context,
-              availableTools,
-            );
+            yield* this.handleToolCalls(signal, result, payload, context, availableTools);
             break;
           default:
-            this.logger.warn(
-              `[handleToolCalls] Unknown finish reason: ${chunk.finishReason}`,
-            );
+            this.logger.warn(`[handleToolCalls] Unknown finish reason: ${chunk.finishReason}`);
             break;
         }
       }
@@ -482,10 +436,7 @@ export class ChatStreamService {
     if (usage) context.usages.push(usage);
   }
 
-  private createCallSettings(
-    context: StreamContext,
-    payload: CreateChatStreamDto,
-  ) {
+  private createCallSettings(context: StreamContext, payload: CreateChatStreamDto) {
     const availableTools = this.toolFunctionService.getTools({
       llmProvider: payload.provider,
       llmName: payload.model,
@@ -494,14 +445,50 @@ export class ChatStreamService {
       emitToolInfoData: this.toolStartCallback(context),
     });
 
+    const settings = {
+      system: payload.systemPrompt,
+      tools: availableTools,
+      maxTokens: payload.maxTokens,
+      temperature: payload.temperature,
+      providerOptions: {},
+    };
+
+    switch (payload.reasoningEffort) {
+      case 0:
+        settings.providerOptions = {
+          anthropic: {
+            thinking: { type: 'disabled' },
+          },
+        };
+        break;
+      case 1:
+        settings.providerOptions = {
+          anthropic: {
+            thinking: { type: 'enabled', budgetTokens: 12000 },
+          },
+        };
+        break;
+      case 2:
+        settings.providerOptions = {
+          anthropic: {
+            thinking: { type: 'enabled', budgetTokens: 24000 },
+          },
+        };
+        break;
+      case 3:
+        settings.providerOptions = {
+          anthropic: {
+            thinking: { type: 'enabled', budgetTokens: 48000 },
+          },
+        };
+        break;
+      default:
+        break;
+    }
+
     return {
       availableTools,
-      settings: {
-        system: payload.systemPrompt,
-        tools: availableTools,
-        maxTokens: payload.maxTokens,
-        temperature: payload.temperature,
-      },
+      settings,
     };
   }
 

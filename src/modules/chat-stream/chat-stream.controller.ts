@@ -93,8 +93,7 @@ export class ChatStreamController {
     // timestamp
     const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
 
-    const systemPrompt =
-      chat.assistant.systemPrompt + defaultAnswerProtocolPrompt + timestamp;
+    const systemPrompt = chat.assistant.systemPrompt + defaultAnswerProtocolPrompt + timestamp;
 
     return CreateChatStreamDto.fromInput({
       provider: body.provider,
@@ -104,6 +103,7 @@ export class ChatStreamController {
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
       maxTokens: body.maxTokens,
       temperature: body.temperature / 100,
+      reasoningEffort: body.reasoningEffort,
     });
   }
 
@@ -136,11 +136,7 @@ export class ChatStreamController {
     return handlers;
   }
 
-  private finalizeStream(
-    req: Request,
-    res: Response,
-    handlers: StreamHandlers,
-  ) {
+  private finalizeStream(req: Request, res: Response, handlers: StreamHandlers) {
     // Cleanup all listeners
     req.off('close', handlers.onClose);
     req.socket.off('close', handlers.onClose);
