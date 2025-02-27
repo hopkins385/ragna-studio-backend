@@ -52,6 +52,12 @@ export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
   private readonly MAX_TOOL_RECURSIONS = 3;
   private readonly DEFAULT_STREAM_DELAY_MS = 10;
+  private readonly THINKING_CONFIGS = {
+    0: { type: 'disabled' },
+    1: { type: 'enabled', budgetTokens: 12000 },
+    2: { type: 'enabled', budgetTokens: 24000 },
+    3: { type: 'enabled', budgetTokens: 48000 },
+  };
 
   constructor(
     private readonly configService: ConfigService,
@@ -437,6 +443,7 @@ export class ChatStreamService {
   }
 
   private createCallSettings(context: StreamContext, payload: CreateChatStreamDto) {
+    // Get available tools
     const availableTools = this.toolFunctionService.getTools({
       llmProvider: payload.provider,
       llmName: payload.model,
@@ -445,50 +452,26 @@ export class ChatStreamService {
       emitToolInfoData: this.toolStartCallback(context),
     });
 
+    // Get settings
     const settings = {
       system: payload.systemPrompt,
       tools: availableTools,
       maxTokens: payload.maxTokens,
       temperature: payload.temperature,
-      providerOptions: {},
+      providerOptions: this.getProviderOptions(payload),
     };
-
-    switch (payload.reasoningEffort) {
-      case 0:
-        settings.providerOptions = {
-          anthropic: {
-            thinking: { type: 'disabled' },
-          },
-        };
-        break;
-      case 1:
-        settings.providerOptions = {
-          anthropic: {
-            thinking: { type: 'enabled', budgetTokens: 12000 },
-          },
-        };
-        break;
-      case 2:
-        settings.providerOptions = {
-          anthropic: {
-            thinking: { type: 'enabled', budgetTokens: 24000 },
-          },
-        };
-        break;
-      case 3:
-        settings.providerOptions = {
-          anthropic: {
-            thinking: { type: 'enabled', budgetTokens: 48000 },
-          },
-        };
-        break;
-      default:
-        break;
-    }
 
     return {
       availableTools,
       settings,
+    };
+  }
+
+  private getProviderOptions(payload: CreateChatStreamDto) {
+    return {
+      anthropic: {
+        thinking: this.THINKING_CONFIGS[payload.reasoningEffort],
+      },
     };
   }
 
