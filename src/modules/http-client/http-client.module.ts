@@ -8,14 +8,17 @@ export interface HttpConfig {
   retries?: number;
 }
 
+const defaultTimeout = 5 * 60 * 1000; // 5 minutes
+const defaultRetries = 3;
+
 @Global()
 @Module({
   providers: [
     {
       provide: HTTP_CONFIG,
       useFactory: (configService: ConfigService): HttpConfig => ({
-        timeout: configService.get('HTTP_CLIENT_TIMEOUT', 15000),
-        retries: configService.get('HTTP_CLIENT_RETRIES', 3),
+        timeout: configService.get('HTTP_CLIENT_TIMEOUT', defaultTimeout),
+        retries: configService.get('HTTP_CLIENT_RETRIES', defaultRetries),
       }),
       inject: [ConfigService],
     },

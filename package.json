@@ -25,7 +25,11 @@
     "migrate:applied": "prisma migrate resolve --applied 20250104182632_init",
     "seed:init": "npx ts-node --transpile-only prisma/seed/seed.ts",
     "seed:users": "npx ts-node --transpile-only prisma/seed/default-users.seed.ts",
-    "seed:templates": "npx ts-node --transpile-only prisma/seed/assistant-templates.seed.ts"
+    "seed:templates": "npx ts-node --transpile-only prisma/seed/assistant-templates.seed.ts",
+    "build:ncc": "ncc build dist/main.js -o dist/ncc",
+    "start:ncc": "node dist/ncc/index.js",
+    "build:byte": "bytenode -c ./dist/ncc/index.js",
+    "start:byte": "bytenode ./dist/ncc/index.jsc"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.11",
@@ -109,6 +113,8 @@
     "@types/turndown": "^5.0.5",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
+    "@vercel/ncc": "^0.38.3",
+    "bytenode": "^1.5.7",
     "eslint": "^9.21.0",
     "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-import": "^2.31.0",
