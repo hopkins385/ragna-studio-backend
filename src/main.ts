@@ -11,9 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
     logger:
-      process.env.APP_ENV !== 'dev'
-        ? ['log', 'error', 'warn']
-        : ['log', 'error', 'warn', 'debug'],
+      process.env.APP_ENV !== 'dev' ? ['log', 'error', 'warn'] : ['log', 'error', 'warn', 'debug'],
     snapshot: false,
     // bufferLogs: true,
     // bodyParser: false,
@@ -30,8 +28,8 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
-  app.useGlobalFilters(new ZodValidationExceptionFilter());
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new ZodValidationExceptionFilter());
 
   app.enable('trust proxy', 'loopback');
   app.enableCors({

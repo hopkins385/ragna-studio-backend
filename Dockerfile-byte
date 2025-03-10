@@ -15,6 +15,7 @@ COPY prisma ./prisma/
 
 # Install dependencies including 'prisma' for the migration
 RUN npm ci
+RUN npm i -g bytenode
 
 # Copy source code
 COPY . .
@@ -25,37 +26,47 @@ RUN npx prisma generate
 # Build application
 RUN npm run build
 
+# Build ncc
+RUN npm run build:ncc
+
+# Build bytecode
+RUN npm run build:byte
+
 # 
 # Production stage
 #
-FROM node:22-alpine AS production
-
-# Set working directory
-WORKDIR /app
+FROM node:22 AS production
 
 # Set environment variables
 ENV NODE_ENV=production
 
+# Set working directory
+WORKDIR /app
+
 # Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
-
-# Install production dependencies only
+# Install production dependencies
 RUN npm ci --omit=dev
+RUN npm i bytenode
 
 # Copy built application from builder stage
-COPY --chown=node:node --from=builder /app/dist ./dist
-COPY --chown=node:node --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/dist/ncc/client ./dist
+COPY --from=builder /app/dist/ncc/lib ./dist/lib
+COPY --from=builder /app/dist/ncc/index.jsc ./dist/index.jsc
 
 # Create directory and set permissions
-RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
-RUN mkdir -p /app/temp && chown -R node:node /app/temp
+RUN mkdir -p /app/uploads /app/uploads
+RUN mkdir -p /app/temp /app/temp
+
+# Own the app directory
+# RUN chown -R node:node /app
 
 # Switch to non-root user
-USER node
+# USER node
 
 # Expose the port the app runs on
 EXPOSE 3000
 
 # Command to run the application
-ENTRYPOINT ["node", "dist/main.js"]
+ENTRYPOINT ["node", "-r", "bytenode", "dist/index.jsc"]
+# CMD ["bytenode", "dist/index.jsc"]

@@ -95,9 +95,12 @@ export class ChatStreamController {
 
     const systemPrompt = chat.assistant.systemPrompt + defaultAnswerProtocolPrompt + timestamp;
 
+    const provider = chat.assistant.llm?.provider;
+    const model = chat.assistant.llm?.apiName;
+
     return CreateChatStreamDto.fromInput({
-      provider: body.provider,
-      model: body.model,
+      provider: body.provider ?? provider,
+      model: body.model ?? model,
       systemPrompt,
       messages: this.chatService.formatChatMessages(body.messages as any),
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
