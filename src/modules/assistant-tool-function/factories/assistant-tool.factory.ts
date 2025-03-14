@@ -10,6 +10,7 @@ import { WebSearchTool } from '../tools/websearch.tool';
 import { ToolProvider } from '../types/tool-provider';
 import { WebScrapeTool } from '../tools/webscrape.tool';
 import { KnowledgeTool } from '../tools/knowledge.tool';
+import { EditorCommentTool } from '../tools/editor-comment.tool';
 
 @Injectable()
 export class AssistantToolFactory {
@@ -20,11 +21,13 @@ export class AssistantToolFactory {
     private readonly webSearchTool: WebSearchTool,
     private readonly webScrapeTool: WebScrapeTool,
     private readonly knowledgeTool: KnowledgeTool,
+    private readonly editorCommentTool: EditorCommentTool,
   ) {
     const entries: Array<[number, ToolProvider]> = [
       [1, this.webSearchTool],
       [2, this.webScrapeTool],
       [3, this.knowledgeTool],
+      [4, this.editorCommentTool],
     ];
 
     // Validate all tools implement ToolProvider interface
@@ -41,10 +44,7 @@ export class AssistantToolFactory {
     this.toolProviders = new Map<number, ToolProvider>(entries);
   }
 
-  public getTools(
-    payload: GetToolPayload,
-    options?: ToolOptions,
-  ): Tools | undefined {
+  public getTools(payload: GetToolPayload, options?: ToolOptions): Tools | undefined {
     // Add validation for payload
     if (!payload || typeof payload !== 'object') {
       return undefined;
@@ -74,10 +74,7 @@ export class AssistantToolFactory {
     // Filter out unwanted tool providers
     const entries = payload.functionIds
       .map((id) => this.toolProviders.get(id))
-      .filter(
-        (toolProvider): toolProvider is ToolProvider =>
-          toolProvider !== undefined,
-      )
+      .filter((toolProvider): toolProvider is ToolProvider => toolProvider !== undefined)
       .reduce<Tools>((acc, toolProvider) => {
         const metadata = toolProvider.getMetadata();
         acc[metadata.name] = this.createTool(toolProvider, context, options);
@@ -87,11 +84,7 @@ export class AssistantToolFactory {
     return entries;
   }
 
-  private createTool(
-    toolProvider: ToolProvider,
-    context: ToolContext,
-    options: ToolOptions,
-  ) {
+  private createTool(toolProvider: ToolProvider, context: ToolContext, options: ToolOptions) {
     if (!toolProvider || !context) {
       throw new Error('Invalid toolProvider or context');
     }
@@ -120,10 +113,7 @@ export class AssistantToolFactory {
           // Add timeout to prevent hanging
           const timeoutMs = options?.timeoutMs || 30000;
           const timeoutPromise = new Promise((_, reject) => {
-            timeoutId = setTimeout(
-              () => reject(new Error('Tool execution timeout')),
-              timeoutMs,
-            );
+            timeoutId = setTimeout(() => reject(new Error('Tool execution timeout')), timeoutMs);
           });
 
           const result = await Promise.race([

@@ -9,6 +9,7 @@ import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
 import { ConfigService } from '@nestjs/config';
+import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
 
 @Injectable()
 export class ChatEventListener {
@@ -23,7 +24,7 @@ export class ChatEventListener {
     const { userId, chatId, toolName, toolInfo } = data;
     this.socket.emitEvent({
       room: `user:${userId}`,
-      event: `chat-${chatId}-tool-start-event`,
+      event: `chat:${chatId}-tool-start-event`,
       data: { toolName, toolInfo },
     });
   }
@@ -33,8 +34,18 @@ export class ChatEventListener {
     const { userId, chatId, toolName } = data;
     this.socket.emitEvent({
       room: `user:${userId}`,
-      event: `chat-${chatId}-tool-end-event`,
+      event: `chat:${chatId}-tool-end-event`,
       data: toolName,
+    });
+  }
+
+  @OnEvent(ChatEvent.EDITOR_COMMAND_CALL)
+  editorCommandEvent(event: EditorCommandEventDto) {
+    const { userId, documentId, command, payload } = event;
+    this.socket.emitEvent({
+      room: `user:${userId}`,
+      event: `document:${documentId}-editor-command`,
+      data: { command, payload },
     });
   }
 
@@ -77,7 +88,7 @@ export class ChatEventListener {
       await this.chatService.updateChatTitle(chatId, chatTitle);
       //
       // send socket event to user
-      const event = `chat-${chatId}-update-title-event`;
+      const event = `chat:${chatId}-update-title-event`;
       const data = { chatId, chatTitle };
       this.socket.emitEvent({ room: `user:${userId}`, event, data });
       //

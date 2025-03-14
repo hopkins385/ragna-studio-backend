@@ -5,4 +5,5 @@ export enum ChatEvent {
   FIRST_USERMESSAGE = 'chat.firstUserMessage',
   TOOL_START_CALL = 'chat.tool.startcall',
   TOOL_END_CALL = 'chat.tool.endcall',
+  EDITOR_COMMAND_CALL = 'chat.editor.command',
 }
