@@ -65,8 +65,8 @@ export class AssistantToolFactory {
 
     const context: ToolContext = {
       userId: payload.userId,
+      chatId: payload.chatId,
       assistantId: payload.assistantId,
-      emitToolInfoData: payload.emitToolInfoData,
     };
 
     // temporary add always tool 4
@@ -105,11 +105,6 @@ export class AssistantToolFactory {
           if (!params || typeof params !== 'object') {
             throw new Error('Invalid parameters provided to tool');
           }
-
-          context.emitToolInfoData({
-            toolName: meta.name,
-            toolInfo: Object.values(params)?.[0]?.toString() || '',
-          });
 
           // Add timeout to prevent hanging
           const timeoutMs = options?.timeoutMs || 30000;

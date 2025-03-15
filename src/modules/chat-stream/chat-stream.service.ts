@@ -450,7 +450,6 @@ export class ChatStreamService {
       llmName: payload.model,
       functionIds: payload.functionIds,
       assistantId: context.chat.assistant.id,
-      emitToolInfoData: this.toolStartCallback(context),
     });
 
     // Get settings
@@ -474,17 +473,5 @@ export class ChatStreamService {
         thinking: this.THINKING_CONFIGS[payload.reasoningEffort],
       },
     };
-  }
-
-  private toolStartCallback(context: StreamContext) {
-    return (toolInfoData: ToolInfoData) =>
-      this.chatEvent.emitToolStartCall(
-        ChatToolCallEventDto.fromInput({
-          userId: context.chat.userId,
-          chatId: context.chat.id,
-          toolName: toolInfoData.toolName,
-          toolInfo: toolInfoData.toolInfo,
-        }),
-      );
   }
 }

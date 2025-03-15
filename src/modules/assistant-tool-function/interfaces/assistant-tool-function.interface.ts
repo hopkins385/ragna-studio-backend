@@ -18,13 +18,13 @@ export interface GetToolPayload {
   llmName: string;
   functionIds: number[] | null;
   assistantId: string;
-  emitToolInfoData: EmitToolInfoData;
+  chatId?: string;
 }
 
 export interface ToolContext {
   userId: string;
+  chatId: string;
   assistantId: string;
-  emitToolInfoData: EmitToolInfoData;
 }
 
 // Define a type for the tool configuration

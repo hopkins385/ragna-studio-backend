@@ -3,10 +3,7 @@ import { ToolProvider } from '../types/tool-provider';
 import { z } from 'zod';
 import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { AxiosInstance } from 'axios';
-import {
-  ToolContext,
-  ToolOptions,
-} from '../interfaces/assistant-tool-function.interface';
+import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
 
 interface RestApiParams {
   method: string;
@@ -23,21 +20,11 @@ const restApiSchema = {
     .string()
     .min(3)
     .max(10)
-    .refine(
-      (method) => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method),
-      {
-        message: 'Method must be one of GET, POST, PUT, PATCH, DELETE',
-      },
-    )
-    .describe(
-      'The HTTP method to use which must be one of GET, POST, PUT, PATCH, DELETE',
-    ),
-  url: z
-    .string()
-    .url()
-    .min(10)
-    .max(1000)
-    .describe('The URL of the REST API to call'),
+    .refine((method) => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method), {
+      message: 'Method must be one of GET, POST, PUT, PATCH, DELETE',
+    })
+    .describe('The HTTP method to use which must be one of GET, POST, PUT, PATCH, DELETE'),
+  url: z.string().url().min(10).max(1000).describe('The URL of the REST API to call'),
   body: z.any().optional().describe('The request body object to send'),
 } as const;
 

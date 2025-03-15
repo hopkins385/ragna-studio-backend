@@ -3,10 +3,8 @@ import { ToolProvider } from '../types/tool-provider';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { BaseResponse, getJson } from 'serpapi';
-import {
-  ToolContext,
-  ToolOptions,
-} from '../interfaces/assistant-tool-function.interface';
+import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
+import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 
 interface WebSearchParams {
   query: string;
@@ -19,13 +17,13 @@ const webSearchSchema = {
 } as const;
 
 @Injectable()
-export class WebSearchTool extends ToolProvider<
-  WebSearchParams,
-  WebSearchResponse
-> {
+export class WebSearchTool extends ToolProvider<WebSearchParams, WebSearchResponse> {
   private readonly logger = new Logger(WebSearchTool.name);
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly chatEventEmitter: ChatEventEmitter,
+    private readonly config: ConfigService,
+  ) {
     super({
       name: 'searchWeb',
       description: 'Search the web',
@@ -38,6 +36,12 @@ export class WebSearchTool extends ToolProvider<
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<WebSearchResponse> {
+    this.emitToolStartCallEvent(this.chatEventEmitter, {
+      userId: context.userId,
+      chatId: context.chatId,
+      toolInfo: `${params.query}`,
+    });
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 

@@ -38,9 +38,7 @@ export class AssistantJobService {
 
     this.logger.debug('Processing workflow job', payload);
 
-    const documentItem = await this.documentItemService.findFirst(
-      payload.documentItemId,
-    );
+    const documentItem = await this.documentItemService.findFirst(payload.documentItemId);
 
     if (!documentItem) {
       this.logger.error(`Document item not found: ${payload.documentItemId}`);
@@ -48,10 +46,7 @@ export class AssistantJobService {
     }
 
     // skip if no input document items
-    if (
-      !payload.inputDocumentItemIds ||
-      payload.inputDocumentItemIds.length < 1
-    ) {
+    if (!payload.inputDocumentItemIds || payload.inputDocumentItemIds.length < 1) {
       return true;
     }
 
@@ -61,12 +56,8 @@ export class AssistantJobService {
     );
 
     if (!inputDocumentItems || inputDocumentItems.length < 1) {
-      this.logger.error(
-        `Input document items not found: ${payload.inputDocumentItemIds}`,
-      );
-      throw new Error(
-        `Input document items not found: ${payload.inputDocumentItemIds}`,
-      );
+      this.logger.error(`Input document items not found: ${payload.inputDocumentItemIds}`);
+      throw new Error(`Input document items not found: ${payload.inputDocumentItemIds}`);
     }
 
     // Sort by orderColumn and join content
@@ -98,11 +89,11 @@ export class AssistantJobService {
     });
 
     const availableTools = this.toolFunctionService.getTools({
+      userId: payload.userId,
       llmName: payload.llmNameApi,
       llmProvider: payload.llmProvider,
       functionIds: payload.functionIds,
       assistantId: payload.assistantId,
-      emitToolInfoData: (data) => {},
     });
 
     const {
@@ -201,10 +192,7 @@ export class AssistantJobService {
     status: DocumentProcessingStatus,
   ) {
     const { userId, documentItemId, workflowId } = data;
-    await this.documentItemService.updateProcessingStatus(
-      documentItemId,
-      status,
-    );
+    await this.documentItemService.updateProcessingStatus(documentItemId, status);
 
     const workflowExecutionEventData = WorkflowExecutionEventDto.fromInput({
       userId,
@@ -217,10 +205,7 @@ export class AssistantJobService {
         break;
       case 'failed':
       case 'completed':
-        this.event.emit(
-          WorkflowEvent.CELL_COMPLETED,
-          workflowExecutionEventData,
-        );
+        this.event.emit(WorkflowEvent.CELL_COMPLETED, workflowExecutionEventData);
         break;
       default:
         this.logger.error(`Invalid job status: ${status}`);
@@ -228,12 +213,7 @@ export class AssistantJobService {
     }
   }
 
-  private getProgress({
-    stepIndex,
-    totalStepCount,
-    rowIndex,
-    totalRowCount,
-  }: AssistantJobDto) {
+  private getProgress({ stepIndex, totalStepCount, rowIndex, totalRowCount }: AssistantJobDto) {
     const totalCells = totalStepCount * totalRowCount;
     const completedCells = rowIndex * totalStepCount + stepIndex + 1;
     const progressPercentage = (completedCells / totalCells) * 100;
@@ -256,10 +236,7 @@ export class AssistantJobService {
   }) {
     this.logger.debug('Making a follow-up call');
 
-    const followUpMessages: CoreMessage[] = [
-      ...initialMessages,
-      ...toolMessages,
-    ];
+    const followUpMessages: CoreMessage[] = [...initialMessages, ...toolMessages];
 
     this.logger.debug('Follow-up messages', followUpMessages);
 

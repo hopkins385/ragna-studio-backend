@@ -4,10 +4,9 @@ import { z } from 'zod';
 import { CollectionService } from '@/modules/collection/collection.service';
 import { EmbeddingService } from '@/modules/embedding/embedding.service';
 import { CollectionAbleDto } from '@/modules/collection-able/dto/collection-able.dto';
-import {
-  ToolContext,
-  ToolOptions,
-} from '../interfaces/assistant-tool-function.interface';
+import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
+import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 
 interface KnowledgeToolParams {
   searchQuery: string;
@@ -26,13 +25,11 @@ const knowledgeSchema = {
 } as const;
 
 @Injectable()
-export class KnowledgeTool extends ToolProvider<
-  KnowledgeToolParams,
-  KnowledgeToolResponse
-> {
+export class KnowledgeTool extends ToolProvider<KnowledgeToolParams, KnowledgeToolResponse> {
   private readonly logger = new Logger(KnowledgeTool.name);
 
   constructor(
+    private readonly chatEventEmitter: ChatEventEmitter,
     private readonly collectionService: CollectionService,
     private readonly embeddingService: EmbeddingService,
   ) {
@@ -52,9 +49,13 @@ export class KnowledgeTool extends ToolProvider<
       throw new Error('Assistant ID is required');
     }
 
-    this.logger.debug(
-      `Retrieving similar documents for query: ${params.searchQuery}`,
-    );
+    this.logger.debug(`Retrieving similar documents for query: ${params.searchQuery}`);
+
+    this.emitToolStartCallEvent(this.chatEventEmitter, {
+      userId: context.userId,
+      chatId: context.chatId,
+      toolInfo: `${params.searchQuery}`,
+    });
 
     try {
       const collections = await this.collectionService.findAllWithRecordsFor(
@@ -69,9 +70,7 @@ export class KnowledgeTool extends ToolProvider<
         return { content: '' };
       }
 
-      const recordIds = collections
-        .map((c) => c.records.map((r) => r.id))
-        .flat();
+      const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
 
       const res = await this.embeddingService.searchDocsByQuery({
         query: params.searchQuery,

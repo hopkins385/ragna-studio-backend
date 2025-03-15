@@ -7,6 +7,7 @@ import {
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
+import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 
 const addCommentSchema = z.object({
   from: z.number().describe('Highlight text start position of the comment'),
@@ -35,7 +36,7 @@ export class EditorCommentTool extends ToolProvider<
 > {
   private readonly logger = new Logger(EditorCommentTool.name);
 
-  constructor(private readonly chatEvent: ChatEventEmitter) {
+  constructor(private readonly chatEventEmitter: ChatEventEmitter) {
     super({
       name: 'comment',
       description: 'Comment on a specific part of the document',
@@ -50,6 +51,12 @@ export class EditorCommentTool extends ToolProvider<
   ) {
     // this.logger.debug(`Commenting on document: ${context.documentId}`);
     this.logger.debug(`Comment params: ${JSON.stringify(params)}`);
+
+    // this.emitToolStartCallEvent(this.chatEventEmitter, {
+    //   userId: context.userId,
+    //   chatId: context.chatId,
+    //   toolInfo: `${params.text}`,
+    // });
 
     // simulate api call
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -69,7 +76,7 @@ export class EditorCommentTool extends ToolProvider<
 
     this.logger.debug(`Emitting editor command event: ${JSON.stringify(eventData)}`);
 
-    this.chatEvent.emitEditorCommandCall(eventData);
+    this.chatEventEmitter.emitEditorCommandCall(eventData);
 
     return addCommentPayload;
   }
