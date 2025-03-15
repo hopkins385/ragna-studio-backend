@@ -14,7 +14,12 @@ const addCommentSchema = z.object({
   text: z.string().describe('Comment text'),
 });
 
-interface EditorCommentToolParams {}
+interface EditorCommentToolParams {
+  from: number;
+  to: number;
+  text: string;
+}
+
 interface EditorCommentToolResponse {
   from: number;
   to: number;
@@ -48,18 +53,16 @@ export class EditorCommentTool extends ToolProvider<
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const addCommentPayload = {
-      from: 0,
-      to: 4,
-      text: 'some comment',
+      from: params.from,
+      to: params.to,
+      text: params.text,
     };
 
     const eventData = EditorCommandEventDto.fromInput({
-      // @ts-ignore
       userId: context.userId,
-      // @ts-ignore
-      documentId: context.documentId,
+      documentId: '1234567890', //context.documentId,
       command: 'addComment',
-      payload: addCommentPayload,
+      args: addCommentPayload,
     });
 
     this.logger.debug(`Emitting editor command event: ${JSON.stringify(eventData)}`);

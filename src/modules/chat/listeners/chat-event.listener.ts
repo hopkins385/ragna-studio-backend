@@ -41,11 +41,11 @@ export class ChatEventListener {
 
   @OnEvent(ChatEvent.EDITOR_COMMAND_CALL)
   editorCommandEvent(event: EditorCommandEventDto) {
-    const { userId, documentId, command, payload } = event;
+    const { userId, documentId, command, args } = event;
     this.socket.emitEvent({
       room: `user:${userId}`,
       event: `document:${documentId}-editor-command`,
-      data: { command, payload },
+      data: { command, args },
     });
   }
 

@@ -13,6 +13,7 @@ export interface ToolInfoData {
 }
 
 export interface GetToolPayload {
+  userId: string;
   llmProvider: string;
   llmName: string;
   functionIds: number[] | null;
@@ -21,6 +22,7 @@ export interface GetToolPayload {
 }
 
 export interface ToolContext {
+  userId: string;
   assistantId: string;
   emitToolInfoData: EmitToolInfoData;
 }
@@ -43,9 +45,5 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: ZodObject<any>;
-  handler: (
-    params: any,
-    context: ToolContext,
-    options?: ToolOptions,
-  ) => Promise<any>;
+  handler: (params: any, context: ToolContext, options?: ToolOptions) => Promise<any>;
 }

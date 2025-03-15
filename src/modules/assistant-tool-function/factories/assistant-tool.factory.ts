@@ -46,15 +46,12 @@ export class AssistantToolFactory {
 
   public getTools(payload: GetToolPayload, options?: ToolOptions): Tools | undefined {
     // Add validation for payload
-    if (!payload || typeof payload !== 'object') {
-      return undefined;
-    }
-
-    if (!Array.isArray(payload.functionIds)) {
-      return undefined;
-    }
-
-    if (!payload.functionIds?.length) {
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      !Array.isArray(payload.functionIds) ||
+      !payload.functionIds?.length
+    ) {
       return undefined;
     }
 
@@ -67,9 +64,13 @@ export class AssistantToolFactory {
     }
 
     const context: ToolContext = {
+      userId: payload.userId,
       assistantId: payload.assistantId,
       emitToolInfoData: payload.emitToolInfoData,
     };
+
+    // temporary add always tool 4
+    payload.functionIds.push(4);
 
     // Filter out unwanted tool providers
     const entries = payload.functionIds
