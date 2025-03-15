@@ -445,6 +445,7 @@ export class ChatStreamService {
   private createCallSettings(context: StreamContext, payload: CreateChatStreamDto) {
     // Get available tools
     const availableTools = this.toolFunctionService.getTools({
+      chatId: context.chat.id,
       userId: context.chat.userId,
       llmProvider: payload.provider,
       llmName: payload.model,
