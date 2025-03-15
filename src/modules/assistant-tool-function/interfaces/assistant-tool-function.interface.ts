@@ -1,4 +1,3 @@
-import { timeout } from 'rxjs/operators';
 import type { ZodObject, ZodType } from 'zod';
 
 // Define a type for the emitToolInfoData function
@@ -19,12 +18,14 @@ export interface GetToolPayload {
   functionIds: number[] | null;
   assistantId: string;
   chatId?: string;
+  documentId?: string;
 }
 
 export interface ToolContext {
   userId: string;
-  chatId: string;
   assistantId: string;
+  chatId?: string;
+  documentId?: string;
 }
 
 // Define a type for the tool configuration
@@ -33,7 +34,8 @@ export interface ToolConfig {
   name: string;
   description: string;
   parameters: Record<string, ZodType<any, any>>;
-  execute: (params: any, emitToolInfoData: EmitToolInfoData) => Promise<any>;
+  // execute: (params: any, emitToolInfoData: EmitToolInfoData) => Promise<any>;
+  execute: (params: any) => Promise<any>;
 }
 
 export interface ToolOptions {

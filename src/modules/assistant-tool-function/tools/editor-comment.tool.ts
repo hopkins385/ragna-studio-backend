@@ -7,23 +7,22 @@ import {
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
-import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 
 const addCommentSchema = z.object({
   from: z.number().describe('Highlight text start position of the comment'),
   to: z
     .number()
     .describe('Highlight text end position of the comment which must be greater than from'),
-  text: z.string().describe('Comment text'),
+  commentText: z.string().describe('The text content of the comment'),
 });
 
 interface EditorCommentToolParams {
   from: number;
   to: number;
-  text: string;
+  commentText: string;
 }
 
-interface EditorCommentToolResponse {
+interface EditorToolCallResponse {
   from: number;
   to: number;
   text: string;
@@ -32,11 +31,11 @@ interface EditorCommentToolResponse {
 @Injectable()
 export class EditorCommentTool extends ToolProvider<
   EditorCommentToolParams,
-  EditorCommentToolResponse
+  EditorToolCallResponse
 > {
   private readonly logger = new Logger(EditorCommentTool.name);
 
-  constructor(private readonly chatEventEmitter: ChatEventEmitter) {
+  constructor(private readonly chatEvent: ChatEventEmitter) {
     super({
       name: 'comment',
       description: 'Comment on a specific part of the document',
@@ -49,35 +48,24 @@ export class EditorCommentTool extends ToolProvider<
     context: ToolContext,
     options?: ToolOptions,
   ) {
-    // this.logger.debug(`Commenting on document: ${context.documentId}`);
-    this.logger.debug(`Comment params: ${JSON.stringify(params)}`);
-
-    // this.emitToolStartCallEvent(this.chatEventEmitter, {
-    //   userId: context.userId,
-    //   chatId: context.chatId,
-    //   toolInfo: `${params.text}`,
-    // });
-
     // simulate api call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const addCommentPayload = {
+    const addCommentArgs = {
       from: params.from,
       to: params.to,
-      text: params.text,
+      text: params.commentText,
     };
 
     const eventData = EditorCommandEventDto.fromInput({
       userId: context.userId,
-      documentId: '1234567890', //context.documentId,
+      documentId: context.documentId ?? '1234567890',
       command: 'addComment',
-      args: addCommentPayload,
+      args: addCommentArgs,
     });
 
-    this.logger.debug(`Emitting editor command event: ${JSON.stringify(eventData)}`);
+    this.chatEvent.emitEditorCommandCall(eventData);
 
-    this.chatEventEmitter.emitEditorCommandCall(eventData);
-
-    return addCommentPayload;
+    return addCommentArgs;
   }
 }

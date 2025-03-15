@@ -69,9 +69,6 @@ export class AssistantToolFactory {
       assistantId: payload.assistantId,
     };
 
-    // temporary add always tool 4
-    payload.functionIds.push(4);
-
     // Filter out unwanted tool providers
     const entries = payload.functionIds
       .map((id) => this.toolProviders.get(id))
@@ -121,7 +118,7 @@ export class AssistantToolFactory {
           clearTimeout(timeoutId);
 
           return result;
-        } catch (error) {
+        } catch (error: unknown) {
           this.logger.error(`Error executing tool: ${meta.name}`, error);
           return {
             message: 'An error occurred while executing the tool',
