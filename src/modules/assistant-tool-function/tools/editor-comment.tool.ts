@@ -9,8 +9,10 @@ import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
 
 const addCommentSchema = z.object({
-  from: z.number().describe('Start position of the comment'),
-  to: z.number().describe('End position of the comment'),
+  from: z.number().describe('Highlight text start position of the comment'),
+  to: z
+    .number()
+    .describe('Highlight text end position of the comment which must be greater than from'),
   text: z.string().describe('Comment text'),
 });
 

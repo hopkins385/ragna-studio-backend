@@ -93,20 +93,33 @@ export class ChatStreamController {
     // timestamp
     const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
 
-    const systemPrompt = chat.assistant.systemPrompt + defaultAnswerProtocolPrompt + timestamp;
+    let systemPrompt = chat.assistant.systemPrompt;
+    if (body.context) {
+      // check if context is a valid json
+      try {
+        const json = JSON.parse(body.context);
+        this.logger.debug(`Adding context to system prompt`, json);
+      } catch (error) {}
+      //
+      systemPrompt += `\n\n<context>${body.context}</context>`;
+    }
+    const theSysPrompt = systemPrompt + defaultAnswerProtocolPrompt + timestamp;
 
     const provider = chat.assistant.llm?.provider;
     const model = chat.assistant.llm?.apiName;
 
+    const chatMessages = this.chatService.formatChatMessages(body.messages as any);
+
     return CreateChatStreamDto.fromInput({
       provider: body.provider ?? provider,
       model: body.model ?? model,
-      systemPrompt,
-      messages: this.chatService.formatChatMessages(body.messages as any),
+      systemPrompt: theSysPrompt,
+      messages: chatMessages,
       functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
       maxTokens: body.maxTokens,
       temperature: body.temperature / 100,
       reasoningEffort: body.reasoningEffort,
+      context: body.context,
     });
   }
 

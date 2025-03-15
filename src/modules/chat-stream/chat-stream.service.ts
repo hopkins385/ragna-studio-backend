@@ -50,7 +50,7 @@ const stringify = fastJson({
 @Injectable()
 export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
-  private readonly MAX_TOOL_RECURSIONS = 3;
+  private readonly MAX_TOOL_RECURSIONS = 20;
   private readonly DEFAULT_STREAM_DELAY_MS = 10;
   private readonly THINKING_CONFIGS = {
     0: { type: 'disabled' },
