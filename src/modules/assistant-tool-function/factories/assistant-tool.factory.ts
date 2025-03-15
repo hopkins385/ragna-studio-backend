@@ -44,7 +44,7 @@ export class AssistantToolFactory {
     this.toolProviders = new Map<number, ToolProvider>(entries);
   }
 
-  public getTools(payload: GetToolPayload, options?: ToolOptions): Tools | undefined {
+  public getTools(payload: GetToolPayload, options?: ToolOptions): Tools {
     // Add validation for payload
     if (
       !payload ||
@@ -52,7 +52,7 @@ export class AssistantToolFactory {
       !Array.isArray(payload.functionIds) ||
       !payload.functionIds?.length
     ) {
-      return undefined;
+      return {};
     }
 
     // Validate function IDs are numbers
@@ -60,7 +60,7 @@ export class AssistantToolFactory {
       this.logger.error(
         `Invalid function ID type in payload. Numbers expected but received: ${payload.functionIds}`,
       );
-      return undefined;
+      return {};
     }
 
     const context: ToolContext = {

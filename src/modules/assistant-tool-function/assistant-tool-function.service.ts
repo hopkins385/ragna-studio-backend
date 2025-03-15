@@ -9,13 +9,6 @@ export class AssistantToolFunctionService {
   constructor(private readonly assistantToolFactory: AssistantToolFactory) {}
 
   public getTools(payload: GetToolPayload, options?: ToolOptions): Tools {
-    const tools = this.assistantToolFactory.getTools(payload, options);
-
-    if (!tools) {
-      this.logger.warn('No tools found');
-      return {};
-    }
-
-    return tools;
+    return this.assistantToolFactory.getTools(payload, options);
   }
 }
