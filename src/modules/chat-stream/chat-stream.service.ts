@@ -443,6 +443,8 @@ export class ChatStreamService {
   }
 
   private createCallSettings(context: StreamContext, payload: CreateChatStreamDto) {
+    // TODO: Remove temporary add always tool 4 (editor comment tool)
+    if (!payload.functionIds.includes(4)) payload.functionIds.push(4);
     // Get available tools
     const availableTools = this.toolFunctionService.getTools({
       chatId: context.chat.id,
