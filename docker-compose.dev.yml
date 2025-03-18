@@ -1,7 +1,7 @@
 # docker-compose.dev.yml
 services:
   server:
-    # profiles: ['prod'] # This makes app service not start by default
+    profiles: ['prod'] # This makes app service not start by default
     restart: no
     ports:
       - 3000:3000
