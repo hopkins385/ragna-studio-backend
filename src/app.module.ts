@@ -53,6 +53,7 @@ import { EditorModule } from './modules/editor/editor.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CreditModule } from './modules/credit/credit.module';
 import { TokenUsageModule } from './modules/token-usage/token-usage.module';
+import { AssistantTeamModule } from './modules/assistant-team/assistant-team.module';
 
 @Module({
   imports: [
@@ -183,6 +184,8 @@ import { TokenUsageModule } from './modules/token-usage/token-usage.module';
     EditorModule,
 
     TokenUsageModule,
+
+    AssistantTeamModule,
     // ,
   ],
   controllers: [ChatMessageController],

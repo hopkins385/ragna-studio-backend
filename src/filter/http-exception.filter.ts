@@ -7,26 +7,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response<any>>();
-    const status = exception.getStatus();
+    const exceptionStatusCode = exception.getStatus();
     const request = ctx.getRequest();
 
-    const errorResponse = exception.getResponse();
-    const errorMessage =
-      typeof errorResponse === 'object' && 'message' in errorResponse
-        ? (errorResponse as any).message
-        : errorResponse;
-    this.logger.error(
-      `HTTP Exception: ${request.method} ${request.url} - ${status} - ${errorMessage}`,
-      exception.stack,
-    );
-    this.logger.debug(`Request Body: ${JSON.stringify(request.body)}`);
-    this.logger.debug(`Request Params: ${JSON.stringify(request.params)}`);
-    this.logger.debug(`Request Query: ${JSON.stringify(request.query)}`);
-    this.logger.debug(`Request Headers: ${JSON.stringify(request.headers)}`);
-    this.logger.debug(`Request IP: ${request.ip}`);
+    // const errorResponse = exception.getResponse();
+    // const errorMessage =
+    //   typeof errorResponse === 'object' && 'message' in errorResponse
+    //     ? (errorResponse as any).message
+    //     : errorResponse;
 
-    response.status(status).json({
-      statusCode: status,
+    response.status(exceptionStatusCode).json({
+      statusCode: exceptionStatusCode,
       message: exception.message,
       timestamp: new Date().toISOString(),
     });
