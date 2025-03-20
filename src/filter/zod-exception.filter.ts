@@ -12,8 +12,6 @@ export class ZodValidationExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest();
     const zodError = exception.getZodError(); // -> ZodError
 
-    this.logger.debug(zodError);
-
     response.status(HttpStatus.UNPROCESSABLE_ENTITY).json({
       message: exception.message,
       errors: zodError.flatten().fieldErrors,
