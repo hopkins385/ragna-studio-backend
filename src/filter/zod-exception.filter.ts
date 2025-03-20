@@ -15,8 +15,8 @@ export class ZodValidationExceptionFilter implements ExceptionFilter {
     this.logger.debug(zodError);
 
     response.status(HttpStatus.UNPROCESSABLE_ENTITY).json({
-      statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       message: exception.message,
+      errors: zodError.flatten().fieldErrors,
       timestamp: new Date().toISOString(),
     });
   }
