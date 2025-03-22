@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateAssistantToolDto } from './dto/create-assistant-tool.dto';
 import { AssistantToolRepository } from './repositories/assistant-tool.repository';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { CreateToolCallDto } from './dto/create-tool-call.dto';
 
 @Injectable()
 export class AssistantToolService {
@@ -155,12 +156,9 @@ export class AssistantToolService {
   }
 
   //
-  async createToolCall(payload: {
-    assistantId: string;
-    toolId: string;
-    input: string;
-    output: string;
-  }) {
+  async createToolCall(payload: CreateToolCallDto) {
+    this.logger.debug(`createToolCall: ${JSON.stringify(payload)}`);
+    return;
     return this.assistantToolRepo.prisma.assistantToolCall.create({
       data: {
         assistantId: payload.assistantId,

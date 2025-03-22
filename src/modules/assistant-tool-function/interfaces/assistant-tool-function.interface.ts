@@ -26,6 +26,7 @@ export interface GetToolPayload {
 export interface ToolContext {
   userId: string;
   assistantId: string;
+  toolId: string;
   chatId?: string;
   chatMessageId?: string;
   documentId?: string;

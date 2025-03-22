@@ -50,7 +50,7 @@ export class AssistantToolFactory {
       return {};
     }
 
-    const context: ToolContext = {
+    const baseContext: Omit<ToolContext, 'toolId'> = {
       userId: payload.userId,
       assistantId: payload.assistantId,
       chatId: payload?.chatId,
@@ -59,11 +59,16 @@ export class AssistantToolFactory {
 
     // Filter out unwanted tool providers
     const entries = payload.assistantTools
-      .map((tool) => this.toolProviders.get(tool.functionId))
-      .filter((toolProvider): toolProvider is ToolProvider => toolProvider !== undefined)
-      .reduce<Tools>((acc, toolProvider) => {
-        const metadata = toolProvider.getMetadata();
-        acc[metadata.name] = this.createTool(toolProvider, context, options);
+      .map((t) => ({ tool: t, provider: this.toolProviders.get(t.functionId) }))
+      .filter((item): item is { tool: any; provider: ToolProvider } => item.provider !== undefined)
+      .reduce<Tools>((acc, { tool, provider }) => {
+        const metadata = provider.getMetadata();
+        // Create tool-specific context with toolId
+        const context: ToolContext = {
+          ...baseContext,
+          toolId: tool.id,
+        };
+        acc[metadata.name] = this.createTool(provider, context, options);
         return acc;
       }, {});
 
