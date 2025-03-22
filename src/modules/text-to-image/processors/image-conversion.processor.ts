@@ -8,6 +8,7 @@ import { AxiosInstance } from 'axios';
 import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { join } from 'node:path';
 import { Worker } from 'worker_threads';
+import { spawn } from 'node:child_process';
 
 interface WorkerResult {
   avifBuffer: Buffer;
@@ -15,10 +16,8 @@ interface WorkerResult {
   error: unknown;
 }
 
-const imageConversionWorkerPath = join(
-  __dirname,
-  '../workers/image-conversion.worker.js',
-);
+const imageConversionWorkerPath = join(__dirname, '..', 'workers', 'image-conversion.worker.js');
+const workerPath = join(__dirname, '..', '..', '..', '..', 'bin', '/image-webworker');
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
@@ -35,7 +34,7 @@ export class ImageConversionProcessor extends WorkerHost {
     private readonly httpClient: AxiosInstance,
   ) {
     super();
-    // this.imageWorker = this.createWorker();
+    this.imageWorker = this.createWorker();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
@@ -46,6 +45,10 @@ export class ImageConversionProcessor extends WorkerHost {
       fileName,
     } = data as ImageConversionJobDataDto;
 
+    if (!filePathOrUrl || !filePathOrUrl.length || typeof filePathOrUrl !== 'string') {
+      throw new Error('filePathOrUrl is required');
+    }
+
     // if the file is a URL, download it
     let fileBuffer: Buffer;
     if (filePathOrUrl.startsWith('https://')) {
@@ -54,9 +57,15 @@ export class ImageConversionProcessor extends WorkerHost {
       fileBuffer = await readFile(filePathOrUrl);
     }
 
-    this.logger.debug(
-      `Processing image', oldBucketPath: ${oldBucketPath}, fileName: ${fileName}`,
-    );
+    throw new Error('Image conversion temporarily disabled');
+
+    /*
+        const res = await goWorker(fileBuffer);
+    const { avifBuffer, webpBuffer } = res as WorkerResult;
+    console.log('res', res);
+    throw new Error('Image conversion temporarily disabled');
+
+    this.logger.debug(`Converting image', oldBucketPath: ${oldBucketPath}, fileName: ${fileName}`);
 
     this.imageWorker.postMessage(fileBuffer);
 
@@ -109,13 +118,6 @@ export class ImageConversionProcessor extends WorkerHost {
     const splt = fileName.split('.');
     const newfileName = splt?.[0] ?? fileName;
 
-    const uploadAvif = this.storageService.uploadBufferToBucket('images', {
-      bucketPath: newBucketPath,
-      fileBuffer: avifBuffer,
-      fileName: `${newfileName}.avif`,
-      fileExtension: 'avif',
-    });
-
     const uploadWebp = this.storageService.uploadBufferToBucket('images', {
       bucketPath: newBucketPath,
       fileBuffer: webpBuffer,
@@ -123,7 +125,16 @@ export class ImageConversionProcessor extends WorkerHost {
       fileExtension: 'webp',
     });
 
+    /*
+    const uploadAvif = this.storageService.uploadBufferToBucket('images', {
+      bucketPath: newBucketPath,
+      fileBuffer: avifBuffer,
+      fileName: `${newfileName}.avif`,
+      fileExtension: 'avif',
+    });
+
     await Promise.all([uploadAvif, uploadWebp]);
+    */
   }
 
   @OnWorkerEvent('ready')
@@ -138,15 +149,13 @@ export class ImageConversionProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
-    return this.logger.debug(
-      `Job ${job.name} completed for ${job.data?.fileName}`,
-    );
+    return this.logger.debug(`Job ${job.name} completed for ${job.data?.fileName}`);
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job) {
     return this.logger.error(
-      `Job ${job.name} failed for ${job.data?.fileName}`,
+      `Job ${job.name} failed for ${job.data?.fileName} because of ${job.failedReason} `,
     );
   }
 
@@ -210,4 +219,55 @@ export class ImageConversionProcessor extends WorkerHost {
       this.logger.log('Worker restarted.');
     }, backoffDelay);
   }
+}
+
+async function goWorker(fileBuffer: Buffer) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(workerPath, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: true,
+    });
+
+    let output = '';
+
+    child.stdout.on('data', (data) => {
+      console.log(`Worker output: ${data}`);
+      output += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      console.error(`Worker error: ${data}`);
+    });
+
+    child.on('error', (error) => {
+      reject(new Error(`Worker process error: ${error}`));
+    });
+
+    child.on('exit', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Worker process exited with code ${code}`));
+      }
+    });
+
+    child.on('close', (code) => {
+      console.log(`Worker process closed with code ${code}`);
+      if (code !== 0) {
+        reject(new Error(`Worker process exited with code ${code}`));
+      } else {
+        try {
+          const result = JSON.parse(output);
+          resolve(result);
+        } catch (error) {
+          reject(new Error(`Failed to parse worker output: ${error}`));
+        }
+      }
+    });
+
+    const input = JSON.stringify({
+      fileBuffer: fileBuffer.toString('base64'),
+    });
+
+    child.stdin.write(input);
+    child.stdin.end();
+  });
 }
