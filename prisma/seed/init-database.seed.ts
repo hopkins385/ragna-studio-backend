@@ -57,19 +57,46 @@ async function seedAssistantTools(prisma: SeedPrismaClient) {
       {
         id: createId(),
         functionId: 1,
-        functionName: 'searchWeb',
-        name: 'Web Search',
+        functionName: 'websearch',
+        name: 'websearch',
         description: 'Search the web',
-        iconName: 'search',
+        iconName: 'globe',
         deletedAt: null,
       },
       {
         id: createId(),
         functionId: 2,
-        functionName: 'website',
-        name: 'Visit Website',
+        functionName: 'webscraper',
+        name: 'webscraper',
         description: 'Get the content of a website',
-        iconName: 'web',
+        iconName: 'website',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 3,
+        functionName: 'knowledge',
+        name: 'knowledge',
+        description: 'Search in the connected knowledge base',
+        iconName: 'database',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 4,
+        functionName: 'texteditor',
+        name: 'texteditor',
+        description: 'Edit text',
+        iconName: 'pencil',
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        functionId: 5,
+        functionName: 'think',
+        name: 'think',
+        description: 'Think about something',
+        iconName: 'brain',
         deletedAt: null,
       },
     ],
@@ -100,9 +127,7 @@ async function confirmDatabaseSeed(): Promise<boolean> {
   try {
     const answer = await new Promise<string>((resolve) => {
       console.log('\n⚠️  Warning: Initial database seed');
-      console.log(
-        'All Users, LLMs, AssistantTemplates, etc. will be deleted!\n',
-      );
+      console.log('All Users, LLMs, AssistantTemplates, etc. will be deleted!\n');
 
       rl.question('Are you sure you want to continue? (yes/no): ', (input) => {
         resolve(input);

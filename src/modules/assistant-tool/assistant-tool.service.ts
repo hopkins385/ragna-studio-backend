@@ -66,11 +66,11 @@ export class AssistantToolService {
   }
 
   async findAll() {
-    const tools = await this.cacheManager.get('all-assistant-tools');
-    if (tools) {
-      this.logger.debug(`returning cached tools`);
-      return tools;
-    }
+    // const tools = await this.cacheManager.get('all-assistant-tools');
+    // if (tools) {
+    //   this.logger.debug(`returning cached tools`);
+    //   return tools;
+    // }
     const allTools = await this.assistantToolRepo.prisma.tool.findMany({
       select: {
         id: true,
@@ -85,11 +85,7 @@ export class AssistantToolService {
         functionId: 'asc',
       },
     });
-    await this.cacheManager.set(
-      'all-assistant-tools',
-      allTools,
-      60 * 60 * 24 * 1000,
-    );
+    await this.cacheManager.set('all-assistant-tools', allTools, 60 * 60 * 24 * 1000);
     return allTools;
   }
 

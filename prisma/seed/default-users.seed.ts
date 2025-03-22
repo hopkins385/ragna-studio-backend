@@ -73,7 +73,7 @@ async function defaultTeams(seed: SeedPrismaClient, organisations: any[]) {
       {
         id: createId(),
         organisationId: organisations[0].id,
-        name: 'Admin Team',
+        name: "Sven's Team",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,

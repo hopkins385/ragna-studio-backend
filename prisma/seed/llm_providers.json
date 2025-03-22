@@ -1,6 +1,41 @@
 [
   {
     "provider": "anthropic",
+    "apiName": "claude-3-7-sonnet-20250219",
+    "displayName": "Claude 3.7 Sonnet",
+    "description": "",
+    "hidden": false,
+    "free": false,
+    "capabilities": {
+      "streamText": true,
+      "useTool": true,
+      "imageInput": true,
+      "imageOutput": false,
+      "audioInput": false,
+      "audioOutput": false,
+      "videoInput": false,
+      "videoOutput": false
+    },
+    "infos": {
+      "model": {
+        "sizeIndex": 5,
+        "qualityIndex": 79,
+        "speedIndex": 63,
+        "contextSize": 200,
+        "maxTokens": 4
+      },
+      "provider": {
+        "name": "Anthropic",
+        "region": "USA"
+      },
+      "host": {
+        "name": "Anthropic",
+        "region": "USA"
+      }
+    }
+  },
+  {
+    "provider": "anthropic",
     "apiName": "claude-3-5-sonnet-20240620",
     "displayName": "Claude 3.5 Sonnet",
     "description": "",
@@ -30,6 +65,41 @@
       },
       "host": {
         "name": "Anthropic",
+        "region": "USA"
+      }
+    }
+  },
+  {
+    "provider": "openai",
+    "apiName": "gpt-4.5-preview",
+    "displayName": "GPT 4.5 (preview)",
+    "description": "",
+    "hidden": false,
+    "free": false,
+    "capabilities": {
+      "streamText": true,
+      "useTool": true,
+      "imageInput": true,
+      "imageOutput": false,
+      "audioInput": false,
+      "audioOutput": false,
+      "videoInput": false,
+      "videoOutput": false
+    },
+    "infos": {
+      "model": {
+        "sizeIndex": 5,
+        "qualityIndex": 77,
+        "speedIndex": 63,
+        "contextSize": 128,
+        "maxTokens": 16
+      },
+      "provider": {
+        "name": "OpenAI",
+        "region": "USA"
+      },
+      "host": {
+        "name": "OpenAI",
         "region": "USA"
       }
     }
@@ -107,7 +177,7 @@
   {
     "provider": "openai",
     "apiName": "o1-mini",
-    "displayName": "o1 Mini (beta)",
+    "displayName": "o1 Mini",
     "description": "Faster and cheaper reasoning model particularly good at coding, math, and science tasks where extensive general knowledge isn't required.",
     "hidden": false,
     "free": false,
