@@ -8,6 +8,7 @@ import { WebScrapeTool } from './tools/webscrape.tool';
 import { KnowledgeTool } from './tools/knowledge.tool';
 import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { ThinkTool } from './tools/think.tool';
 
 @Module({
   imports: [EmbeddingModule, CollectionModule],
@@ -18,6 +19,7 @@ import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
     WebScrapeTool,
     KnowledgeTool,
     EditorCommentTool,
+    ThinkTool,
     // Services
     AssistantToolFunctionService,
     // Emitters

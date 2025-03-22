@@ -6,11 +6,12 @@ import {
   Tools,
   ToolOptions,
 } from '../interfaces/assistant-tool-function.interface';
-import { WebSearchTool } from '../tools/websearch.tool';
-import { ToolProvider } from '../types/tool-provider';
-import { WebScrapeTool } from '../tools/webscrape.tool';
-import { KnowledgeTool } from '../tools/knowledge.tool';
-import { EditorCommentTool } from '../tools/editor-comment.tool';
+import { ThinkTool } from '@/modules/assistant-tool-function/tools/think.tool';
+import { WebSearchTool } from '@/modules/assistant-tool-function/tools/websearch.tool';
+import { WebScrapeTool } from '@/modules/assistant-tool-function/tools/webscrape.tool';
+import { KnowledgeTool } from '@/modules/assistant-tool-function/tools/knowledge.tool';
+import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
+import { ToolProvider } from '@/modules/assistant-tool-function/types/tool-provider';
 
 @Injectable()
 export class AssistantToolFactory {
@@ -22,12 +23,14 @@ export class AssistantToolFactory {
     private readonly webScrapeTool: WebScrapeTool,
     private readonly knowledgeTool: KnowledgeTool,
     private readonly editorCommentTool: EditorCommentTool,
+    private readonly thinkTool: ThinkTool,
   ) {
     const entries: Array<[number, ToolProvider]> = [
       [1, this.webSearchTool],
       [2, this.webScrapeTool],
       [3, this.knowledgeTool],
       [4, this.editorCommentTool],
+      [5, this.thinkTool],
     ];
 
     // Validate all tools implement ToolProvider interface
