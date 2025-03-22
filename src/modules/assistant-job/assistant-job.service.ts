@@ -92,7 +92,7 @@ export class AssistantJobService {
       userId: payload.userId,
       llmName: payload.llmNameApi,
       llmProvider: payload.llmProvider,
-      functionIds: payload.functionIds,
+      assistantTools: [],
       assistantId: payload.assistantId,
     });
 

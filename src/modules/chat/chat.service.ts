@@ -156,6 +156,7 @@ export class ChatService {
                 toolId: true,
                 tool: {
                   select: {
+                    id: true,
                     functionId: true,
                   },
                 },
@@ -257,9 +258,7 @@ export class ChatService {
   public async createMessage(payload: CreateChatMessageDto) {
     let tokenCount = 0;
     try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content,
-      );
+      const { tokenCount: count } = await this.tokenizerService.getTokens(payload.message.content);
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -300,9 +299,7 @@ export class ChatService {
     let tokenCount = 0;
 
     try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content,
-      );
+      const { tokenCount: count } = await this.tokenizerService.getTokens(payload.message.content);
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -496,19 +493,13 @@ export class ChatService {
 
   // UTILITIES
 
-  getHistory(
-    chat: any,
-    totalAvailableTokens: number,
-    requestedCompletionTokens: number,
-  ) {
+  getHistory(chat: any, totalAvailableTokens: number, requestedCompletionTokens: number) {
     if (!chat || !chat.messages) {
       throw new Error('Chat not found or has no messages');
     }
     const chatMessages = chat.messages;
     const messagesCount = chatMessages.length;
-    const availableHistoryTokens = notLowerZero(
-      totalAvailableTokens - requestedCompletionTokens,
-    );
+    const availableHistoryTokens = notLowerZero(totalAvailableTokens - requestedCompletionTokens);
     let tokenCount = 0;
     let i = messagesCount - 1; // start from the end of the array
     const messages = [];

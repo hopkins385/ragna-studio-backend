@@ -153,4 +153,23 @@ export class AssistantToolService {
       },
     });
   }
+
+  //
+  async createToolCall(payload: {
+    assistantId: string;
+    toolId: string;
+    input: string;
+    output: string;
+  }) {
+    return this.assistantToolRepo.prisma.assistantToolCall.create({
+      data: {
+        assistantId: payload.assistantId,
+        toolId: payload.toolId,
+        input: payload.input,
+        output: payload.output,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
 }

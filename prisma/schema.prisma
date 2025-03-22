@@ -247,6 +247,7 @@ model Assistant {
   chats         Chat[]
   tools         AssistantTool[]
   workflowSteps WorkflowStep[]
+  toolCalls     AssistantToolCall[]
 
   team Team           @relation(fields: [teamId], references: [id])
   llm  LargeLangModel @relation(fields: [llmId], references: [id])
@@ -267,6 +268,7 @@ model Tool {
   deletedAt    DateTime? @map("deleted_at")
 
   assistants AssistantTool[]
+  toolCalls  AssistantToolCall[]
 
   @@map("tools")
 }
@@ -284,6 +286,23 @@ model AssistantTool {
 
   @@index([assistantId, toolId], name: "assistant_tools_assistant_id_tool_id_index")
   @@map("assistant_tools")
+}
+
+model AssistantToolCall {
+  id          String    @id @default(cuid())
+  assistantId String    @map("assistant_id")
+  toolId      String    @map("tool_id")
+  input       Json?     @map("input") @db.Json
+  output      Json?     @map("output") @db.Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  assistant Assistant @relation(fields: [assistantId], references: [id])
+  tool      Tool      @relation(fields: [toolId], references: [id])
+
+  @@index([assistantId, toolId], name: "assistant_tool_calls_assistant_id_tool_id_index")
+  @@map("assistant_tool_calls")
 }
 
 model AssistantTemplate {

@@ -230,7 +230,7 @@ export class ChatStreamService {
       model: context.model,
       messages: payload.messages,
       maxSteps: 1,
-      maxRetries: 3,
+      maxRetries: 10,
       toolChoice: 'auto',
       ...callSettings,
     });
@@ -449,7 +449,7 @@ export class ChatStreamService {
       userId: context.chat.userId,
       llmProvider: payload.provider,
       llmName: payload.model,
-      functionIds: payload.functionIds,
+      assistantTools: context.chat.assistant.tools.map((t) => t.tool),
       assistantId: context.chat.assistant.id,
     });
 

@@ -27,8 +27,7 @@ export class WorkflowExecutionService {
   }): FlowJob[] {
     const stepsCount = payload.workflowSteps.length;
     const startStepIndex = stepsCount - 1;
-    const rowCount =
-      payload.workflowSteps[0].document?.documentItems.length || 0;
+    const rowCount = payload.workflowSteps[0].document?.documentItems.length || 0;
     const rows = [];
 
     const defaultJobOpts = {
@@ -37,8 +36,7 @@ export class WorkflowExecutionService {
     } as JobsOptions;
 
     function jobChild(stepIndex: number, rowIndex: number): any {
-      const { assistant, document, name, inputSteps } =
-        payload.workflowSteps[stepIndex];
+      const { assistant, document, name, inputSteps } = payload.workflowSteps[stepIndex];
       const documentItem = document.documentItems[rowIndex];
 
       if (!assistant) {
@@ -48,9 +46,7 @@ export class WorkflowExecutionService {
       }
 
       const inputDocumentItemIds = inputSteps.map((inputStep: any) => {
-        const inputDocument = payload.workflowSteps.find(
-          (step) => step.id === inputStep,
-        );
+        const inputDocument = payload.workflowSteps.find((step) => step.id === inputStep);
         if (!inputDocument) {
           return;
         }
@@ -65,7 +61,7 @@ export class WorkflowExecutionService {
         stepName: name,
         llmId: assistant.llm.id,
         assistantId: assistant.id,
-        functionIds: assistant.tools.map((t) => t.tool.functionId),
+        assistantTools: assistant.tools.map((t) => t.tool),
         llmProvider: assistant.llm.provider,
         llmNameApi: assistant.llm.apiName,
         inputDocumentItemIds,

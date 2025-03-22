@@ -35,11 +35,7 @@ export class AssistantToolFactory {
 
     // Validate all tools implement ToolProvider interface
     entries.forEach(([id, provider]) => {
-      if (
-        !provider ||
-        typeof provider.execute !== 'function' ||
-        typeof provider.getMetadata !== 'function'
-      ) {
+      if (!provider || typeof provider.execute !== 'function') {
         throw new Error(`Invalid tool provider for ID ${id}`);
       }
     });
@@ -49,32 +45,21 @@ export class AssistantToolFactory {
 
   public getTools(payload: GetToolPayload, options?: ToolOptions): Tools {
     // Add validation for payload
-    if (
-      !payload ||
-      typeof payload !== 'object' ||
-      !Array.isArray(payload.functionIds) ||
-      !payload.functionIds?.length
-    ) {
-      return {};
-    }
-
-    // Validate function IDs are numbers
-    if (!payload.functionIds.every((id) => typeof id === 'number')) {
-      this.logger.error(
-        `Invalid function ID type in payload. Numbers expected but received: ${payload.functionIds}`,
-      );
+    if (!payload || typeof payload !== 'object' || !payload.assistantTools?.length) {
+      this.logger.debug('No tools found in payload');
       return {};
     }
 
     const context: ToolContext = {
       userId: payload.userId,
-      chatId: payload.chatId,
       assistantId: payload.assistantId,
+      chatId: payload?.chatId,
+      chatMessageId: payload?.chatMessageId,
     };
 
     // Filter out unwanted tool providers
-    const entries = payload.functionIds
-      .map((id) => this.toolProviders.get(id))
+    const entries = payload.assistantTools
+      .map((tool) => this.toolProviders.get(tool.functionId))
       .filter((toolProvider): toolProvider is ToolProvider => toolProvider !== undefined)
       .reduce<Tools>((acc, toolProvider) => {
         const metadata = toolProvider.getMetadata();
@@ -107,7 +92,7 @@ export class AssistantToolFactory {
           }
 
           // Add timeout to prevent hanging
-          const timeoutMs = options?.timeoutMs || 30000;
+          const timeoutMs = options?.timeoutMs || 300000;
           const timeoutPromise = new Promise((_, reject) => {
             timeoutId = setTimeout(() => reject(new Error('Tool execution timeout')), timeoutMs);
           });
@@ -119,6 +104,13 @@ export class AssistantToolFactory {
 
           // Clear the timeout if execution completed successfully
           clearTimeout(timeoutId);
+
+          // Log the result
+          this.logger.debug(`Tool executed successfully: ${meta.name}`);
+          // Log the input parameters
+          this.logger.debug(`Input parameters: ${JSON.stringify(params)}`);
+          // Log the result
+          this.logger.debug(`Tool result: ${JSON.stringify(result)}`);
 
           return result;
         } catch (error: unknown) {

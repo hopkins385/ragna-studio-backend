@@ -1,3 +1,4 @@
+import { Tool } from '@prisma/client';
 import type { ZodObject, ZodType } from 'zod';
 
 // Define a type for the emitToolInfoData function
@@ -15,9 +16,10 @@ export interface GetToolPayload {
   userId: string;
   llmProvider: string;
   llmName: string;
-  functionIds: number[] | null;
+  assistantTools: Tool[];
   assistantId: string;
   chatId?: string;
+  chatMessageId?: string;
   documentId?: string;
 }
 
@@ -25,6 +27,7 @@ export interface ToolContext {
   userId: string;
   assistantId: string;
   chatId?: string;
+  chatMessageId?: string;
   documentId?: string;
 }
 

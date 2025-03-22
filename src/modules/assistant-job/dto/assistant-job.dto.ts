@@ -1,3 +1,5 @@
+import { Tool } from '@prisma/client';
+
 export class AssistantJobDto {
   readonly totalStepCount: number;
   readonly totalRowCount: number;
@@ -8,7 +10,7 @@ export class AssistantJobDto {
   readonly llmProvider: string;
   readonly llmNameApi: string;
   readonly assistantId: string;
-  readonly functionIds: number[];
+  readonly assistantTools: Tool[];
   readonly inputDocumentItemIds: string[];
   readonly documentItemId: string;
   readonly systemPrompt: string;
@@ -25,7 +27,7 @@ export class AssistantJobDto {
     stepName: string,
     llmId: string,
     assistantId: string,
-    functionIds: number[],
+    assistantTools: Tool[],
     llmProvider: string,
     llmNameApi: string,
     inputDocumentItemIds: string[],
@@ -43,7 +45,7 @@ export class AssistantJobDto {
     this.stepName = stepName;
     this.llmId = llmId.toLowerCase();
     this.assistantId = assistantId.toLowerCase();
-    this.functionIds = functionIds;
+    this.assistantTools = assistantTools;
     this.llmProvider = llmProvider;
     this.llmNameApi = llmNameApi;
     this.inputDocumentItemIds = inputDocumentItemIds;
@@ -63,7 +65,7 @@ export class AssistantJobDto {
     stepName: string;
     llmId: string;
     assistantId: string;
-    functionIds: number[];
+    assistantTools: Tool[];
     llmProvider: string;
     llmNameApi: string;
     inputDocumentItemIds: string[];
@@ -82,7 +84,7 @@ export class AssistantJobDto {
       input.stepName,
       input.llmId,
       input.assistantId,
-      input.functionIds,
+      input.assistantTools,
       input.llmProvider,
       input.llmNameApi,
       input.inputDocumentItemIds,

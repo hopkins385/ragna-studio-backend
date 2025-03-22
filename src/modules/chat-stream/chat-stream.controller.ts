@@ -115,7 +115,6 @@ export class ChatStreamController {
       model: body.model ?? model,
       systemPrompt: theSysPrompt,
       messages: chatMessages,
-      functionIds: chat.assistant.tools.map((t) => t.tool.functionId),
       maxTokens: body.maxTokens,
       temperature: body.temperature / 100,
       reasoningEffort: body.reasoningEffort,

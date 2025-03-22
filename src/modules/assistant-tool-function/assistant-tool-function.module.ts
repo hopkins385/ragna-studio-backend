@@ -9,9 +9,10 @@ import { KnowledgeTool } from './tools/knowledge.tool';
 import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { ThinkTool } from './tools/think.tool';
+import { AssistantToolModule } from '@/modules/assistant-tool/assistant-tool.module';
 
 @Module({
-  imports: [EmbeddingModule, CollectionModule],
+  imports: [EmbeddingModule, CollectionModule, AssistantToolModule],
   providers: [
     // Tools
     AssistantToolFactory,
