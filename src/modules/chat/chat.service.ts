@@ -9,6 +9,7 @@ import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { CreateChatStreamBody } from '@/modules/chat-stream/dto/create-chat-stream-body.dto';
 import { CoreMessage } from 'ai';
+import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
@@ -259,15 +260,22 @@ export class ChatService {
 
   public async createMessage(payload: CreateChatMessageDto) {
     let tokenCount = 0;
+
+    if (!payload.message) {
+      throw new Error('Message is required');
+    }
+
+    /*
     try {
       const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content.text,
+        payload.message.content,
       );
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
       tokenCount = 0;
     }
+      */
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -302,15 +310,15 @@ export class ChatService {
   public async createMessageAndReduceCredit(payload: CreateChatMessageDto) {
     let tokenCount = 0;
 
-    try {
+    /*try {
       const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content.text,
+        payload.message.content,
       );
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
       tokenCount = 0;
-    }
+    }*/
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -550,7 +558,7 @@ export class ChatService {
       if (message.type === 'image' && message.visionContent) {
         const text = {
           type: 'text',
-          text: message.content.text,
+          text: message.content[0].text,
         };
         return {
           role: message.role.toString(),
@@ -560,7 +568,7 @@ export class ChatService {
       }
       return {
         role: message.role.toString(),
-        content: message.content.text,
+        content: message.content[0].text,
       };
     });
   }

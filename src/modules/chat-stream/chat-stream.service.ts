@@ -319,6 +319,27 @@ export class ChatStreamService {
 
     payload.messages.push(...toolMessages);
 
+    // store tool call in database
+    await this.chatService.createMessage({
+      userId: context.chat.userId,
+      chatId: context.chat.id,
+      message: {
+        type: ChatMessageType.TOOL_CALL,
+        role: ChatMessageRole.ASSISTANT,
+        content: toolCalls as any,
+      },
+    });
+
+    await this.chatService.createMessage({
+      userId: context.chat.userId,
+      chatId: context.chat.id,
+      message: {
+        type: ChatMessageType.TOOL_RESULT,
+        role: ChatMessageRole.TOOL,
+        content: toolResults as any,
+      },
+    });
+
     this.logger.debug('[handleToolCalls] messages:', payload.messages);
 
     const result = streamText({
@@ -416,10 +437,12 @@ export class ChatStreamService {
         message: {
           type: ChatMessageType.TEXT,
           role: messageData.role,
-          content: {
-            type: ChatMessageType.TEXT,
-            text: messageData.content,
-          },
+          content: [
+            {
+              type: ChatMessageType.TEXT,
+              text: messageData.content,
+            },
+          ],
         },
       }),
     );

@@ -110,6 +110,8 @@ export class ChatStreamController {
 
     const chatMessages = this.chatService.formatChatMessages(body.messages);
 
+    this.logger.debug(`Creating chat stream payload messages:`, chatMessages);
+
     return CreateChatStreamDto.fromInput({
       provider: body.provider ?? provider,
       model: body.model ?? model,

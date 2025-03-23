@@ -4,39 +4,53 @@ import { createZodDto } from 'nestjs-zod';
 import { ChatMessageType } from '../enums/chat-message.enum';
 import { ChatMessageRole } from '../enums/chat-message-role.enum';
 
-interface ChatMessageContent {
+interface ChatMessageToolCall {
+  type: 'tool-call';
+  toolCallId: string;
+  toolName: string;
+  args: any;
+}
+
+interface ChatMessageToolResult {
+  type: 'tool-result';
+  toolCallId: string;
+  toolName: string;
+  args: any;
+  result: any;
+}
+
+interface ChatMessageText {
   type: ChatMessageType;
   text: string;
 }
 
+export type ChatMessageContent = ChatMessageText | ChatMessageToolCall | ChatMessageToolResult;
+
 export class ChatMessageDto {
   readonly type: ChatMessageType;
   readonly role: ChatMessageRole;
-  readonly content: ChatMessageContent;
+  readonly content: ChatMessageContent[];
   readonly visionContent?: any;
 
   constructor(
     type: ChatMessageType,
     role: ChatMessageRole,
-    inputText: string,
+    content: ChatMessageContent[],
     visionContent?: any,
   ) {
     this.type = type;
     this.role = role;
-    this.content = {
-      type: type,
-      text: inputText,
-    };
+    this.content = content;
     this.visionContent = visionContent;
   }
 
   static fromInput(input: {
     type: ChatMessageType;
     role: ChatMessageRole;
-    text: string;
+    content: ChatMessageContent[];
     visionContent?: any;
   }): ChatMessageDto {
-    return new ChatMessageDto(input.type, input.role, input.text, input.visionContent);
+    return new ChatMessageDto(input.type, input.role, input.content, input.visionContent);
   }
 }
 
@@ -51,7 +65,7 @@ export class CreateChatMessageDto {
     this.message = ChatMessageDto.fromInput({
       type: chatMessage.type,
       role: chatMessage.role,
-      text: chatMessage.content.text,
+      content: chatMessage.content,
       visionContent: chatMessage.visionContent,
     });
   }

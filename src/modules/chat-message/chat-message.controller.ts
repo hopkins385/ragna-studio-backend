@@ -33,10 +33,8 @@ export class ChatMessageController {
       message: {
         type: body.message.type,
         role: body.message.role,
-        content: {
-          type: body.message.content.type,
-          text: body.message.content.text,
-        },
+        // @ts-ignore
+        content: body.message.content,
         visionContent: body.message.visionContent,
       },
     });

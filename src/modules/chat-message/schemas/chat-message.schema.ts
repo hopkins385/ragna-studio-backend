@@ -6,9 +6,12 @@ import { ChatMessageRole } from '../enums/chat-message-role.enum';
 export const chatMessageSchema = z.object({
   type: z.nativeEnum(ChatMessageType),
   role: z.nativeEnum(ChatMessageRole),
-  content: z.object({
-    type: z.nativeEnum(ChatMessageType),
-    text: z.string(),
-  }),
+  content: z.array(
+    z.object({
+      type: z.nativeEnum(ChatMessageType),
+      text: z.string(),
+    }),
+  ),
+
   visionContent: visionContentSchema.nullable().optional(),
 });
