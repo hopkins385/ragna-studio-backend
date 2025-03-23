@@ -108,7 +108,7 @@ export class ChatStreamController {
     const provider = chat.assistant.llm?.provider;
     const model = chat.assistant.llm?.apiName;
 
-    const chatMessages = this.chatService.formatChatMessages(body.messages as any);
+    const chatMessages = this.chatService.formatChatMessages(body.messages);
 
     return CreateChatStreamDto.fromInput({
       provider: body.provider ?? provider,

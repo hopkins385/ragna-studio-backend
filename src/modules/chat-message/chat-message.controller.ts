@@ -9,10 +9,7 @@ import {
 } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { UserEntity } from '../user/entities/user.entity';
-import {
-  CreateChatMessageBody,
-  CreateChatMessageDto,
-} from './dto/create-chat-message.dto';
+import { CreateChatMessageBody, CreateChatMessageDto } from './dto/create-chat-message.dto';
 import { ChatService } from '../chat/chat.service';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 
@@ -36,7 +33,10 @@ export class ChatMessageController {
       message: {
         type: body.message.type,
         role: body.message.role,
-        content: body.message.content,
+        content: {
+          type: body.message.content.type,
+          text: body.message.content.text,
+        },
         visionContent: body.message.visionContent,
       },
     });

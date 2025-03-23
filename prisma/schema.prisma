@@ -16,6 +16,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Status {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id              String    @id @default(cuid())
   deviceId        String?   @map("device_id")
@@ -215,7 +222,7 @@ model ChatMessage {
   chatId        String                  @map("chat_id")
   type          String?
   role          chat_messages_role_enum @map("role")
-  content       String                  @db.Text
+  content       Json                    @db.Json
   visionContent Json?                   @map("vision_content") @db.Json
   tokenCount    Int                     @map("token_count")
   createdAt     DateTime                @default(now()) @map("created_at")
@@ -294,6 +301,8 @@ model AssistantToolCall {
   toolId      String    @map("tool_id")
   input       Json?     @map("input") @db.Json
   output      Json?     @map("output") @db.Json
+  status      Status    @default(PENDING) // pending, completed, failed
+  context     Json?     @map("context") @db.Json // Stores context info like {type: "chat", id: "xxx"} or {type: "workflow_step", id: "xxx"}
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")

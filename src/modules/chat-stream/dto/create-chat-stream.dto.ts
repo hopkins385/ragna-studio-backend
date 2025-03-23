@@ -1,5 +1,4 @@
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
-import { Tool } from '@prisma/client';
 import type { CoreMessage } from 'ai';
 
 export class CreateChatStreamDto {
@@ -36,7 +35,7 @@ export class CreateChatStreamDto {
     provider: ProviderType;
     model: string;
     systemPrompt: string;
-    messages: any[];
+    messages: CoreMessage[];
     maxTokens: number;
     temperature: number;
     reasoningEffort?: number;

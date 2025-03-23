@@ -60,7 +60,7 @@ export class WebSearchTool extends ToolProvider<WebSearchParams, WebSearchRespon
       delete response.pagination;
       delete response.serpapi_pagination;
 
-      this.logger.debug(`Searched web: `, response);
+      // this.logger.debug(`Searched web: `, response);
 
       return response;
       //

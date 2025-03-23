@@ -317,13 +317,15 @@ export class ChatStreamService {
       { role: 'tool', content: toolResults },
     ];
 
-    const followUpMessages: CoreMessage[] = [...payload.messages, ...toolMessages];
+    payload.messages.push(...toolMessages);
+
+    this.logger.debug('[handleToolCalls] messages:', payload.messages);
 
     const result = streamText({
       abortSignal: signal,
       model: context.model,
       system: payload.systemPrompt,
-      messages: followUpMessages,
+      messages: payload.messages,
       maxTokens: payload.maxTokens,
       tools: availableTools,
       toolChoice: 'auto',
@@ -414,7 +416,10 @@ export class ChatStreamService {
         message: {
           type: ChatMessageType.TEXT,
           role: messageData.role,
-          content: messageData.content,
+          content: {
+            type: ChatMessageType.TEXT,
+            text: messageData.content,
+          },
         },
       }),
     );

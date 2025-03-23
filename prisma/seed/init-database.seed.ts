@@ -143,11 +143,11 @@ async function confirmDatabaseSeed(): Promise<boolean> {
 }
 
 export async function initDatabase() {
-  const confirm = await confirmDatabaseSeed();
-  if (!confirm) {
-    console.log('❌ Operation cancelled');
-    process.exit(0);
-  }
+  // const confirm = await confirmDatabaseSeed();
+  // if (!confirm) {
+  //   console.log('❌ Operation cancelled');
+  //   process.exit(0);
+  // }
   // Truncate all tables in the database
   await truncate(prismaSeedClient);
 

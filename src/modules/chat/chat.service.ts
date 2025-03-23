@@ -7,6 +7,8 @@ import { CreateChatMessageDto } from '../chat-message/dto/create-chat-message.dt
 import { VisionImageUrlContent } from '../chat-message/interfaces/vision-image.interface';
 import { ChatEntity } from './entities/chat.entity';
 import { UserEntity } from '../user/entities/user.entity';
+import { CreateChatStreamBody } from '@/modules/chat-stream/dto/create-chat-stream-body.dto';
+import { CoreMessage } from 'ai';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
@@ -258,7 +260,9 @@ export class ChatService {
   public async createMessage(payload: CreateChatMessageDto) {
     let tokenCount = 0;
     try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(payload.message.content);
+      const { tokenCount: count } = await this.tokenizerService.getTokens(
+        payload.message.content.text,
+      );
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -299,7 +303,9 @@ export class ChatService {
     let tokenCount = 0;
 
     try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(payload.message.content);
+      const { tokenCount: count } = await this.tokenizerService.getTokens(
+        payload.message.content.text,
+      );
       tokenCount = count;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -536,7 +542,7 @@ export class ChatService {
     });
   }
 
-  formatChatMessages(messages: ChatMessage[] | null | undefined) {
+  formatChatMessages(messages: CreateChatStreamBody['messages'] | null | undefined): any[] {
     if (!messages) {
       return [];
     }
@@ -544,17 +550,17 @@ export class ChatService {
       if (message.type === 'image' && message.visionContent) {
         const text = {
           type: 'text',
-          text: message.content,
+          text: message.content.text,
         };
         return {
-          role: message.role,
+          role: message.role.toString(),
           //@ts-ignore
           content: [text, ...this.getVisionMessages(message.visionContent)],
         };
       }
       return {
-        role: message.role,
-        content: message.content,
+        role: message.role.toString(),
+        content: message.content.text,
       };
     });
   }
