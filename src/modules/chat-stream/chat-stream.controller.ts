@@ -103,7 +103,8 @@ export class ChatStreamController {
       //
       systemPrompt += `\n\n<context>${body.context}</context>`;
     }
-    const theSysPrompt = systemPrompt + defaultAnswerProtocolPrompt + timestamp;
+    // + defaultAnswerProtocolPrompt
+    const theSysPrompt = systemPrompt + timestamp;
 
     const provider = chat.assistant.llm?.provider;
     const model = chat.assistant.llm?.apiName;

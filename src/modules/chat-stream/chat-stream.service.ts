@@ -81,14 +81,14 @@ export class ChatStreamService {
       model: payload.model,
     });
 
-    if (
+    /*if (
       (payload.provider === ProviderType.OPENAI && payload.model.startsWith('o1-')) ||
       payload.model.startsWith('o3-')
     ) {
       modelFactory.setOptions({
         reasoningEffort: 'high',
       });
-    }
+    }*/
 
     const context: StreamContext = {
       model: modelFactory.getModel(),
