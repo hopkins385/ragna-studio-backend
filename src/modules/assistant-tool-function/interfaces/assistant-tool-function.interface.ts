@@ -47,7 +47,7 @@ export interface ToolOptions {
 }
 
 export interface ToolDefinition {
-  id: number;
+  id: number; // <- functionId
   name: string;
   description: string;
   parameters: ZodObject<any>;

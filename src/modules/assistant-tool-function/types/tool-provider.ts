@@ -8,7 +8,7 @@ export interface ToolMetadata {
   description: string;
 }
 
-export abstract class ToolProvider<TParams extends Record<string, any> = any, TResponse = any> {
+export abstract class ToolProvider<TArgs extends Record<string, any> = any, TResponse = any> {
   private name: string;
   private description: string;
   private parameters: ZodType<any>;
@@ -20,7 +20,7 @@ export abstract class ToolProvider<TParams extends Record<string, any> = any, TR
   }
 
   public abstract execute(
-    params: TParams,
+    args: TArgs,
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<TResponse>;

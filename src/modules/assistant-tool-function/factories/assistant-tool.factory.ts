@@ -88,12 +88,12 @@ export class AssistantToolFactory {
     return tool({
       description: meta.description || 'No description provided',
       parameters: meta.parameters,
-      execute: async (params: any) => {
+      execute: async (args) => {
         let timeoutId: NodeJS.Timeout;
         try {
           // Validate params
-          if (!params || typeof params !== 'object') {
-            throw new Error('Invalid parameters provided to tool');
+          if (!args || typeof args !== 'object') {
+            throw new Error('Invalid args provided to tool');
           }
 
           // Add timeout to prevent hanging
@@ -103,19 +103,12 @@ export class AssistantToolFactory {
           });
 
           const result = await Promise.race([
-            toolProvider.execute(params, context, options),
+            toolProvider.execute(args, context, options),
             timeoutPromise,
           ]);
 
           // Clear the timeout if execution completed successfully
           clearTimeout(timeoutId);
-
-          // Log the result
-          this.logger.debug(`Tool executed successfully: ${meta.name}`);
-          // Log the input parameters
-          this.logger.debug(`Input parameters: ${JSON.stringify(params)}`);
-          // Log the result
-          this.logger.debug(`Tool result: ${JSON.stringify(result)}`);
 
           return result;
         } catch (error: unknown) {

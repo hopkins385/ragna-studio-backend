@@ -16,7 +16,7 @@ const addCommentSchema = z.object({
   commentText: z.string().describe('The text content of the comment'),
 });
 
-interface EditorCommentToolParams {
+interface EditorCommentToolArgs {
   from: number;
   to: number;
   commentText: string;
@@ -25,14 +25,11 @@ interface EditorCommentToolParams {
 interface EditorToolCallResponse {
   from: number;
   to: number;
-  text: string;
+  commentText: string;
 }
 
 @Injectable()
-export class EditorCommentTool extends ToolProvider<
-  EditorCommentToolParams,
-  EditorToolCallResponse
-> {
+export class EditorCommentTool extends ToolProvider<EditorCommentToolArgs, EditorToolCallResponse> {
   private readonly logger = new Logger(EditorCommentTool.name);
 
   constructor(private readonly chatEvent: ChatEventEmitter) {
@@ -43,18 +40,14 @@ export class EditorCommentTool extends ToolProvider<
     });
   }
 
-  public async execute(
-    params: EditorCommentToolParams,
-    context: ToolContext,
-    options?: ToolOptions,
-  ) {
+  public async execute(args: EditorCommentToolArgs, context: ToolContext, options?: ToolOptions) {
     // simulate api call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const addCommentArgs = {
-      from: params.from,
-      to: params.to,
-      text: params.commentText,
+      from: args.from,
+      to: args.to,
+      commentText: args.commentText,
     };
 
     const eventData = EditorCommandEventDto.fromInput({
