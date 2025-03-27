@@ -5,17 +5,11 @@ import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { AxiosInstance } from 'axios';
 import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
 
-interface RestApiParams {
-  method: string;
-  url: string;
-  body?: any;
-}
-
 interface RestApiResponse {
   message: string;
 }
 
-const restApiSchema = {
+const restApiSchema = z.object({
   method: z
     .string()
     .min(3)
@@ -26,30 +20,32 @@ const restApiSchema = {
     .describe('The HTTP method to use which must be one of GET, POST, PUT, PATCH, DELETE'),
   url: z.string().url().min(10).max(1000).describe('The URL of the REST API to call'),
   body: z.any().optional().describe('The request body object to send'),
-} as const;
+});
+
+type RestApiArgs = z.infer<typeof restApiSchema>;
 
 @Injectable()
-export class RestApiTool extends ToolProvider<RestApiParams, RestApiResponse> {
+export class RestApiTool extends ToolProvider<RestApiArgs, RestApiResponse> {
   private readonly logger = new Logger(RestApiTool.name);
 
   constructor(@Inject(HTTP_CLIENT) private readonly httpClient: AxiosInstance) {
     super({
       name: 'restapi',
       description: 'Call a REST API',
-      parameters: z.object(restApiSchema),
+      parameters: restApiSchema,
     });
   }
 
   async execute(
-    params: RestApiParams,
+    args: RestApiArgs,
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<RestApiResponse> {
     try {
       const response = await this.httpClient.request({
-        method: params.method,
-        url: params.url,
-        data: params.body,
+        method: args.method,
+        url: args.url,
+        data: args.body,
       });
 
       return response.data;

@@ -8,24 +8,22 @@ import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 
-interface KnowledgeToolParams {
-  searchQuery: string;
-}
-
 interface KnowledgeToolResponse {
   content: string;
 }
 
-const knowledgeSchema = {
+const knowledgeSchema = z.object({
   searchQuery: z
     .string()
     .min(3)
     .max(100)
     .describe('The improved user query to search the knowledge base for'),
-} as const;
+});
+
+type KnowledgeToolArgs = z.infer<typeof knowledgeSchema>;
 
 @Injectable()
-export class KnowledgeTool extends ToolProvider<KnowledgeToolParams, KnowledgeToolResponse> {
+export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeToolResponse> {
   private readonly logger = new Logger(KnowledgeTool.name);
 
   constructor(
@@ -36,12 +34,12 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolParams, KnowledgeTo
     super({
       name: 'knowledge',
       description: 'Search the users knowledge base',
-      parameters: z.object(knowledgeSchema),
+      parameters: knowledgeSchema,
     });
   }
 
   async execute(
-    params: KnowledgeToolParams,
+    args: KnowledgeToolArgs,
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<KnowledgeToolResponse> {
@@ -49,12 +47,12 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolParams, KnowledgeTo
       throw new Error('Assistant ID is required');
     }
 
-    this.logger.debug(`Retrieving similar documents for query: ${params.searchQuery}`);
+    this.logger.debug(`Retrieving similar documents for query: ${args.searchQuery}`);
 
     this.emitToolStartCallEvent(this.chatEventEmitter, {
       userId: context.userId,
       chatId: context.chatId,
-      toolInfo: `${params.searchQuery}`,
+      toolInfo: `${args.searchQuery}`,
     });
 
     try {
@@ -73,7 +71,7 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolParams, KnowledgeTo
       const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
 
       const res = await this.embeddingService.searchDocsByQuery({
-        query: params.searchQuery,
+        query: args.searchQuery,
         recordIds,
       });
 

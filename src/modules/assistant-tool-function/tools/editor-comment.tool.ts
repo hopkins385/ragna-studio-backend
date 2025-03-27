@@ -16,11 +16,7 @@ const addCommentSchema = z.object({
   commentText: z.string().describe('The text content of the comment'),
 });
 
-interface EditorCommentToolArgs {
-  from: number;
-  to: number;
-  commentText: string;
-}
+type EditorCommentToolArgs = z.infer<typeof addCommentSchema>;
 
 interface EditorToolCallResponse {
   from: number;

@@ -10,16 +10,12 @@ import {
   ToolOptions,
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
 
-interface WebScrapeParams {
-  url: string;
-}
-
 interface WebScrapeResponse {
   meta: any | null;
   body: string | null;
 }
 
-const webScrapeSchema = {
+const webScrapeSchema = z.object({
   url: z
     .string()
     .url()
@@ -29,10 +25,12 @@ const webScrapeSchema = {
       message: 'URL must start with https://',
     })
     .describe('The URL of the website to scrape'),
-} as const;
+});
+
+type WebScrapeArgs = z.infer<typeof webScrapeSchema>;
 
 @Injectable()
-export class WebScrapeTool extends ToolProvider<WebScrapeParams, WebScrapeResponse> {
+export class WebScrapeTool extends ToolProvider<WebScrapeArgs, WebScrapeResponse> {
   private readonly logger = new Logger(WebScrapeTool.name);
 
   constructor(
@@ -43,22 +41,22 @@ export class WebScrapeTool extends ToolProvider<WebScrapeParams, WebScrapeRespon
     super({
       name: 'website',
       description: 'Get information about a website',
-      parameters: z.object(webScrapeSchema),
+      parameters: webScrapeSchema,
     });
   }
 
   async execute(
-    params: WebScrapeParams,
+    args: WebScrapeArgs,
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<WebScrapeResponse> {
     const scrapeServerUrl = this.config.getOrThrow('SCRAPE_SERVER_URL');
-    const websiteURL = new URL(params.url);
+    const websiteURL = new URL(args.url);
 
     this.emitToolStartCallEvent(this.chatEventEmitter, {
       userId: context.userId,
       chatId: context.chatId,
-      toolInfo: `${params.url}`,
+      toolInfo: `${args.url}`,
     });
 
     try {

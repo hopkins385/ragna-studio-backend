@@ -2,22 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ToolProvider } from '../types/tool-provider';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
-import { BaseResponse, getJson } from 'serpapi';
+import { BaseResponse as SerpBaseResponse, getJson } from 'serpapi';
 import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 
-interface WebSearchParams {
-  query: string;
-}
-
-type WebSearchResponse = BaseResponse;
-
-const webSearchSchema = {
+const webSearchSchema = z.object({
   query: z.string().min(3).max(100).describe('The query to search the web for'),
-} as const;
+});
+
+type WebSearchArgs = z.infer<typeof webSearchSchema>;
+type WebSearchResponse = SerpBaseResponse;
 
 @Injectable()
-export class WebSearchTool extends ToolProvider<WebSearchParams, WebSearchResponse> {
+export class WebSearchTool extends ToolProvider<WebSearchArgs, WebSearchResponse> {
   private readonly logger = new Logger(WebSearchTool.name);
 
   constructor(
@@ -27,19 +24,19 @@ export class WebSearchTool extends ToolProvider<WebSearchParams, WebSearchRespon
     super({
       name: 'searchWeb',
       description: 'Search the web',
-      parameters: z.object(webSearchSchema),
+      parameters: webSearchSchema,
     });
   }
 
   async execute(
-    params: WebSearchParams,
+    args: WebSearchArgs,
     context: ToolContext,
     options?: ToolOptions,
   ): Promise<WebSearchResponse> {
     this.emitToolStartCallEvent(this.chatEventEmitter, {
       userId: context.userId,
       chatId: context.chatId,
-      toolInfo: `${params.query}`,
+      toolInfo: `${args.query}`,
     });
 
     try {
@@ -48,7 +45,7 @@ export class WebSearchTool extends ToolProvider<WebSearchParams, WebSearchRespon
       const response = await getJson({
         engine: 'google',
         api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
-        q: params.query,
+        q: args.query,
         location: 'Berlin,Berlin,Germany',
       });
 

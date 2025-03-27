@@ -13,14 +13,14 @@ const thinkToolSchema = z.object({
   thought: z.string().describe('Your thoughts.'),
 });
 
-type ThinkToolParams = z.infer<typeof thinkToolSchema>;
+type ThinkToolArgs = z.infer<typeof thinkToolSchema>;
 
 interface ThinkToolCallResponse {
   thought: string;
 }
 
 @Injectable()
-export class ThinkTool extends ToolProvider<ThinkToolParams, ThinkToolCallResponse> {
+export class ThinkTool extends ToolProvider<ThinkToolArgs, ThinkToolCallResponse> {
   private readonly logger = new Logger(ThinkTool.name);
 
   constructor(
@@ -35,11 +35,11 @@ export class ThinkTool extends ToolProvider<ThinkToolParams, ThinkToolCallRespon
     });
   }
 
-  public async execute(params: ThinkToolParams, context: ToolContext, options?: ToolOptions) {
+  public async execute(args: ThinkToolArgs, context: ToolContext, options?: ToolOptions) {
     this.emitToolStartCallEvent(this.chatEvent, {
       userId: context.userId,
       chatId: context.chatId,
-      toolInfo: `${params?.thought}`,
+      toolInfo: `${args?.thought}`,
     });
     // simulate api call
     await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -50,7 +50,7 @@ export class ThinkTool extends ToolProvider<ThinkToolParams, ThinkToolCallRespon
       toolId: context.toolId,
       // input is equal to output, so we just pass the params to output
       input: undefined,
-      output: params,
+      output: args,
     });
 
     // save the tool call to the database
@@ -58,7 +58,7 @@ export class ThinkTool extends ToolProvider<ThinkToolParams, ThinkToolCallRespon
 
     //
     return {
-      thought: params.thought,
+      thought: args.thought,
     };
   }
 }
