@@ -9,7 +9,6 @@ import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
-import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import { Readable, Transform } from 'node:stream';
 import fastJson from 'fast-json-stringify';
 import { ConfigService } from '@nestjs/config';
