@@ -1,5 +1,6 @@
 import { HTTP_CLIENT } from '@/modules/http-client/constants';
-import { NerExtractResponse } from '@/modules/ner/interfaces/ner-response.interface';
+import { NerExtractResult } from '@/modules/ner/interfaces/ner-extract-result.interface';
+import { NerServerExtractResponse } from '@/modules/ner/interfaces/ner-server-response.interface';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError, AxiosInstance } from 'axios';
@@ -26,9 +27,9 @@ export class NerService {
    * @param payload - The payload containing the text to be processed and optional labels.
    * @returns A promise that resolves to the response from the internal NER server.
    */
-  async extractEntities(payload: { text: string; labels?: string[] }): Promise<NerExtractResponse> {
+  async extractEntities(payload: { text: string; labels?: string[] }): Promise<NerExtractResult> {
     try {
-      const response = await this.httpClient.post<NerExtractResponse>(
+      const response = await this.httpClient.post<NerServerExtractResponse>(
         this.nerServerUrl + '/ner/extract',
         {
           text: payload.text,
@@ -36,7 +37,10 @@ export class NerService {
         },
       );
 
-      return response.data;
+      return {
+        maskedText: response.data.masked_text,
+        entities: response.data.entities,
+      };
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         this.logger.error(`Error extracting entities: ${error.code} - ${error.message}`);

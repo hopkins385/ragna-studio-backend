@@ -4,14 +4,14 @@ import { createZodDto } from 'nestjs-zod';
 import { ChatMessageType } from '../enums/chat-message.enum';
 import { ChatMessageRole } from '../enums/chat-message-role.enum';
 
-interface ChatMessageToolCall {
+export interface ChatMessageToolCall {
   type: 'tool-call';
   toolCallId: string;
   toolName: string;
   args: any;
 }
 
-interface ChatMessageToolResult {
+export interface ChatMessageToolResult {
   type: 'tool-result';
   toolCallId: string;
   toolName: string;
@@ -19,12 +19,17 @@ interface ChatMessageToolResult {
   result: any;
 }
 
-interface ChatMessageText {
+export interface ChatMessageText {
   type: ChatMessageType;
   text: string;
 }
-
+// union type for all message types
 export type ChatMessageContent = ChatMessageText | ChatMessageToolCall | ChatMessageToolResult;
+
+// Helper type guard
+export function isTextMessage(content: ChatMessageContent): content is ChatMessageText {
+  return content.type === 'text';
+}
 
 export class ChatMessageDto {
   readonly type: ChatMessageType;

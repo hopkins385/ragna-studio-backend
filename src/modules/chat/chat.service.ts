@@ -1,3 +1,8 @@
+import {
+  ChatMessageContent,
+  ChatMessageText,
+  isTextMessage,
+} from './../chat-message/dto/create-chat-message.dto';
 import { TokenizerService } from './../tokenizer/tokenizer.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ChatRepository } from './repositories/chat.repository';
@@ -267,24 +272,50 @@ export class ChatService {
     });
   }
 
-  public async createMessage(payload: CreateChatMessageDto) {
-    let tokenCount = 0;
+  private async getTokenCount(text: string): Promise<number> {
+    try {
+      const { tokenCount } = await this.tokenizerService.getTokens(text);
+      return tokenCount;
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      return 0;
+    }
+  }
 
+  private async getTokenCountForMessageContent(
+    content: ChatMessageContent | ChatMessageContent[],
+  ): Promise<number> {
+    if (!content) {
+      throw new Error('Content is missing');
+    }
+    // if array
+    if (Array.isArray(content)) {
+      const promises = content
+        .map((c) => {
+          if (isTextMessage(c)) {
+            return this.getTokenCount(c.text);
+          }
+        })
+        .filter((c) => c !== undefined);
+      const tokenCounts = await Promise.all(promises);
+      return tokenCounts.reduce((acc, count) => acc + count, 0);
+    }
+    // if single content
+    if (isTextMessage(content)) {
+      return this.getTokenCount(content.text);
+    }
+
+    // default
+    return 0;
+  }
+
+  public async createMessage(payload: CreateChatMessageDto) {
     if (!payload.message) {
       throw new Error('Message is required');
     }
 
-    /*
-    try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content,
-      );
-      tokenCount = count;
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      tokenCount = 0;
-    }
-      */
+    const messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
+    this.logger.debug(`[Create Message] Token count: ${messageTokenCount}`);
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -296,7 +327,7 @@ export class ChatService {
             role: payload.message.role,
             content: payload.message.content,
             visionContent: payload.message.visionContent,
-            tokenCount,
+            tokenCount: messageTokenCount,
           },
         }),
         // update chat updated at
@@ -317,17 +348,9 @@ export class ChatService {
   }
 
   public async createMessageAndReduceCredit(payload: CreateChatMessageDto) {
-    let tokenCount = 0;
-
-    /*try {
-      const { tokenCount: count } = await this.tokenizerService.getTokens(
-        payload.message.content,
-      );
-      tokenCount = count;
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      tokenCount = 0;
-    }*/
+    //
+    const messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
+    this.logger.debug(`[Create Msg and Reduce Credit] Token count: ${messageTokenCount}`);
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -339,7 +362,7 @@ export class ChatService {
             role: payload.message.role,
             content: payload.message.content,
             visionContent: payload.message.visionContent,
-            tokenCount,
+            tokenCount: messageTokenCount,
           },
         }),
         // TODO: enable reducing credit

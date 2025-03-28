@@ -144,16 +144,12 @@ export class AiModelFactory {
       throw new Error(`Provider ${this.provider} not supported`);
     }
 
-    this.logger.debug(`getModel()`, {
-      provider: this.provider,
-      model: this.model,
-      options: this.options,
-    });
+    // this.logger.debug(`getModel()`, {
+    //   provider: this.provider,
+    //   model: this.model,
+    //   options: this.options,
+    // });
 
-    return new ProviderClass(
-      this.model,
-      this.config,
-      this.options,
-    ).createModel();
+    return new ProviderClass(this.model, this.config, this.options).createModel();
   }
 }
