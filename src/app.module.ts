@@ -54,6 +54,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CreditModule } from './modules/credit/credit.module';
 import { TokenUsageModule } from './modules/token-usage/token-usage.module';
 import { AssistantTeamModule } from './modules/assistant-team/assistant-team.module';
+import { NerModule } from './modules/ner/ner.module';
 
 @Module({
   imports: [
@@ -186,6 +187,8 @@ import { AssistantTeamModule } from './modules/assistant-team/assistant-team.mod
     TokenUsageModule,
 
     AssistantTeamModule,
+
+    NerModule,
     // ,
   ],
   controllers: [ChatMessageController],
