@@ -12,6 +12,7 @@ import { WebScrapeTool } from '@/modules/assistant-tool-function/tools/webscrape
 import { KnowledgeTool } from '@/modules/assistant-tool-function/tools/knowledge.tool';
 import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
 import { ToolProvider } from '@/modules/assistant-tool-function/types/tool-provider';
+import { promiseWithTimeout } from '@/common/utils/promises.util';
 
 @Injectable()
 export class AssistantToolFactory {
@@ -89,26 +90,21 @@ export class AssistantToolFactory {
       description: meta.description || 'No description provided',
       parameters: meta.parameters,
       execute: async (args) => {
-        let timeoutId: NodeJS.Timeout;
+        const timeoutRef: { id?: NodeJS.Timeout } = {};
         try {
           // Validate params
           if (!args || typeof args !== 'object') {
             throw new Error('Invalid args provided to tool');
           }
 
-          // Add timeout to prevent hanging
-          const timeoutMs = options?.timeoutMs || 300000;
-          const timeoutPromise = new Promise((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Tool execution timeout')), timeoutMs);
-          });
-
-          const result = await Promise.race([
+          const result = await promiseWithTimeout(
             toolProvider.execute(args, context, options),
-            timeoutPromise,
-          ]);
+            options?.timeoutMs || 300000, // Default to 5 minutes
+            timeoutRef,
+          );
 
           // Clear the timeout if execution completed successfully
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutRef.id);
 
           return result;
         } catch (error: unknown) {
