@@ -13,14 +13,15 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserBody } from './dto/create-user-body.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Role } from './enums/role.enum';
 import { RolesGuard } from './guards/roles.guard';
 import { ReqUser } from './decorators/user.decorator';
 import { UserEntity } from './entities/user.entity';
 import { IdParam } from '@/common/dto/cuid-param.dto';
+import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
+import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
 
 @Controller('user')
 @UseGuards(RolesGuard)
@@ -28,6 +29,29 @@ export class UserController {
   private readonly logger = new Logger(UserController.name);
 
   constructor(private readonly userService: UserService) {}
+
+  @Post()
+  @Roles(Role.ADMIN)
+  async create(@Body() createUserBody: CreateUserBody) {
+    try {
+      return await this.userService.create(createUserBody);
+    } catch (error: unknown) {
+      this.logger.error(`Error creating user`, error);
+      throw new InternalServerErrorException('Error creating user');
+    }
+  }
+
+  @Post('invite')
+  @Roles(Role.ADMIN)
+  async invite(@Body() inviteUserBody: InviteUserBody) {
+    try {
+      const { inviteToken } = await this.userService.invite(inviteUserBody);
+      return { inviteToken };
+    } catch (error: unknown) {
+      this.logger.error(`Error creating user`, error);
+      throw new InternalServerErrorException('Error creating user');
+    }
+  }
 
   @Get('/invite-token')
   @Roles(Role.ADMIN)
@@ -43,23 +67,12 @@ export class UserController {
     }
   }
 
-  @Post()
-  @Roles(Role.ADMIN)
-  async create(@Body() createUserDto: CreateUserDto) {
-    try {
-      return await this.userService.create(createUserDto);
-    } catch (error: unknown) {
-      this.logger.error(`Error creating user`, error);
-      throw new InternalServerErrorException('Error creating user');
-    }
-  }
-
   @Get()
   @Roles(Role.ADMIN)
-  async findAll(@ReqUser() user: UserEntity) {
+  async findAll(@ReqUser() reqUser: UserEntity) {
     try {
       const [users, meta] = await this.userService.findAllPaginated({
-        organisationId: user.organisationId,
+        organisationId: reqUser.organisationId,
       });
       return { users, meta };
     } catch (error: unknown) {
@@ -91,9 +104,9 @@ export class UserController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  async update(@Param() { id }: IdParam, @Body() updateUserDto: UpdateUserDto) {
+  async update(@Param() { id }: IdParam, @Body() updateUserBody: UpdateUserBody) {
     try {
-      const result = await this.userService.update(id, updateUserDto);
+      const result = await this.userService.update(id, updateUserBody);
       return { result };
     } catch (error: unknown) {
       this.logger.error(`Error updating user`, error);

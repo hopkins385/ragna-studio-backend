@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
@@ -9,6 +7,9 @@ import jwt from 'jsonwebtoken';
 import { SessionUser } from './entities/session-user.entity';
 import { UserRepository } from './repositories/user.repository';
 import { BaseService } from '@/common/service/base.service';
+import { CreateUserBody } from '@/modules/user/dto/create-user-body.dto';
+import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
+import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
 
 @Injectable()
 export class UserService {
@@ -19,7 +20,7 @@ export class UserService {
     // super(UserService.name);
   }
 
-  async create({ name, email, password }: CreateUserDto) {
+  async create({ name, email, password }: CreateUserBody) {
     const exists = await this.findByEmail(email);
     if (exists) throw new Error('Email already registered');
 
@@ -31,13 +32,7 @@ export class UserService {
     });
   }
 
-  async createWithoutPassword({
-    name,
-    email,
-  }: {
-    name: string;
-    email: string;
-  }) {
+  async createWithoutPassword({ name, email }: { name: string; email: string }) {
     const exists = await this.findByEmail(email);
     if (exists) throw new Error('Email already registered');
 
@@ -45,6 +40,25 @@ export class UserService {
       name,
       email,
     });
+  }
+
+  async invite({ name, email }: InviteUserBody) {
+    const exists = await this.findByEmail(email);
+    if (exists) throw new Error('Email already registered');
+    const user = await this.repository.create({
+      name,
+      email,
+      password: null,
+    });
+
+    const token = await this.createInviteToken({
+      userId: user.id,
+    });
+
+    return {
+      user: new UserEntity(user as any),
+      inviteToken: token,
+    };
   }
 
   async findOne(payload: { userId: string }): Promise<Partial<UserEntity>> {
@@ -158,17 +172,11 @@ export class UserService {
     });
   }
 
-  async updateUserPassword(
-    userId: string,
-    pay: { oldPassword: string; newPassword: string },
-  ) {
+  async updateUserPassword(userId: string, pay: { oldPassword: string; newPassword: string }) {
     const user = await this.repository.findByIdWithPassword(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-    const isPasswordMatch = await comparePassword(
-      pay.oldPassword,
-      user.password,
-    );
+    const isPasswordMatch = await comparePassword(pay.oldPassword, user.password);
     if (!isPasswordMatch) throw new Error('Invalid password');
 
     const hashedPassword = await hashPassword(pay.newPassword);
@@ -180,10 +188,7 @@ export class UserService {
     });
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<Partial<UserEntity>> {
+  async update(id: string, updateUserDto: UpdateUserBody): Promise<Partial<UserEntity>> {
     if (!id) throw new Error('User ID is required');
 
     const exists = await this.userExists({ userId: id });
@@ -225,15 +230,10 @@ export class UserService {
       const signOptions = {
         expiresIn: this.configService.get('JWT_INVITE_EXPIRES_IN', '1h'),
       };
-      jwt.sign(
-        payload,
-        this.configService.get('JWT_INVITE_SECRET'),
-        signOptions,
-        (err, token) => {
-          if (err) reject(err);
-          resolve(token);
-        },
-      );
+      jwt.sign(payload, this.configService.get('JWT_INVITE_SECRET'), signOptions, (err, token) => {
+        if (err) reject(err);
+        resolve(token);
+      });
     });
   }
 
