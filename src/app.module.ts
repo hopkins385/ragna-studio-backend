@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
-import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { AccountModule } from './modules/account/account.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ChatModule } from './modules/chat/chat.module';
@@ -55,6 +55,7 @@ import { CreditModule } from './modules/credit/credit.module';
 import { TokenUsageModule } from './modules/token-usage/token-usage.module';
 import { AssistantTeamModule } from './modules/assistant-team/assistant-team.module';
 import { NerModule } from './modules/ner/ner.module';
+import { ThrottlerBehindProxyGuard } from '@/common/guards/throttler.guard';
 
 @Module({
   imports: [
@@ -80,8 +81,8 @@ import { NerModule } from './modules/ner/ner.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get('THROTTLE_TTL', 60),
-          limit: config.get('THROTTLE_LIMIT', 10),
+          ttl: config.get('THROTTLE_TTL', 60 * 1000),
+          limit: config.get('THROTTLE_LIMIT', 100),
         },
       ],
     }),
@@ -201,17 +202,18 @@ import { NerModule } from './modules/ner/ner.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    // TODO: enable throttler by uncommenting the following lines
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerBehindProxyGuard,
+    // },
+
+    // TODO: enable global timeout interceptor by uncommenting the following lines
+    //  {
+    //    provide: APP_INTERCEPTOR,
+    //    useClass: TimeoutInterceptor,
+    //  },
   ],
-  // providers: [
-  //  {
-  //    provide: APP_INTERCEPTOR,
-  //    useClass: TimeoutInterceptor,
-  //  },
-  //   {
-  //     provide: APP_GUARD,
-  //     useClass: ThrottlerBehindProxyGuard,
-  //   },
-  // ],
 })
 export class AppModule {
   static port: number;
@@ -222,9 +224,7 @@ export class AppModule {
   constructor(private readonly configService: ConfigService) {
     AppModule.port = +this.configService.get<number>('API_PORT', 3000);
     AppModule.apiPrefix = this.configService.get<string>('API_PREFIX', '');
-    AppModule.isDev = Boolean(
-      this.configService.get<string>('APP_ENV') === 'dev',
-    );
+    AppModule.isDev = Boolean(this.configService.get<string>('APP_ENV') === 'dev');
     AppModule.origins = this.configService
       .get<string>('CORS_ORIGINS', '*')
       .replace(/\s/g, '')

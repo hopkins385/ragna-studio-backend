@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './filter/http-exception.filter';
 import { ZodValidationExceptionFilter } from './filter/zod-exception.filter';
 import helmet from 'helmet';
 import { JsonWebTokenErrorFilter } from '@/filter/token-exception.filter';
+import { ThrottlerExceptionFilter } from '@/filter/throttler-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -31,6 +32,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalFilters(new ZodValidationExceptionFilter());
+  app.useGlobalFilters(new ThrottlerExceptionFilter());
   app.useGlobalFilters(new JsonWebTokenErrorFilter());
 
   app.enable('trust proxy', 'loopback');

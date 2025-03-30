@@ -28,6 +28,7 @@ import { SocialAuthProviderParam } from './google/social-auth-provider.param';
 import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
 import { RegisterUserBody } from './dto/register-user-body.dto';
 import { SessionService } from '@/modules/session/session.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +40,7 @@ export class AuthController {
     private readonly sessionService: SessionService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60 * 1000 } })
   @Public()
   @Post('login')
   @UseGuards(LocalAuthGuard)
@@ -129,9 +131,7 @@ export class AuthController {
     try {
       const response = await this.googleService.getAccessToken(body.code);
 
-      const profile = await this.googleService.getProfileByToken(
-        response.tokens.id_token,
-      );
+      const profile = await this.googleService.getProfileByToken(response.tokens.id_token);
 
       const tokens = await this.authService.socialLogin(profile);
       return tokens;
@@ -157,9 +157,7 @@ export class AuthController {
   @Post('/register')
   async register(@Body() body: RegisterUserBody) {
     // needs invite token
-    const validToken = await this.authService.validateInviteToken(
-      body.invitationCode,
-    );
+    const validToken = await this.authService.validateInviteToken(body.invitationCode);
 
     if (!validToken) {
       throw new BadRequestException('Invalid token');
