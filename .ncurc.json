@@ -1,0 +1,9 @@
+{
+  "upgrade": false,
+  "interactive": true,
+  "reject": [
+    "typescript",
+    "@aws-sdk/*",
+    "googleapis"
+  ]
+}
