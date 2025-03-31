@@ -17,7 +17,7 @@ interface WorkerResult {
 }
 
 const imageConversionWorkerPath = join(__dirname, '..', 'workers', 'image-conversion.worker.js');
-const workerPath = join(__dirname, '..', '..', '..', '..', 'bin', '/image-webworker');
+// const workerPath = join(__dirname, '..', '..', '..', '..', 'bin', '/image-webworker');
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
@@ -223,7 +223,7 @@ export class ImageConversionProcessor extends WorkerHost {
 
 async function goWorker(fileBuffer: Buffer) {
   return new Promise((resolve, reject) => {
-    const child = spawn(workerPath, {
+    const child = spawn('tbd', {
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,
     });
