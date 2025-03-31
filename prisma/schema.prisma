@@ -177,6 +177,7 @@ model Team {
   workflows    Workflow[]
   documents    Document[]
   imageFolders TextToImageFolder[]
+  projects     Project[]
 
   organisation Organisation @relation(fields: [organisationId], references: [id])
 
@@ -197,6 +198,41 @@ model TeamUser {
 
   @@index([teamId, userId], name: "team_users_team_id_user_id_index")
   @@map("team_users")
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  teamId      String    @map("team_id")
+  name        String
+  description String?
+  status      String?   @default("active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  projectables Projectable[]
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId, name], name: "projects_team_id_name_index")
+  @@map("projects")
+}
+
+model Projectable {
+  id              String    @id @default(cuid())
+  projectId       String    @map("project_id")
+  projectableType Int       @map("projectable_type") @db.SmallInt
+  projectableId   String    @map("projectable_id")
+  role            String?
+  orderColumn     Int?      @map("order_column") @db.SmallInt
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, projectableType, projectableId], name: "projectables_index")
+  @@map("projectables")
 }
 
 model Chat {
