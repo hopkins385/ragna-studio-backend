@@ -66,12 +66,19 @@ export class ChatStreamService {
     private readonly toolFunctionService: AssistantToolFunctionService,
   ) {}
 
+  /**
+   * Creates a stream of chat messages
+   * @param chat - The chat entity
+   * @param payload - The payload containing the request data
+   * @param abortController - The abort controller to cancel the stream
+   * @returns
+   */
   async createMessageStream(
     chat: ChatEntity,
     payload: CreateChatStreamDto,
     abortController: AbortController,
   ): Promise<Readable> {
-    this.logger.debug('Creating chat message stream:', payload);
+    // this.logger.debug('Creating chat message stream:', payload);
 
     const modelFactory = new AiModelFactory(this.configService);
 
@@ -98,7 +105,7 @@ export class ChatStreamService {
       usages: [],
     };
 
-    const stream = this.generateStream(abortController.signal, context, payload);
+    const stream = this.createTextStream(abortController.signal, context, payload);
 
     const readableStream = Readable.from(stream);
 
@@ -170,59 +177,20 @@ export class ChatStreamService {
     return readableStream.pipe(transform);
   }
 
-  private async finalize(context: StreamContext, signal: AbortSignal): Promise<void> {
-    context.isCancelled = true;
-    if (signal.aborted) {
-      // TODO: token usage for incomplete messages
-      this.logger.debug(`[finalize] aborted: ${signal.aborted}`);
-    }
-
-    const usage = {
-      tokens: context.usages.reduce(
-        (acc, curr) => {
-          acc.prompt += curr.tokens.promptTokens;
-          acc.completion += curr.tokens.completionTokens;
-          acc.reasoning = 0;
-          acc.total += curr.tokens.totalTokens;
-          return acc;
-        },
-        {
-          prompt: 0,
-          completion: 0,
-          reasoning: 0,
-          total: 0,
-        },
-      ),
-    };
-
-    const llmId = context.chat.assistant?.llm.id;
-    if (!llmId) {
-      this.logger.error('[finalize] LLM ID not found');
-    }
-
-    this.tokenUsageEvent.emitTokenUsage(
-      TokenUsageEventDto.fromInput({
-        userId: context.chat.userId,
-        modelId: llmId,
-        tokens: usage.tokens,
-      }),
-    );
-
-    return this.saveMessage(context.chat.id, {
-      userId: context.chat.userId,
-      content: context.chunks.join(''),
-      role: ChatMessageRole.ASSISTANT,
-      timestamp: new Date(),
-      isComplete: true,
-      isFirstMessage: context.chat.messages.length < 2,
-      usage: context.usages as any, // TODO: fix type
-    });
-  }
-
-  async *generateStream(signal: AbortSignal, context: StreamContext, payload: CreateChatStreamDto) {
+  /**
+   * Creates a text stream
+   * @param signal - AbortSignal to cancel the stream
+   * @param context - StreamContext containing model and chat information
+   * @param payload - CreateChatStreamDto containing the request payload
+   * @return AsyncGenerator yielding handleTextStream which yields text chunks and tool calls
+   */
+  async *createTextStream(
+    signal: AbortSignal,
+    context: StreamContext,
+    payload: CreateChatStreamDto,
+  ): AsyncGenerator<any, void, any> {
+    // this.logger.debug(`[generateStream] payload:`, payload);
     const { settings: callSettings, availableTools } = this.createCallSettings(context, payload);
-
-    this.logger.debug(`[generateStream] payload:`, payload);
 
     const initialResult = streamText({
       abortSignal: signal,
@@ -234,10 +202,19 @@ export class ChatStreamService {
       ...callSettings,
     });
 
-    yield* this.handleStream(signal, initialResult, payload, context, availableTools);
+    yield* this.handleTextStream(signal, initialResult, payload, context, availableTools);
   }
 
-  private async *handleStream(
+  /**
+   * Handles the text stream
+   * @param signal - AbortSignal to cancel the stream
+   * @param result - The streamText object for accessing the stream
+   * @param payload - CreateChatStreamDto containing the request payload
+   * @param context - StreamContext containing model and chat information
+   * @param availableTools - Available tools for the ai model
+   * @returns AsyncGenerator yielding text chunks
+   */
+  private async *handleTextStream(
     signal: AbortSignal,
     result: StreamTextResult<any, unknown>,
     payload: CreateChatStreamDto,
@@ -287,6 +264,15 @@ export class ChatStreamService {
     await this.addUsage('text', context, result);
   }
 
+  /**
+   * Handles tool calls and streams the results
+   * @param signal - AbortSignal to cancel the stream
+   * @param initalResult - The initial result object for accessing different stream types and additional information.
+   * @param payload - CreateChatStreamDto containing the request payload
+   * @param context - StreamContext containing model and chat information
+   * @param availableTools - Available tools for the ai model
+   * @returns AsyncGenerator yielding tool call results
+   */
   private async *handleToolCalls(
     signal: AbortSignal,
     initalResult: StreamTextResult<any, unknown>,
@@ -339,7 +325,7 @@ export class ChatStreamService {
       },
     });
 
-    this.logger.debug('[handleToolCalls] messages:', payload.messages);
+    // this.logger.debug('[handleToolCalls] messages:', payload.messages);
 
     const result = streamText({
       abortSignal: signal,
@@ -405,6 +391,61 @@ export class ChatStreamService {
     await this.addUsage('text', context, result);
   }
 
+  /**
+   * Finalizes the stream by saving the message and emitting token usage
+   * @param context - StreamContext containing model and chat information
+   * @param signal - AbortSignal to cancel the stream
+   * @returns
+   */
+  private async finalize(context: StreamContext, signal: AbortSignal): Promise<void> {
+    context.isCancelled = true;
+    if (signal.aborted) {
+      // TODO: token usage for incomplete messages
+      this.logger.debug(`[finalize] aborted: ${signal.aborted}`);
+    }
+
+    const usage = {
+      tokens: context.usages.reduce(
+        (acc, curr) => {
+          acc.prompt += curr.tokens.promptTokens;
+          acc.completion += curr.tokens.completionTokens;
+          acc.reasoning = 0;
+          acc.total += curr.tokens.totalTokens;
+          return acc;
+        },
+        {
+          prompt: 0,
+          completion: 0,
+          reasoning: 0,
+          total: 0,
+        },
+      ),
+    };
+
+    const llmId = context.chat.assistant?.llm.id;
+    if (!llmId) {
+      this.logger.error('[finalize] LLM ID not found');
+    }
+
+    this.tokenUsageEvent.emitTokenUsage(
+      TokenUsageEventDto.fromInput({
+        userId: context.chat.userId,
+        modelId: llmId,
+        tokens: usage.tokens,
+      }),
+    );
+
+    return this.saveMessage(context.chat.id, {
+      userId: context.chat.userId,
+      content: context.chunks.join(''),
+      role: ChatMessageRole.ASSISTANT,
+      timestamp: new Date(),
+      isComplete: true,
+      isFirstMessage: context.chat.messages.length < 2,
+      usage: context.usages as any, // TODO: fix type
+    });
+  }
+
   private async saveMessage(
     chatId: string,
     messageData: {
@@ -417,7 +458,7 @@ export class ChatStreamService {
       usage?: LanguageModelUsage[];
     },
   ) {
-    this.logger.debug('Saving message:', messageData);
+    // this.logger.debug('Saving message:', messageData);
     // FirstMessage Event
     if (messageData.isFirstMessage) {
       this.chatEvent.emitIsFirstChatMessage(
