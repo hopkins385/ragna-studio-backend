@@ -36,8 +36,8 @@ export class PromptWizardService {
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({
-      provider: ProviderType.ANTHROPIC,
-      model: 'claude-3-5-sonnet-latest',
+      provider: ProviderType.OPENAI,
+      model: 'gpt-4o',
     });
 
     let userContent = basicPromptImprovementTemplate
@@ -58,7 +58,7 @@ export class PromptWizardService {
       model: modelFactory.getModel(),
       messages,
       maxSteps: 1,
-      maxRetries: 3,
+      maxRetries: 1,
     });
 
     return text;
@@ -96,10 +96,7 @@ export class PromptWizardService {
     return text;
   }
 
-  private async finalzingPromptAgent(payload: {
-    inputPrompt: string;
-    critique: string;
-  }) {
+  private async finalzingPromptAgent(payload: { inputPrompt: string; critique: string }) {
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({

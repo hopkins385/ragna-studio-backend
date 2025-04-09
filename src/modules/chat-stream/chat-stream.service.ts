@@ -49,6 +49,7 @@ const stringify = fastJson({
 @Injectable()
 export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
+  private readonly MAX_RETRIES = 10;
   private readonly MAX_TOOL_RECURSIONS = 20;
   private readonly DEFAULT_STREAM_DELAY_MS = 10;
   private readonly THINKING_CONFIGS = {
@@ -69,22 +70,28 @@ export class ChatStreamService {
   /**
    * Creates a stream of chat messages
    * @param chat - The chat entity
-   * @param payload - The payload containing the request data
+   * @param chatStreamDto - The dto containing the request data
    * @param abortController - The abort controller to cancel the stream
    * @returns
    */
   async createMessageStream(
-    chat: ChatEntity,
-    payload: CreateChatStreamDto,
-    abortController: AbortController,
+    payload: {
+      chat: ChatEntity;
+      chatStreamDto: CreateChatStreamDto;
+    },
+    options: {
+      abortController: AbortController;
+    },
   ): Promise<Readable> {
-    // this.logger.debug('Creating chat message stream:', payload);
+    const { chat, chatStreamDto } = payload;
+    const { abortController } = options;
+    const { signal: abortSignal } = abortController;
 
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({
-      provider: payload.provider,
-      model: payload.model,
+      provider: chatStreamDto.provider,
+      model: chatStreamDto.model,
     });
 
     /*if (
@@ -105,13 +112,21 @@ export class ChatStreamService {
       usages: [],
     };
 
-    const stream = this.createTextStream(abortController.signal, context, payload);
+    const stream = this.createTextStream(
+      {
+        context,
+        chatStreamDto,
+      },
+      {
+        abortSignal,
+      },
+    );
 
     const readableStream = Readable.from(stream);
 
     readableStream.on('end', () => {
       this.logger.debug('[ReadableStream] ended');
-      this.finalize(context, abortController.signal);
+      this.finalize(context, abortSignal);
     });
 
     readableStream.on('error', async (error: any) => {
@@ -121,7 +136,7 @@ export class ChatStreamService {
         return;
       }
       this.logger.error(`[ReadableStream] error: ${error?.message}`);
-      // await this.finalize(context, abortController.signal); // TODO: finalize?
+      // await this.finalize(context, abortController.abortSignal); // TODO: finalize?
       abortController.abort();
     });
 
@@ -146,15 +161,15 @@ export class ChatStreamService {
     transform.on('error', async (error: any) => {
       if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
         this.logger.error(
-          `[Transform stream] error: ${error?.message}, Aborted: ${abortController.signal.aborted}`,
+          `[Transform stream] error: ${error?.message}, Aborted: ${abortSignal.aborted}`,
         );
         return;
       }
 
       this.logger.debug(
-        `[Transform stream] error: ${error?.message}; code: ${error?.code}; name: ${error?.name}; Aborted: ${abortController.signal.aborted}`,
+        `[Transform stream] error: ${error?.message}; code: ${error?.code}; name: ${error?.name}; Aborted: ${abortSignal.aborted}`,
       );
-      await this.finalize(context, abortController.signal);
+      await this.finalize(context, abortSignal);
       abortController.abort();
     });
 
@@ -166,7 +181,7 @@ export class ChatStreamService {
         transform.resume();
       }
 
-      // Signal that backpressure has been relieved
+      // abortSignal that backpressure has been relieved
       transform.emit('ready');
     });
 
@@ -179,50 +194,76 @@ export class ChatStreamService {
 
   /**
    * Creates a text stream
-   * @param signal - AbortSignal to cancel the stream
    * @param context - StreamContext containing model and chat information
-   * @param payload - CreateChatStreamDto containing the request payload
+   * @param chatStreamDto - CreateChatStreamDto containing the request payload
+   * @param abortSignal - AbortSignal to cancel the stream
    * @return AsyncGenerator yielding handleTextStream which yields text chunks and tool calls
    */
   async *createTextStream(
-    signal: AbortSignal,
-    context: StreamContext,
-    payload: CreateChatStreamDto,
+    payload: {
+      context: StreamContext;
+      chatStreamDto: CreateChatStreamDto;
+    },
+    options: {
+      abortSignal: AbortSignal;
+    },
   ): AsyncGenerator<any, void, any> {
-    // this.logger.debug(`[generateStream] payload:`, payload);
-    const { settings: callSettings, availableTools } = this.createCallSettings(context, payload);
+    const { context, chatStreamDto } = payload;
+    const { abortSignal } = options;
 
-    const initialResult = streamText({
-      abortSignal: signal,
-      model: context.model,
-      messages: payload.messages,
+    const { settings: callSettings, availableTools } = this.createCallSettings({
+      context,
+      chatStreamDto,
+    });
+
+    const streamTextResult = streamText({
+      abortSignal,
+      model: payload.context.model,
+      messages: payload.chatStreamDto.messages,
       maxSteps: 1,
-      maxRetries: 10,
+      maxRetries: this.MAX_RETRIES,
       toolChoice: 'auto',
       ...callSettings,
     });
 
-    yield* this.handleTextStream(signal, initialResult, payload, context, availableTools);
+    yield* this.handleTextStream(
+      {
+        streamTextResult,
+        chatStreamDto,
+        context,
+        availableTools,
+      },
+      {
+        abortSignal,
+      },
+    );
   }
 
   /**
    * Handles the text stream
-   * @param signal - AbortSignal to cancel the stream
-   * @param result - The streamText object for accessing the stream
-   * @param payload - CreateChatStreamDto containing the request payload
+   * @param streamTextResult - The streamText object for accessing the stream
+   * @param chatStreamDto - CreateChatStreamDto containing the request payload
    * @param context - StreamContext containing model and chat information
    * @param availableTools - Available tools for the ai model
+   * @param abortSignal - AbortSignal to cancel the stream
    * @returns AsyncGenerator yielding text chunks
    */
   private async *handleTextStream(
-    signal: AbortSignal,
-    result: StreamTextResult<any, unknown>,
-    payload: CreateChatStreamDto,
-    context: StreamContext,
-    availableTools: any,
+    payload: {
+      streamTextResult: StreamTextResult<any, unknown>;
+      chatStreamDto: CreateChatStreamDto;
+      context: StreamContext;
+      availableTools: any;
+    },
+    options: {
+      abortSignal: AbortSignal;
+    },
   ): AsyncGenerator<any, void, any> {
-    for await (const chunk of result.fullStream) {
-      if (signal.aborted) return;
+    const { streamTextResult, chatStreamDto, context, availableTools } = payload;
+    const { abortSignal } = options;
+
+    for await (const chunk of streamTextResult.fullStream) {
+      if (abortSignal.aborted) return;
 
       if (chunk.type === 'error') {
         this.logger.debug('[handleStream] chunk error:', chunk.error);
@@ -232,7 +273,7 @@ export class ChatStreamService {
       if (chunk.type === 'finish') {
         switch (chunk.finishReason) {
           case 'error':
-            throw new Error(`Finish Error: ${JSON.stringify(result.response)}`);
+            throw new Error(`Finish Error: ${JSON.stringify(streamTextResult.response)}`);
           case 'length':
             // this.onStreamStopLength();
             break;
@@ -241,7 +282,17 @@ export class ChatStreamService {
             break;
           case 'tool-calls':
             // handle tool calls
-            yield* this.handleToolCalls(signal, result, payload, context, availableTools);
+            yield* this.handleToolCalls(
+              {
+                streamTextResult,
+                chatStreamDto,
+                context,
+                availableTools,
+              },
+              {
+                abortSignal,
+              },
+            );
             break;
           default:
             this.logger.warn(`[handleStream] Unknown finish reason: ${chunk.finishReason}`);
@@ -261,25 +312,32 @@ export class ChatStreamService {
     }
 
     // usage
-    await this.addUsage('text', context, result);
+    await this.addUsage('text', context, streamTextResult);
   }
 
   /**
    * Handles tool calls and streams the results
-   * @param signal - AbortSignal to cancel the stream
-   * @param initalResult - The initial result object for accessing different stream types and additional information.
+   * @param streamTextResult - The initial result object for accessing different stream types and additional information.
    * @param payload - CreateChatStreamDto containing the request payload
    * @param context - StreamContext containing model and chat information
    * @param availableTools - Available tools for the ai model
+   * @param abortSignal - AbortSignal to cancel the stream
    * @returns AsyncGenerator yielding tool call results
    */
   private async *handleToolCalls(
-    signal: AbortSignal,
-    initalResult: StreamTextResult<any, unknown>,
-    payload: CreateChatStreamDto,
-    context: StreamContext,
-    availableTools: any,
+    payload: {
+      streamTextResult: StreamTextResult<any, unknown>;
+      chatStreamDto: CreateChatStreamDto;
+      context: StreamContext;
+      availableTools: any;
+    },
+    options: {
+      abortSignal: AbortSignal;
+    },
   ): AsyncGenerator<any, void, any> {
+    const { streamTextResult, chatStreamDto, context, availableTools } = payload;
+    const { abortSignal } = options;
+
     context.toolCallRecursion++;
     // Prevent infinite loop
     if (context.toolCallRecursion >= this.MAX_TOOL_RECURSIONS) {
@@ -287,8 +345,8 @@ export class ChatStreamService {
     }
 
     const [toolCalls, toolResults] = await Promise.all([
-      initalResult.toolCalls,
-      initalResult.toolResults,
+      streamTextResult.toolCalls,
+      streamTextResult.toolResults,
     ]);
 
     // Ensure toolResults is not empty to avoid infinite loop
@@ -302,7 +360,7 @@ export class ChatStreamService {
       { role: 'tool', content: toolResults },
     ];
 
-    payload.messages.push(...toolMessages);
+    chatStreamDto.messages.push(...toolMessages);
 
     // store tool call in database
     await this.chatService.createMessage({
@@ -325,18 +383,16 @@ export class ChatStreamService {
       },
     });
 
-    // this.logger.debug('[handleToolCalls] messages:', payload.messages);
-
-    const result = streamText({
-      abortSignal: signal,
+    const toolCallStreamTextResult = streamText({
+      abortSignal: abortSignal,
       model: context.model,
-      system: payload.systemPrompt,
-      messages: payload.messages,
-      maxTokens: payload.maxTokens,
+      system: chatStreamDto.systemPrompt,
+      messages: chatStreamDto.messages,
+      maxTokens: chatStreamDto.maxTokens,
       tools: availableTools,
       toolChoice: 'auto',
       maxSteps: 1,
-      maxRetries: 3,
+      maxRetries: this.MAX_RETRIES,
     });
 
     this.chatEvent.emitToolEndCall(
@@ -347,8 +403,8 @@ export class ChatStreamService {
       }),
     );
 
-    for await (const chunk of result.fullStream) {
-      if (signal.aborted) return;
+    for await (const chunk of toolCallStreamTextResult.fullStream) {
+      if (abortSignal.aborted) return;
 
       if (chunk.type === 'error') {
         this.logger.debug('[handleToolCalls] chunk error:', chunk.error);
@@ -359,7 +415,7 @@ export class ChatStreamService {
         // handle finish
         switch (chunk.finishReason) {
           case 'error':
-            throw new Error(`Finish Error: ${JSON.stringify(result.response)}`);
+            throw new Error(`Finish Error: ${JSON.stringify(toolCallStreamTextResult.response)}`);
           case 'length':
             // this.onStreamStopLength();
             break;
@@ -368,7 +424,15 @@ export class ChatStreamService {
             break;
           case 'tool-calls':
             // call itself recursively
-            yield* this.handleToolCalls(signal, result, payload, context, availableTools);
+            yield* this.handleToolCalls(
+              {
+                streamTextResult: toolCallStreamTextResult,
+                chatStreamDto,
+                context,
+                availableTools,
+              },
+              { abortSignal },
+            );
             break;
           default:
             this.logger.warn(`[handleToolCalls] Unknown finish reason: ${chunk.finishReason}`);
@@ -388,20 +452,20 @@ export class ChatStreamService {
     }
 
     // usage
-    await this.addUsage('text', context, result);
+    await this.addUsage('text', context, toolCallStreamTextResult);
   }
 
   /**
    * Finalizes the stream by saving the message and emitting token usage
    * @param context - StreamContext containing model and chat information
-   * @param signal - AbortSignal to cancel the stream
+   * @param abortSignal - AbortSignal to cancel the stream
    * @returns
    */
-  private async finalize(context: StreamContext, signal: AbortSignal): Promise<void> {
+  private async finalize(context: StreamContext, abortSignal: AbortSignal): Promise<void> {
     context.isCancelled = true;
-    if (signal.aborted) {
+    if (abortSignal.aborted) {
       // TODO: token usage for incomplete messages
-      this.logger.debug(`[finalize] aborted: ${signal.aborted}`);
+      this.logger.debug(`[finalize] aborted: ${abortSignal.aborted}`);
     }
 
     const usage = {
@@ -510,24 +574,29 @@ export class ChatStreamService {
     if (usage) context.usages.push(usage);
   }
 
-  private createCallSettings(context: StreamContext, payload: CreateChatStreamDto) {
+  private createCallSettings(payload: {
+    context: StreamContext;
+    chatStreamDto: CreateChatStreamDto;
+  }) {
+    const { context, chatStreamDto } = payload;
+
     // Get available tools
     const availableTools = this.toolFunctionService.getTools({
       chatId: context.chat.id,
       userId: context.chat.userId,
-      llmProvider: payload.provider,
-      llmName: payload.model,
+      llmProvider: chatStreamDto.provider,
+      llmName: chatStreamDto.model,
       assistantTools: context.chat.assistant.tools.map((t) => t.tool),
       assistantId: context.chat.assistant.id,
     });
 
     // Get settings
     const settings = {
-      system: payload.systemPrompt,
+      system: chatStreamDto.systemPrompt,
       tools: availableTools,
-      maxTokens: payload.maxTokens,
-      temperature: payload.temperature,
-      providerOptions: this.getProviderOptions(payload),
+      maxTokens: chatStreamDto.maxTokens,
+      temperature: chatStreamDto.temperature,
+      providerOptions: this.getProviderOptions(chatStreamDto),
     };
 
     return {

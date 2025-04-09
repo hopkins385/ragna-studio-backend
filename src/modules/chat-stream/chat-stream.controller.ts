@@ -49,6 +49,7 @@ export class ChatStreamController {
     @Body() body: CreateChatStreamBody,
   ) {
     const abortController = new AbortController();
+    const { signal } = abortController;
     const handlers = this.setupStreamHandlers(req, res, abortController);
 
     const chat = await this.chatService.getChatForUser({
@@ -63,17 +64,21 @@ export class ChatStreamController {
     // Set stream headers
     this.setStreamHeaders(res);
 
-    const payload = this.createChatStreamPayload(body, chat);
+    const chatStreamDto = this.createChatStreamDto(body, chat);
 
     try {
       const readableStream = await this.chatStreamService.createMessageStream(
-        chat,
-        payload,
-        abortController,
+        {
+          chat,
+          chatStreamDto,
+        },
+        {
+          abortController,
+        },
       );
 
       await pipeline(readableStream, res, {
-        signal: abortController.signal,
+        signal,
       });
       //
     } catch (error: any) {
@@ -86,10 +91,7 @@ export class ChatStreamController {
     }
   }
 
-  private createChatStreamPayload(
-    body: CreateChatStreamBody,
-    chat: ChatEntity,
-  ): CreateChatStreamDto {
+  private createChatStreamDto(body: CreateChatStreamBody, chat: ChatEntity): CreateChatStreamDto {
     // timestamp
     const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
 
@@ -136,7 +138,7 @@ export class ChatStreamController {
         abortController.abort();
       },
       onDrain: () => {
-        this.logger.error('drained, which is unhandled');
+        this.logger.warn('stream drained, which is unhandled');
       },
       onError: (error: Error) => {
         this.logger.error(`error: ${error.message}`);

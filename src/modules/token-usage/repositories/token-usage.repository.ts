@@ -58,18 +58,20 @@ export class TokenUsageRepository {
     });
   }
 
-  async getAllTokenUsagesForUser(payload: {
-    userId: string;
-    period: { from: Date; to: Date };
-  }) {
+  async getAllTokenUsagesForUser(payload: { userId: string; period: { from: Date; to: Date } }) {
     return this.prisma.tokenUsage.findMany({
       select: {
+        promptTokens: true,
+        completionTokens: true,
         totalTokens: true,
         createdAt: true,
         llm: {
           select: {
             provider: true,
             displayName: true,
+            llmPrices: {
+              select: { inputTokenPrice: true, outputTokenPrice: true, currency: true },
+            },
           },
         },
       },
