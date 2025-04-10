@@ -1,26 +1,20 @@
 export class SessionUser {
-  id: string;
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly lastLoginAt: Date;
+  readonly organisationId: string;
+  readonly totalCredits: number;
 
-  email: string;
-
-  name: string;
-
-  firstName: string;
-
-  lastName: string;
-
-  totalCredits: number;
-
-  lastLoginAt: Date;
-
-  // custom
-  organisationId: string;
-  firstTeamId: string;
   hasOnboarded: boolean;
   hasEmailVerified: boolean;
-  credits: number;
 
   roles: string[];
+
+  activeTeamId: string;
+  firstTeamId: string;
   teams: string[];
 
   constructor(input: {
@@ -34,6 +28,7 @@ export class SessionUser {
     hasEmailVerified: boolean;
     hasOnboarded: boolean;
     organisationId: string;
+    activeTeamId: string;
     firstTeamId: string;
     roles: string[];
     teams: string[];
@@ -48,6 +43,7 @@ export class SessionUser {
     this.hasEmailVerified = input.hasEmailVerified;
     this.hasOnboarded = input.hasOnboarded;
     this.organisationId = input.organisationId;
+    this.activeTeamId = input.activeTeamId;
     this.firstTeamId = input.firstTeamId;
     this.roles = input.roles;
     this.teams = input.teams;
@@ -64,6 +60,7 @@ export class SessionUser {
     hasEmailVerified: boolean;
     hasOnboarded: boolean;
     organisationId: string;
+    activeTeamId: string;
     firstTeamId: string;
     roles: string[];
     teams: string[];

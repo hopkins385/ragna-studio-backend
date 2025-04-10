@@ -143,6 +143,8 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
+    const firstTeamId = user.teams?.[0]?.team.id || '';
+
     return SessionUser.fromInput({
       id: user.id,
       email: user.email,
@@ -154,7 +156,8 @@ export class UserService {
       hasEmailVerified: user.emailVerifiedAt !== null,
       hasOnboarded: user.onboardedAt !== null,
       organisationId: user.teams?.[0]?.team.organisationId || '',
-      firstTeamId: user.teams?.[0]?.team.id || '',
+      firstTeamId,
+      activeTeamId: firstTeamId,
       roles: user.roles.map((r) => r.role.name),
       teams: user.teams.map((t) => t.team.id),
     });
