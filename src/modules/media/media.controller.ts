@@ -50,10 +50,7 @@ export class MediaController {
 
   @Post('for/paginate')
   @HttpCode(200)
-  async paginateFindAllFor(
-    @Body() body: MediaAbleBody,
-    @Query() query: PaginateQuery,
-  ) {
+  async paginateFindAllFor(@Body() body: MediaAbleBody, @Query() query: PaginateQuery) {
     const { model } = body;
     const mediaAbleDto = MediaAbleDto.fromInput({
       id: model.id,
@@ -73,15 +70,12 @@ export class MediaController {
   }
 
   @Delete(':id')
-  async remove(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+  async remove(@ReqUser() reqUser: UserEntity, @Param() param: IdParam) {
     try {
-      await this.mediaService.delete({ userId: user.id, mediaId: param.id });
+      await this.mediaService.delete({ mediaId: param.id });
       return { status: 'ok' };
     } catch (error: any) {
-      this.logger.error(
-        `Failed to delete media: ${error?.message}`,
-        error?.stack,
-      );
+      this.logger.error(`Failed to delete media: ${error?.message}`, error?.stack);
       throw new InternalServerErrorException('Error deleting media');
     }
   }

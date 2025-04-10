@@ -9,14 +9,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
-import {
-  mkdir,
-  readdir,
-  readFile,
-  rmdir,
-  unlink,
-  writeFile,
-} from 'fs/promises';
+import { mkdir, readdir, readFile, rmdir, unlink, writeFile } from 'fs/promises';
 import { basename, dirname, join } from 'path';
 import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
 import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
@@ -88,7 +81,7 @@ export class StorageService {
         filePath: newPath,
         fileMime: payload.file.mimetype,
         fileSize: payload.file.size,
-        model: { id: payload.userId, type: 'user' },
+        model: { id: payload.teamId, type: 'team' }, // TODO: client can decide the model type
       });
 
       return createMediaPayload;
@@ -200,10 +193,7 @@ export class StorageService {
     }
   }
 
-  async uploadFileToBucket(
-    bucket: Bucket,
-    payload: UploadFileDto,
-  ): Promise<CreateMediaDto> {
+  async uploadFileToBucket(bucket: Bucket, payload: UploadFileDto): Promise<CreateMediaDto> {
     if (!payload.file.mimetype) {
       throw new Error('File mimetype is required.');
     }
@@ -334,13 +324,7 @@ export class StorageService {
   async downloadFileToTemp(url: string): Promise<string> {
     const response = await fetch(url);
     const buffer = Buffer.from(await response.arrayBuffer());
-    const fpath = join(
-      process.cwd(),
-      'temp',
-      'files',
-      randomUUID(),
-      basename(url),
-    );
+    const fpath = join(process.cwd(), 'temp', 'files', randomUUID(), basename(url));
     await mkdir(dirname(fpath), { recursive: true });
     await writeFile(fpath, buffer, 'binary');
     return fpath;
@@ -357,10 +341,13 @@ export class StorageService {
     return true;
   }
 
-  async deleteFileFromBucket(
-    filePath: string,
-    bucketName?: Bucket,
-  ): Promise<boolean> {
+  async deleteFileFromBucket({
+    filePath,
+    bucketName,
+  }: {
+    filePath: string;
+    bucketName?: Bucket;
+  }): Promise<boolean> {
     const bucketSettings = this.getBucketSettings(bucketName ?? 'images');
     const cleanedFilePath = filePath.replace(`${bucketSettings.url}/`, '');
 
@@ -392,9 +379,7 @@ export class StorageService {
       });
       return Buffer.from(response.data);
     } catch (error: any) {
-      this.logger.error(
-        ` Error downloading file from url: ${url}: ${error?.message}`,
-      );
+      this.logger.error(` Error downloading file from url: ${url}: ${error?.message}`);
       throw error;
     }
   }
@@ -402,10 +387,8 @@ export class StorageService {
   getFileExtension(mimeType: string) {
     return {
       'application/pdf': 'pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        'docx',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        'xlsx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
       'text/markdown': 'md',
       'text/csv': 'csv',
       'text/html': 'html',
@@ -436,11 +419,14 @@ export class StorageService {
     }[extension];
   }
 
-  async deleteFile(userId: string, fileName: string) {
+  async deleteFileBy({ userId, fileName }: { userId: string; fileName: string }) {
     const filePath = join(this.getBasePath(), userId, fileName);
-    return unlink(filePath);
+    return this.deleteFile({ filePath });
   }
 
+  async deleteFile({ filePath }: { filePath: string }) {
+    return unlink(filePath);
+  }
   getBasePath() {
     return join(process.cwd(), 'uploads');
   }

@@ -68,11 +68,7 @@ export class MediaService {
     });
   }
 
-  async paginateFindAllFor(
-    model: MediaAbleDto,
-    page: number,
-    limit: number = 10,
-  ) {
+  async paginateFindAllFor(model: MediaAbleDto, page: number, limit: number = 10) {
     return this.mediaRepo.prisma.media
       .paginate({
         select: {
@@ -103,23 +99,19 @@ export class MediaService {
     return this.mediaAbleService.deleteManyMedia(mediaId);
   }
 
-  async delete({
-    userId,
-    mediaId,
-  }: {
-    userId: string;
-    mediaId: string;
-  }): Promise<boolean> {
+  async delete({ mediaId }: { mediaId: string }): Promise<boolean> {
     const media = await this.findFirst(mediaId);
     if (!media) {
       throw new Error('Media not found');
     }
 
+    const { filePath } = media;
+
     // is media local or remote?
     if (media.filePath.startsWith('http')) {
-      await this.storageService.deleteFileFromBucket(media.filePath);
+      await this.storageService.deleteFileFromBucket({ filePath });
     } else {
-      await this.storageService.deleteFile(userId, media.fileName);
+      await this.storageService.deleteFile({ filePath });
     }
 
     await this.mediaRepo.prisma.$transaction([
