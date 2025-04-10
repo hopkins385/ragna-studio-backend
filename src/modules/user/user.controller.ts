@@ -11,6 +11,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Logger,
+  Query,
+  ConflictException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserBody } from './dto/create-user-body.dto';
@@ -22,6 +24,7 @@ import { UserEntity } from './entities/user.entity';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
 import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
 
 @Controller('user')
 @UseGuards(RolesGuard)
@@ -37,42 +40,54 @@ export class UserController {
       return await this.userService.create(createUserBody);
     } catch (error: unknown) {
       this.logger.error(`Error creating user`, error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error creating user');
     }
   }
 
   @Post('invite')
   @Roles(Role.ADMIN)
-  async invite(@Body() inviteUserBody: InviteUserBody) {
+  async invite(@ReqUser() reqUser: UserEntity, @Body() inviteUserBody: InviteUserBody) {
     try {
-      const { inviteToken } = await this.userService.invite(inviteUserBody);
+      const { inviteToken } = await this.userService.invite({
+        name: inviteUserBody.name,
+        email: inviteUserBody.email,
+        teamId: reqUser.firstTeamId,
+      });
       return { inviteToken };
     } catch (error: unknown) {
       this.logger.error(`Error creating user`, error);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error creating user');
     }
   }
 
-  @Get('/invite-token')
+  /*@Get('/invite-token')
   @Roles(Role.ADMIN)
-  async createInviteToken(@ReqUser() user: UserEntity) {
+  async createInviteToken(@ReqUser() reqUser: UserEntity) {
     try {
       const token = await this.userService.createInviteToken({
-        userId: user.id,
+        reqUserId: reqUser.id,
       });
       return { token };
     } catch (error: unknown) {
       this.logger.error(`Error creating invite token`, error);
       throw new InternalServerErrorException('Error creating invite token');
     }
-  }
+  }*/
 
   @Get()
   @Roles(Role.ADMIN)
-  async findAll(@ReqUser() reqUser: UserEntity) {
+  async findAll(@ReqUser() reqUser: UserEntity, @Query() query: PaginateQuery) {
     try {
       const [users, meta] = await this.userService.findAllPaginated({
         organisationId: reqUser.organisationId,
+        page: query.page,
+        limit: query.limit,
       });
       return { users, meta };
     } catch (error: unknown) {
@@ -116,9 +131,9 @@ export class UserController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  async remove(@Param() { id }: IdParam, @ReqUser() user: UserEntity) {
+  async remove(@Param() { id }: IdParam, @ReqUser() reqUser: UserEntity) {
     // current logged in user cannot delete themselves
-    if (id === user.id) {
+    if (id === reqUser.id) {
       throw new ForbiddenException('You cannot delete yourself');
     }
     try {

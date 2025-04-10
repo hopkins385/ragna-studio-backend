@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
 import { UserEntity } from './entities/user.entity';
 import { User } from '@prisma/client';
@@ -6,10 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import { SessionUser } from './entities/session-user.entity';
 import { UserRepository } from './repositories/user.repository';
-import { BaseService } from '@/common/service/base.service';
 import { CreateUserBody } from '@/modules/user/dto/create-user-body.dto';
 import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
-import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
 
 @Injectable()
 export class UserService {
@@ -22,7 +20,7 @@ export class UserService {
 
   async create({ name, email, password }: CreateUserBody) {
     const exists = await this.findByEmail(email);
-    if (exists) throw new Error('Email already registered');
+    if (exists) throw new ConflictException('User already registered');
 
     const hasedPassword = await hashPassword(password);
     return this.repository.create({
@@ -42,21 +40,49 @@ export class UserService {
     });
   }
 
-  async invite({ name, email }: InviteUserBody) {
+  async invite({ name, email, teamId }: { name: string; email: string; teamId: string }) {
     const exists = await this.findByEmail(email);
-    if (exists) throw new Error('Email already registered');
-    const user = await this.repository.create({
+    if (exists) throw new ConflictException('User already registered');
+
+    const newUser = await this.repository.create({
       name,
       email,
       password: null,
+      onboardedAt: new Date(),
+    });
+
+    // assign to user the standard user-role
+    const role = await this.repository.prisma.role.findFirst({
+      where: {
+        name: 'user',
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!role) throw new Error('Role not found');
+
+    await this.repository.prisma.userRole.create({
+      data: {
+        userId: newUser.id,
+        roleId: role.id,
+      },
+    });
+
+    // add user to team
+    await this.repository.prisma.teamUser.create({
+      data: {
+        userId: newUser.id,
+        teamId,
+      },
     });
 
     const token = await this.createInviteToken({
-      userId: user.id,
+      userId: newUser.id,
     });
 
     return {
-      user: new UserEntity(user as any),
+      user: new UserEntity(newUser as any),
       inviteToken: token,
     };
   }
@@ -144,10 +170,24 @@ export class UserService {
     return users.map((user) => new UserEntity(user as any));
   }
 
-  async findAllPaginated({ organisationId }: { organisationId: string }) {
-    const [users, meta] = await this.repository.findAllPaginated({
-      organisationId,
-    });
+  async findAllPaginated({
+    organisationId,
+    page,
+    limit,
+  }: {
+    organisationId: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const [users, meta] = await this.repository.findAllPaginated(
+      {
+        organisationId,
+      },
+      {
+        page,
+        limit,
+      },
+    );
     return [users.map((user) => new UserEntity(user as any)), meta]; // TODO: fix types
   }
 
@@ -180,6 +220,16 @@ export class UserService {
     if (!isPasswordMatch) throw new Error('Invalid password');
 
     const hashedPassword = await hashPassword(pay.newPassword);
+    return this.repository.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+      },
+    });
+  }
+
+  async updateOnlyPassword({ userId, password }: { userId: string; password: string }) {
+    const hashedPassword = await hashPassword(password);
     return this.repository.prisma.user.update({
       where: { id: userId },
       data: {
@@ -225,15 +275,24 @@ export class UserService {
     return this.repository.softDelete(userId);
   }
 
-  async createInviteToken(payload: any): Promise<string> {
+  async createInviteToken(payload: { userId: string }): Promise<string> {
+    const jwtPayload = {
+      sub: payload.userId,
+      iss: this.configService.get<string>('JWT_ISSUER', 'https://api.ragna.io'),
+    };
     return new Promise((resolve, reject) => {
       const signOptions = {
         expiresIn: this.configService.get('JWT_INVITE_EXPIRES_IN', '1h'),
       };
-      jwt.sign(payload, this.configService.get('JWT_INVITE_SECRET'), signOptions, (err, token) => {
-        if (err) reject(err);
-        resolve(token);
-      });
+      jwt.sign(
+        jwtPayload,
+        this.configService.get('JWT_INVITE_SECRET'),
+        signOptions,
+        (err, token) => {
+          if (err) reject(err);
+          resolve(token);
+        },
+      );
     });
   }
 

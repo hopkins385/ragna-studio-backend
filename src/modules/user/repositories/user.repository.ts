@@ -13,6 +13,7 @@ interface CreateUser {
   name: string;
   email: string;
   password?: string;
+  onboardedAt?: Date;
 }
 
 @Injectable()
@@ -129,7 +130,7 @@ export class UserRepository {
           deletedAt: null,
         },
       })
-      .withPages({ page, limit });
+      .withPages({ page, limit, includePageCount: true });
   }
 
   async exists(userId: string) {
@@ -139,13 +140,18 @@ export class UserRepository {
     return !!user;
   }
 
-  async create({ name, email, password }: CreateUser): Promise<User> {
+  async create({ name, email, password, onboardedAt }: CreateUser): Promise<User> {
+    const firstName = name.split(' ')[0];
+    const lastName = name.split(' ').slice(1).join(' ');
     return this.prisma.user.create({
       data: {
         id: createId(),
         name,
+        firstName,
+        lastName,
         email,
         password,
+        onboardedAt,
       },
     });
   }

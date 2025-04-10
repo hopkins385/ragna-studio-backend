@@ -10,6 +10,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
 import { SessionService } from '../session/session.service';
+import { r } from '@faker-js/faker/dist/airline-CBNP41sR';
 
 interface UserPayload {
   userId: string;
@@ -47,10 +48,7 @@ export class AuthService {
     await this.userService.updateLastLogin(userId);
   }
 
-  async validateUser({
-    email,
-    password,
-  }: CredentialsDto): Promise<Partial<UserModel> | null> {
+  async validateUser({ email, password }: CredentialsDto): Promise<Partial<UserModel> | null> {
     const user = await this.userService.findByEmail(email);
     if (!user || !user.password || !user.password.length) return null;
 
@@ -126,7 +124,7 @@ export class AuthService {
     });
   }
 
-  async validateInviteToken(token: string): Promise<{ sub: string }> {
+  async validateInviteToken({ token }: { token: string }): Promise<{ sub: string }> {
     return this.jwtService.verifyAsync(token, {
       secret: this.configService.get<string>('JWT_INVITE_SECRET'),
     });
@@ -152,15 +150,10 @@ export class AuthService {
   async socialLogin(socialAuth: SocialAuthResponseDto): Promise<TokenResponse> {
     let user = await this.userService.findByEmail(socialAuth.email);
     if (!user) {
-      if (
-        !socialAuth?.firstName &&
-        !socialAuth?.lastName &&
-        !socialAuth?.name
-      ) {
+      if (!socialAuth?.firstName && !socialAuth?.lastName && !socialAuth?.name) {
         throw new Error('Username required');
       }
-      const userName =
-        socialAuth?.name ?? `${socialAuth?.firstName} ${socialAuth?.lastName}`;
+      const userName = socialAuth?.name ?? `${socialAuth?.firstName} ${socialAuth?.lastName}`;
       user = await this.userService.createWithoutPassword({
         email: socialAuth.email,
         name: userName,
@@ -195,6 +188,21 @@ export class AuthService {
     */
 
     return { jobId: 'job.id' };
+  }
+
+  async resetPassword(payload: { token: string; password: string }): Promise<boolean> {
+    const { sub } = await this.validateInviteToken({ token: payload.token });
+    if (!sub) {
+      throw new Error('Invalid token');
+    }
+    const user = await this.userService.findOne({ userId: sub });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    await this.userService.updateOnlyPassword({ userId: user.id, password: payload.password });
+
+    return true;
   }
 
   async confirmEmail(payload: any) {

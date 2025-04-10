@@ -100,6 +100,23 @@ export class AuthController {
     }
   }
 
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; password: string }) {
+    try {
+      const result = await this.authService.resetPassword({
+        token: body.token,
+        password: body.password,
+      });
+      if (!result) {
+        throw new Error('Failed to reset password');
+      }
+      return { success: true };
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
+  }
+
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@ReqUser() user: UserEntity) {
@@ -153,7 +170,7 @@ export class AuthController {
     }
   }
 
-  @Public()
+  /*@Public()
   @Post('/register')
   async register(@Body() body: RegisterUserBody) {
     // needs invite token
@@ -175,7 +192,7 @@ export class AuthController {
       this.logger.error(error?.message);
       throw new InternalServerErrorException('Failed to register user');
     }
-  }
+  }*/
 
   @Public()
   @Get('/confirm/email/:id/:token')
