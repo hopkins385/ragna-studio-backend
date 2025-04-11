@@ -1,10 +1,9 @@
 import { SessionService } from '@/modules/session/session.service';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserService } from '@/modules/user/user.service';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -12,14 +11,9 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly userService: UserService,
     private readonly sessionService: SessionService,
   ) {
     super({
-      // jwtFromRequest: ExtractJwt.fromExtractors([
-      //   JwtRefreshStrategy.extractJWTFromCookie,
-      //   ExtractJwt.fromAuthHeaderAsBearerToken(),
-      // ]),
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_REFRESH_SECRET'),
@@ -38,31 +32,23 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     const sessionData = await this.sessionService.getSession({ sessionId: decodedSessionId });
 
     if (!sessionData || !sessionData.user) {
+      this.logger.debug(`Invalid token, session not found`, sessionData);
       throw new UnauthorizedException();
     }
 
-    const user = await this.userService.findOne({
-      userId: sessionData.user.id,
+    const reqUser = new RequestUser({
+      id: sessionData.user.id,
+      sessionId: sessionData.id,
+      organisationId: sessionData.user.organisationId,
+      activeTeamId: sessionData.user.activeTeamId,
+      onboardedAt: sessionData.user.onboardedAt,
+      roles: sessionData.user.roles,
+      teams: sessionData.user.teams,
     });
 
-    if (!user || user.id !== decodedUserId) {
-      throw new UnauthorizedException();
-    }
-
     return {
-      sessionId: decodedSessionId,
-      ...user,
+      sessionData,
+      ...reqUser,
     };
-  }
-
-  private static extractJWTFromCookie(req: Request): string | null {
-    if (
-      req.cookies &&
-      'HOST-ragna.token' in req.cookies &&
-      req.cookies['HOST-ragna.token'].length > 0
-    ) {
-      return req.cookies['HOST-ragna.token'];
-    }
-    return null;
   }
 }

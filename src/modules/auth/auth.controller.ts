@@ -1,5 +1,6 @@
 import { Public } from '@/common/decorators/public.decorator';
 import { AuthUser } from '@/modules/auth/decorators/auth-user.decorator';
+import { ResetPasswordBody } from '@/modules/auth/dto/reset-password-body.dto';
 import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
 import { Session } from '@/modules/session/decorators/session.decorator';
 import { SessionData, SessionService } from '@/modules/session/session.service';
@@ -85,7 +86,7 @@ export class AuthController {
 
   @Public()
   @Post('reset-password')
-  async resetPassword(@Body() body: { token: string; password: string }) {
+  async resetPassword(@Body() body: ResetPasswordBody) {
     try {
       const result = await this.authService.resetPassword({
         token: body.token,
