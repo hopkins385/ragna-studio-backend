@@ -22,19 +22,19 @@ export class OnboardController {
   @Post('user')
   async onboardUser(@ReqUser() reqUser: RequestUser, @Body() body: OnboardUserBody) {
     if (reqUser.onboardedAt !== null) {
-      throw new BadRequestException('User already onboarded');
+      throw new BadRequestException('already onboarded');
     }
 
-    const user = await this.userService.findOne({ userId: reqUser.id });
-    const payload = OnboardUserDto.fromInput({
-      userId: reqUser.id,
-      userName: user.name,
-      userEmail: user.email,
-      orgName: body.orgName,
-    });
-
     try {
-      const result = await this.onboardService.onboardUser(payload);
+      const user = await this.userService.findOne({ userId: reqUser.id });
+      const result = await this.onboardService.onboardUser(
+        OnboardUserDto.fromInput({
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          orgName: body.orgName,
+        }),
+      );
       return { success: result };
     } catch (error: any) {
       throw new InternalServerErrorException('Error onboarding user');
