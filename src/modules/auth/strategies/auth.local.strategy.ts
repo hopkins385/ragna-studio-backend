@@ -38,8 +38,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       const sessionUser = new SessionUserEntity({
         id: fullUser.id,
         organisationId: fullUser.organisationId,
-        activeTeamId: fullUser.firstTeamId,
-        firstTeamId: fullUser.firstTeamId,
+        activeTeamId: fullUser.teams?.[0]?.team.id || null,
         onboardedAt: fullUser.onboardedAt,
         roles: fullUser.roles,
       });

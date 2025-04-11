@@ -6,7 +6,7 @@
     "baseDir": "modules"
   },
   "compilerOptions": {
-    "builder": "tsc",
+    "builder": "swc",
     "typeCheck": false,
     "deleteOutDir": true,
     "watchAssets": true,

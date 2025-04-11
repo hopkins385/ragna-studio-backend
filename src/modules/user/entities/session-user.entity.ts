@@ -14,7 +14,6 @@ export class SessionUser {
   roles: string[];
 
   activeTeamId: string;
-  firstTeamId: string;
   teams: string[];
 
   constructor(input: {
@@ -29,7 +28,6 @@ export class SessionUser {
     hasOnboarded: boolean;
     organisationId: string;
     activeTeamId: string;
-    firstTeamId: string;
     roles: string[];
     teams: string[];
   }) {
@@ -44,7 +42,6 @@ export class SessionUser {
     this.hasOnboarded = input.hasOnboarded;
     this.organisationId = input.organisationId;
     this.activeTeamId = input.activeTeamId;
-    this.firstTeamId = input.firstTeamId;
     this.roles = input.roles;
     this.teams = input.teams;
   }
@@ -61,7 +58,6 @@ export class SessionUser {
     hasOnboarded: boolean;
     organisationId: string;
     activeTeamId: string;
-    firstTeamId: string;
     roles: string[];
     teams: string[];
   }): SessionUser {
