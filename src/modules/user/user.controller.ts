@@ -122,8 +122,8 @@ export class UserController {
   @Roles(Role.ADMIN)
   async update(@Param() { id }: IdParam, @Body() updateUserBody: UpdateUserBody) {
     try {
-      const result = await this.userService.update(id, updateUserBody);
-      return { result };
+      const user = await this.userService.update(id, updateUserBody);
+      return { user };
     } catch (error: unknown) {
       this.logger.error(`Error updating user`, error);
       throw new InternalServerErrorException('Error updating user');
