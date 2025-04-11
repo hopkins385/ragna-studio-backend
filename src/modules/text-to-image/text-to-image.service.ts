@@ -1,15 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { UserEntity } from '../user/entities/user.entity';
-import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
-import { StorageService } from '../storage/storage.service';
-import { TextToImageRepository } from './repositories/text-to-image.repository';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
-import { FluxProInputsDto } from './utils/flux-pro-inputs.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Queue } from 'bullmq';
+import { StorageService } from '../storage/storage.service';
 import { FluxProBody } from './dto/flux-pro-body.dto';
 import { FluxUltraBody } from './dto/flux-ultra-body.dto';
+import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
+import { TextToImageRepository } from './repositories/text-to-image.repository';
+import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
+import { FluxProInputsDto } from './utils/flux-pro-inputs.dto';
 import { FluxUltraInputsDto } from './utils/flux-ultra-inputs.dto';
 
 enum TextToImageRunStatus {
@@ -102,10 +101,7 @@ export class TextToImageService {
     });
   }
 
-  public async getFolderImagesRuns(
-    folderId: string,
-    options: { showDeleted?: boolean },
-  ) {
+  public async getFolderImagesRuns(folderId: string, options: { showDeleted?: boolean }) {
     // get all images of a folder but group them by run
     return this.textToImageRepo.prisma.textToImageRun.findMany({
       select: {
@@ -234,11 +230,7 @@ export class TextToImageService {
       });
   }
 
-  public async getFolderImagesSliced(
-    folderId: string,
-    skip: number,
-    take: number,
-  ) {
+  public async getFolderImagesSliced(folderId: string, skip: number, take: number) {
     const images = await this.textToImageRepo.prisma.textToImage.findMany({
       select: {
         id: true,
@@ -303,10 +295,7 @@ export class TextToImageService {
     return this.softDeleteRun(runId);
   }
 
-  public async generateFluxProImages(
-    user: UserEntity,
-    payload: FluxProBody,
-  ): Promise<string[]> {
+  public async generateFluxProImages(userId: string, payload: FluxProBody): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
     const genImageDto = FluxProInputsDto.fromInput({
@@ -324,22 +313,15 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxpro', payload);
-      const genImageResults = await this.generateImagesForRun(
-        run,
-        imgCount,
-        genImageDto,
-      );
-      return this.processImageResults(user.id, genImageResults, payload);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to generate images');
     }
   }
 
-  public async generateFluxUltraImages(
-    user: UserEntity,
-    payload: FluxUltraBody,
-  ): Promise<string[]> {
+  public async generateFluxUltraImages(userId: string, payload: FluxUltraBody): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
     const genImageDto = FluxUltraInputsDto.fromInput({
@@ -355,12 +337,8 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxultra', payload);
-      const genImageResults = await this.generateImagesForRun(
-        run,
-        imgCount,
-        genImageDto,
-      );
-      return this.processImageResults(user.id, genImageResults, payload);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
       throw new Error('Failed to generate images');
@@ -414,9 +392,7 @@ export class TextToImageService {
     payload: GenerateImagesPayload,
   ): Promise<GenImageResult[]> {
     return Promise.all(
-      Array.from({ length: imageCount }, () =>
-        this.generateSingleImage(run, payload),
-      ),
+      Array.from({ length: imageCount }, () => this.generateSingleImage(run, payload)),
     );
   }
 
@@ -480,14 +456,13 @@ export class TextToImageService {
 
     try {
       if (genImage.imgUrl) {
-        const { storagefileUrl } =
-          await this.storageService.uploadToBucketByUrl({
-            fileName,
-            fileMimeType: mimeType,
-            fileUrl: genImage.imgUrl,
-            bucketFolder: bucketFolderPath,
-            bucket: 'images',
-          });
+        const { storagefileUrl } = await this.storageService.uploadToBucketByUrl({
+          fileName,
+          fileMimeType: mimeType,
+          fileUrl: genImage.imgUrl,
+          bucketFolder: bucketFolderPath,
+          bucket: 'images',
+        });
         newfileUrl = storagefileUrl;
       }
 
@@ -514,9 +489,7 @@ export class TextToImageService {
 
       return textToImage.path;
     } catch (error: any) {
-      this.logger.error(
-        `Failed to process image for run ${run.id}: ${error?.message}`,
-      );
+      this.logger.error(`Failed to process image for run ${run.id}: ${error?.message}`);
       return '';
     }
   }
@@ -539,10 +512,7 @@ export class TextToImageService {
     });
   }
 
-  private async updateRunStatus(payload: {
-    runId: string;
-    status: TextToImageRunStatus;
-  }) {
+  private async updateRunStatus(payload: { runId: string; status: TextToImageRunStatus }) {
     return this.textToImageRepo.prisma.textToImageRun.update({
       where: {
         id: payload.runId,

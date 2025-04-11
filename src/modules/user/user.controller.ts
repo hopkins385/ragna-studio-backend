@@ -1,30 +1,31 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-  ForbiddenException,
-  InternalServerErrorException,
-  NotFoundException,
-  Logger,
-  Query,
-  ConflictException,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserBody } from './dto/create-user-body.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
+import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ReqUser } from './decorators/user.decorator';
+import { CreateUserBody } from './dto/create-user-body.dto';
+import { UserEntity } from './entities/user.entity';
 import { Role } from './enums/role.enum';
 import { RolesGuard } from './guards/roles.guard';
-import { ReqUser } from './decorators/user.decorator';
-import { UserEntity } from './entities/user.entity';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
-import { InviteUserBody } from '@/modules/user/dto/invite-user-body.dto';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { UserService } from './user.service';
 
 @Controller('user')
 @UseGuards(RolesGuard)
@@ -49,12 +50,12 @@ export class UserController {
 
   @Post('invite')
   @Roles(Role.ADMIN)
-  async invite(@ReqUser() reqUser: UserEntity, @Body() inviteUserBody: InviteUserBody) {
+  async invite(@ReqUser() reqUser: RequestUser, @Body() inviteUserBody: InviteUserBody) {
     try {
       const { inviteToken } = await this.userService.invite({
         name: inviteUserBody.name,
         email: inviteUserBody.email,
-        teamId: reqUser.firstTeamId,
+        teamId: reqUser.activeTeamId,
       });
       return { inviteToken };
     } catch (error: unknown) {
@@ -68,7 +69,7 @@ export class UserController {
 
   /*@Get('/invite-token')
   @Roles(Role.ADMIN)
-  async createInviteToken(@ReqUser() reqUser: UserEntity) {
+  async createInviteToken(@ReqUser() reqUser: RequestUser) {
     try {
       const token = await this.userService.createInviteToken({
         reqUserId: reqUser.id,
@@ -82,7 +83,7 @@ export class UserController {
 
   @Get()
   @Roles(Role.ADMIN)
-  async findAll(@ReqUser() reqUser: UserEntity, @Query() query: PaginateQuery) {
+  async findAll(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
     try {
       const [users, meta] = await this.userService.findAllPaginated({
         organisationId: reqUser.organisationId,
@@ -98,7 +99,7 @@ export class UserController {
 
   @Get(':id')
   @Roles(Role.ADMIN)
-  async findOne(@ReqUser() reqUser: UserEntity, @Param() { id }: IdParam) {
+  async findOne(@ReqUser() reqUser: RequestUser, @Param() { id }: IdParam) {
     let user: Partial<UserEntity>;
 
     try {
@@ -131,7 +132,7 @@ export class UserController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  async remove(@Param() { id }: IdParam, @ReqUser() reqUser: UserEntity) {
+  async remove(@Param() { id }: IdParam, @ReqUser() reqUser: RequestUser) {
     // current logged in user cannot delete themselves
     if (id === reqUser.id) {
       throw new ForbiddenException('You cannot delete yourself');

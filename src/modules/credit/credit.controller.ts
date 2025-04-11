@@ -1,25 +1,22 @@
 // credit.controller.ts
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { CreditService } from './credit.service';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
+import { CreditService } from './credit.service';
 
 @Controller('credits')
 export class CreditController {
   constructor(private creditService: CreditService) {}
 
   @Get()
-  async getUserCredits(@ReqUser() user: UserEntity) {
-    return this.creditService.getUserCredits({ userId: user.id });
+  async getUserCredits(@ReqUser() reqUser: RequestUser) {
+    return this.creditService.getUserCredits({ userId: reqUser.id });
   }
 
   @Post('use')
-  async useCredits(
-    @ReqUser() user: UserEntity,
-    @Body() body: { amount: number },
-  ) {
+  async useCredits(@ReqUser() reqUser: RequestUser, @Body() body: { amount: number }) {
     await this.creditService.useCredits({
-      userId: user.id,
+      userId: reqUser.id,
       amount: body.amount,
     });
     return { message: 'Credits used successfully' };
@@ -27,11 +24,11 @@ export class CreditController {
 
   @Post('purchase')
   async purchaseCredits(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Body() body: { amount: number; cost: number },
   ) {
     await this.creditService.purchaseCredits({
-      userId: user.id,
+      userId: reqUser.id,
       amount: body.amount,
       cost: body.cost,
     });
@@ -39,7 +36,7 @@ export class CreditController {
   }
 
   @Get('history')
-  async getCreditUsageHistory(@ReqUser() user: UserEntity) {
-    return this.creditService.getCreditUsageHistory({ userId: user.id });
+  async getCreditUsageHistory(@ReqUser() reqUser: RequestUser) {
+    return this.creditService.getCreditUsageHistory({ userId: reqUser.id });
   }
 }

@@ -1,9 +1,9 @@
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { UserService } from '@/modules/user/user.service';
 import {
   Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,10 +13,9 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { UserEntity } from '@/modules/user/entities/user.entity';
+import { DeleteAccountBody } from './dto/delete-account-body.dto';
 import { UpdateAccountNameBody } from './dto/update-account-name-body.dto';
 import { UpdateAccountPasswordBody } from './dto/update-account-password-body.dto';
-import { DeleteAccountBody } from './dto/delete-account-body.dto';
 
 @Controller('account')
 export class AccountController {
@@ -30,8 +29,8 @@ export class AccountController {
   // }
 
   @Get()
-  async find(@ReqUser() user: UserEntity) {
-    const { id: userId } = user;
+  async find(@ReqUser() reqUser: RequestUser) {
+    const { id: userId } = reqUser;
     try {
       const accountData = await this.userService.findOne({ userId });
       return accountData;
@@ -41,12 +40,9 @@ export class AccountController {
   }
 
   @Patch('/name')
-  async updateName(
-    @ReqUser() user: UserEntity,
-    @Body() body: UpdateAccountNameBody,
-  ) {
+  async updateName(@ReqUser() reqUser: RequestUser, @Body() body: UpdateAccountNameBody) {
     try {
-      const accountData = await this.userService.updateUserName(user.id, {
+      const accountData = await this.userService.updateUserName(reqUser.id, {
         firstName: body.firstName,
         lastName: body.lastName,
       });
@@ -58,12 +54,9 @@ export class AccountController {
   }
 
   @Patch('/password')
-  async updatePassword(
-    @ReqUser() user: UserEntity,
-    @Body() body: UpdateAccountPasswordBody,
-  ) {
+  async updatePassword(@ReqUser() reqUser: RequestUser, @Body() body: UpdateAccountPasswordBody) {
     try {
-      const accountData = await this.userService.updateUserPassword(user.id, {
+      const accountData = await this.userService.updateUserPassword(reqUser.id, {
         oldPassword: body.oldPassword,
         newPassword: body.newPassword,
       });
@@ -76,9 +69,9 @@ export class AccountController {
 
   @HttpCode(HttpStatus.OK)
   @Post('/delete')
-  async delete(@ReqUser() user: UserEntity, @Body() body: DeleteAccountBody) {
+  async delete(@ReqUser() reqUser: RequestUser, @Body() body: DeleteAccountBody) {
     try {
-      await this.userService.softDeleteUser(user.id, {
+      await this.userService.softDeleteUser(reqUser.id, {
         password: body.password,
       });
       return { success: true };

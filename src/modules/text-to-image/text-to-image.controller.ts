@@ -1,31 +1,27 @@
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
   InternalServerErrorException,
-  NotFoundException,
   Logger,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
   Res,
   StreamableFile,
 } from '@nestjs/common';
-import { TextToImageService } from './text-to-image.service';
-import { UserEntity } from '@/modules/user/entities/user.entity';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { FluxProBody } from './dto/flux-pro-body.dto';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
-import {
-  FolderIdParam,
-  ProjectIdParam,
-  RunIdParam,
-} from './dto/text-to-image.param.dto';
-import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 import { FluxUltraBody } from './dto/flux-ultra-body.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
+import { FolderIdParam, RunIdParam } from './dto/text-to-image.param.dto';
+import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
+import { TextToImageService } from './text-to-image.service';
 
 @Controller('text-to-image')
 export class TextToImageController {
@@ -34,15 +30,9 @@ export class TextToImageController {
   constructor(private readonly textToImageService: TextToImageService) {}
 
   @Post('flux-pro')
-  async generateFluxProImages(
-    @ReqUser() user: UserEntity,
-    @Body() body: FluxProBody,
-  ) {
+  async generateFluxProImages(@ReqUser() reqUser: RequestUser, @Body() body: FluxProBody) {
     try {
-      const imageUrls = await this.textToImageService.generateFluxProImages(
-        user,
-        body,
-      );
+      const imageUrls = await this.textToImageService.generateFluxProImages(reqUser.id, body);
       return { imageUrls };
     } catch (error) {
       throw new InternalServerErrorException('Failed to generate images');
@@ -50,15 +40,9 @@ export class TextToImageController {
   }
 
   @Post('flux-ultra')
-  async generateFluxUltraImages(
-    @ReqUser() user: UserEntity,
-    @Body() body: FluxUltraBody,
-  ) {
+  async generateFluxUltraImages(@ReqUser() reqUser: RequestUser, @Body() body: FluxUltraBody) {
     try {
-      const imageUrls = await this.textToImageService.generateFluxUltraImages(
-        user,
-        body,
-      );
+      const imageUrls = await this.textToImageService.generateFluxUltraImages(reqUser.id, body);
       return { imageUrls };
     } catch (error) {
       throw new InternalServerErrorException('Failed to generate images');
@@ -78,17 +62,15 @@ export class TextToImageController {
   }
 
   @Get('folders')
-  async getFolders(@ReqUser() user: UserEntity) {
+  async getFolders(@ReqUser() reqUser: RequestUser) {
     try {
       const folders = await this.textToImageService.findFolders({
-        teamId: user.firstTeamId,
+        teamId: reqUser.activeTeamId,
       });
       if (folders.length === 0) {
-        this.logger.debug(
-          'This project has no ai-image folders, creating one ... ',
-        );
+        this.logger.debug('This project has no ai-image folders, creating one ... ');
         const folder = await this.textToImageService.createFolder({
-          teamId: user.firstTeamId,
+          teamId: reqUser.activeTeamId,
           folderName: 'Default',
         });
         return { folders: [folder] };
@@ -100,10 +82,7 @@ export class TextToImageController {
   }
 
   @Get(':id/download')
-  async downloadImage(
-    @Param() param: IdParam,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async downloadImage(@Param() param: IdParam, @Res({ passthrough: true }) response: Response) {
     try {
       const file = await this.textToImageService.downloadImage(param.id);
       return new StreamableFile(file);
@@ -121,11 +100,10 @@ export class TextToImageController {
     const folderId = param.folderId;
 
     try {
-      const [runs, meta] =
-        await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
-          showDeleted: query.showHidden,
-          page: query.page,
-        });
+      const [runs, meta] = await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
+        showDeleted: query.showHidden,
+        page: query.page,
+      });
       return { runs, meta };
     } catch (error) {
       throw new NotFoundException('Folder not found');

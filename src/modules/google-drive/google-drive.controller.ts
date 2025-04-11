@@ -1,20 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  NotFoundException,
-  Query,
-  Logger,
-} from '@nestjs/common';
-import { GoogleDriveService } from './google-drive.service';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { Controller, Get, Logger, NotFoundException, Query } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
 import { GoogleDriveCodeQuery } from './dto/google-drive-code-query.dto';
 import { GoogleDriveSearchQuery } from './dto/google-drive-search-query.dto';
+import { GoogleDriveService } from './google-drive.service';
 
 @Controller('google-drive')
 export class GoogleDriveController {
@@ -33,13 +22,10 @@ export class GoogleDriveController {
   }
 
   @Get('callback')
-  async callback(
-    @ReqUser() user: UserEntity,
-    @Query() query: GoogleDriveCodeQuery,
-  ) {
+  async callback(@ReqUser() reqUser: RequestUser, @Query() query: GoogleDriveCodeQuery) {
     try {
       await this.googleDriveService.createAuthTokens(
-        { userId: user.id },
+        { userId: reqUser.id },
         {
           code: query.code,
         },
@@ -51,10 +37,10 @@ export class GoogleDriveController {
   }
 
   @Get('has-access')
-  async hasAccess(@ReqUser() user: UserEntity) {
+  async hasAccess(@ReqUser() reqUser: RequestUser) {
     try {
       const value = await this.googleDriveService.userHasAccessToken({
-        userId: user.id,
+        userId: reqUser.id,
         providerName: 'google',
         type: 'googledrive',
       });
@@ -65,13 +51,10 @@ export class GoogleDriveController {
   }
 
   @Get()
-  async findData(
-    @ReqUser() user: UserEntity,
-    @Query() query: GoogleDriveSearchQuery,
-  ) {
+  async findData(@ReqUser() reqUser: RequestUser, @Query() query: GoogleDriveSearchQuery) {
     try {
       const data = await this.googleDriveService.findData(
-        { userId: user.id },
+        { userId: reqUser.id },
         {
           searchFileName: query.searchFileName ?? '',
           searchFolderId: query.searchFolderId ?? '',

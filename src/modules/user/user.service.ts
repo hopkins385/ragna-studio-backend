@@ -1,13 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
-import { UserEntity } from './entities/user.entity';
-import { User } from '@prisma/client';
-import { ConfigService } from '@nestjs/config';
-import jwt from 'jsonwebtoken';
-import { SessionUser } from './entities/session-user.entity';
-import { UserRepository } from './repositories/user.repository';
 import { CreateUserBody } from '@/modules/user/dto/create-user-body.dto';
 import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { User } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { SessionUser } from './entities/session-user.entity';
+import { UserEntity } from './entities/user.entity';
+import { UserRepository } from './repositories/user.repository';
 
 @Injectable()
 export class UserService {
@@ -216,7 +217,7 @@ export class UserService {
   }
 
   async updateUserPassword(userId: string, pay: { oldPassword: string; newPassword: string }) {
-    const user = await this.repository.findByIdWithPassword(userId);
+    const user = await this.repository.findById({ userId }, { withPassword: true });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
     const isPasswordMatch = await comparePassword(pay.oldPassword, user.password);
@@ -269,7 +270,7 @@ export class UserService {
   }
 
   async softDeleteUser(userId: string, pay: { password: string }) {
-    const user = await this.repository.findByIdWithPassword(userId);
+    const user = await this.repository.findById({ userId }, { withPassword: true });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
     const isPasswordMatch = await comparePassword(pay.password, user.password);
@@ -300,7 +301,7 @@ export class UserService {
   }
 
   // POLICIES
-  canAccessUser(sessionUser: UserEntity, user: UserEntity) {
-    return sessionUser.organisationId === user.organisationId;
+  canAccessUser(reqUser: RequestUser, user: UserEntity) {
+    return reqUser.organisationId === user.organisationId;
   }
 }

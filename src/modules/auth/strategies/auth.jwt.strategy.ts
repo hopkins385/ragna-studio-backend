@@ -1,9 +1,9 @@
 import { SessionService } from '@/modules/session/session.service';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserService } from '@/modules/user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -11,7 +11,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly userService: UserService,
     private readonly sessionService: SessionService,
   ) {
     super({
@@ -27,32 +26,29 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const decodedSessionId = decoded.sid;
 
     if (!decodedUserId || !decodedSessionId) {
-      this.logger.debug(
-        `Invalid token, missing user id or session id`,
-        decoded,
-      );
+      this.logger.debug(`Invalid token, missing user id or session id`, decoded);
       throw new UnauthorizedException();
     }
 
-    const sessionData = await this.sessionService.getSession(decodedSessionId);
+    const sessionData = await this.sessionService.getSession({ sessionId: decodedSessionId });
 
     if (!sessionData || !sessionData.user) {
       this.logger.debug(`Invalid token, session not found`, sessionData);
       throw new UnauthorizedException();
     }
 
-    const user = await this.userService.findOne({
-      userId: sessionData.user.id,
+    const reqUser = new RequestUser({
+      id: sessionData.user.id,
+      sessionId: sessionData.id,
+      organisationId: sessionData.user.organisationId,
+      activeTeamId: sessionData.user.activeTeamId,
+      onboardedAt: sessionData.user.onboardedAt,
+      roles: sessionData.user.roles,
     });
 
-    if (!user || user.id !== decodedUserId) {
-      this.logger.debug(`Invalid token, user not found`, user);
-      throw new UnauthorizedException();
-    }
-
     return {
-      sessionId: decodedSessionId,
-      ...user,
+      sessionData,
+      ...reqUser,
     };
   }
 }

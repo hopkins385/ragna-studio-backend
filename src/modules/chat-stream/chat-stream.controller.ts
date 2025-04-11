@@ -1,4 +1,8 @@
-import { ChatStreamService } from './chat-stream.service';
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { ChatService } from '@/modules/chat/chat.service';
+import { ChatEntity } from '@/modules/chat/entities/chat.entity';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
   Body,
   Controller,
@@ -12,16 +16,11 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
-import { UserEntity } from '@/modules/user/entities/user.entity';
-import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
 import { Request, Response } from 'express';
-import { ChatService } from '@/modules/chat/chat.service';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
-import { ChatEntity } from '@/modules/chat/entities/chat.entity';
 import { pipeline } from 'node:stream/promises';
-import { defaultAnswerProtocolPrompt } from './prompts/default-system.prompt';
+import { ChatStreamService } from './chat-stream.service';
+import { CreateChatStreamBody } from './dto/create-chat-stream-body.dto';
+import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
 
 interface StreamHandlers {
   onClose: () => void;
@@ -42,7 +41,7 @@ export class ChatStreamController {
   @Post(':id')
   @HttpCode(HttpStatus.OK)
   async createChatMessageStream(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Param() param: IdParam,
@@ -54,7 +53,7 @@ export class ChatStreamController {
 
     const chat = await this.chatService.getChatForUser({
       chatId: param.id,
-      userId: user.id,
+      userId: reqUser.id,
     });
 
     if (!chat) {

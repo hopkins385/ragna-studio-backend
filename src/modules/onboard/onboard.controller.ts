@@ -1,45 +1,38 @@
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { UserService } from '@/modules/user/user.service';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  HttpException,
-  HttpStatus,
   BadRequestException,
+  Body,
+  Controller,
   InternalServerErrorException,
+  Post,
 } from '@nestjs/common';
-import { OnboardService } from './onboard.service';
+import { ReqUser } from '../user/decorators/user.decorator';
 import { OnboardUserBody } from './dto/onboard-user-body.dto';
 import { OnboardUserDto } from './dto/onboard-user.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { MailService } from '../mail/mail.service';
-import { Public } from '@/common/decorators/public.decorator';
+import { OnboardService } from './onboard.service';
 
 @Controller('onboard')
 export class OnboardController {
   constructor(
     private readonly onboardService: OnboardService,
-    // private readonly mailService: MailService,
+    private readonly userService: UserService,
   ) {}
 
   @Post('user')
-  async onboardUser(
-    @ReqUser() user: UserEntity,
-    @Body() body: OnboardUserBody,
-  ) {
-    if (user.onboardedAt !== null) {
+  async onboardUser(@ReqUser() reqUser: RequestUser, @Body() body: OnboardUserBody) {
+    if (reqUser.onboardedAt !== null) {
       throw new BadRequestException('User already onboarded');
     }
+
+    const user = await this.userService.findOne({ userId: reqUser.id });
     const payload = OnboardUserDto.fromInput({
-      userId: user.id,
-      userName: user.name ?? 'User Name',
+      userId: reqUser.id,
+      userName: user.name,
       userEmail: user.email,
       orgName: body.orgName,
     });
+
     try {
       const result = await this.onboardService.onboardUser(payload);
       return { success: result };

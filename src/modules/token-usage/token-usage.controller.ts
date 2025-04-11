@@ -1,15 +1,8 @@
-import {
-  Controller,
-  Get,
-  InternalServerErrorException,
-  Logger,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { Controller, Get, InternalServerErrorException, Logger, Query } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { TokenUsageService } from './token-usage.service';
 import { TokenUsageHistoryQuery } from './dto/token-usage-history.query.dto';
+import { TokenUsageService } from './token-usage.service';
 
 @Controller('token-usage')
 export class TokenUsageController {
@@ -19,13 +12,13 @@ export class TokenUsageController {
 
   @Get('history')
   async getTokenUsageHistory(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Query() query: TokenUsageHistoryQuery,
   ) {
     const { year, month } = query;
     try {
       const tokenUsages = await this.tokenUsageService.getTokenUsageHistory({
-        userId: user.id,
+        userId: reqUser.id,
         from: {
           year,
           month,

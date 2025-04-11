@@ -1,29 +1,26 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  InternalServerErrorException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
-import { UserFavoriteService } from './user-favorite.service';
-import { UserEntity } from '@/modules/user/entities/user.entity';
+import { IdParam } from '@/common/dto/cuid-param.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import { AddUserFavoriteBody } from './dto/add-user-favorites-body.dto';
+import { FavoriteTypeBody, FavoriteTypeParam } from './dto/favorite-type-param.dto';
+import { GetAllFavoritesDto } from './dto/get-all-user-favorites.dto';
+import { UserFavoriteDto } from './dto/user-favorite.dto';
 import {
   UserFavoriteResponse,
   UserFavoritesResponse,
 } from './interfaces/user-favorite-response.interface';
-import {
-  FavoriteTypeBody,
-  FavoriteTypeParam,
-} from './dto/favorite-type-param.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { AddUserFavoriteBody } from './dto/add-user-favorites-body.dto';
-import { UserFavoriteDto } from './dto/user-favorite.dto';
-import { GetAllFavoritesDto } from './dto/get-all-user-favorites.dto';
+import { UserFavoriteService } from './user-favorite.service';
 
 @Controller('user-favorite')
 export class UserFavoriteController {
@@ -32,12 +29,12 @@ export class UserFavoriteController {
 
   @Post()
   async createFavorite(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Body() body: AddUserFavoriteBody,
   ): Promise<UserFavoriteResponse> {
     const favoriteDto = UserFavoriteDto.fromInput({
-      userId: user.id,
-      teamId: user.firstTeamId,
+      userId: reqUser.id,
+      teamId: reqUser.activeTeamId,
       favoriteId: body.favoriteId,
       favoriteType: body.favoriteType,
     });
@@ -51,17 +48,14 @@ export class UserFavoriteController {
   }
 
   @Get()
-  async getAllFavorites(
-    @ReqUser() user: UserEntity,
-  ): Promise<UserFavoritesResponse> {
+  async getAllFavorites(@ReqUser() reqUser: RequestUser): Promise<UserFavoritesResponse> {
     const getAllFavoritesDto = GetAllFavoritesDto.fromInput({
-      userId: user.id,
-      teamId: user.firstTeamId,
+      userId: reqUser.id,
+      teamId: reqUser.activeTeamId,
     });
 
     try {
-      const favorites =
-        await this.userFavoriteService.getAll(getAllFavoritesDto);
+      const favorites = await this.userFavoriteService.getAll(getAllFavoritesDto);
       return { favorites };
     } catch (error) {
       throw new NotFoundException('Not found');
@@ -69,13 +63,10 @@ export class UserFavoriteController {
   }
 
   @Get('type/:favoriteType')
-  async getFavoritesByType(
-    @ReqUser() user: UserEntity,
-    @Param() param: FavoriteTypeParam,
-  ) {
+  async getFavoritesByType(@ReqUser() reqUser: RequestUser, @Param() param: FavoriteTypeParam) {
     try {
       const favorites = await this.userFavoriteService.getAllFavoritesByType(
-        user.id,
+        reqUser.id,
         param.favoriteType,
       );
       return { favorites };
@@ -87,12 +78,12 @@ export class UserFavoriteController {
   @Delete(':id')
   async deleteFavorite(
     @Param() param: IdParam,
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Body() body: FavoriteTypeBody,
   ): Promise<{ success: boolean }> {
     const userFavoriteDto = UserFavoriteDto.fromInput({
-      userId: user.id,
-      teamId: user.firstTeamId,
+      userId: reqUser.id,
+      teamId: reqUser.activeTeamId,
       favoriteId: param.id,
       favoriteType: body.favoriteType,
     });

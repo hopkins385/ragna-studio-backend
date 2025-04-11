@@ -1,44 +1,40 @@
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
   InternalServerErrorException,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { WorkflowStepService } from './workflow-step.service';
+import { ReqUser } from '../user/decorators/user.decorator';
+import { CreateWorkflowItemDto } from './dto/create-workflow-item.dto';
+import { CreateWorkflowRowBody } from './dto/create-workflow-row-body.dts';
+import { CreateWorkflowStepBody } from './dto/create-workflow-step-body.dto';
 import { CreateWorkflowStepDto } from './dto/create-workflow-step.dto';
+import { UpdateWorkflowItemBody } from './dto/update-workflow-item-body.dto';
+import { UpdateWorkflowItemParams } from './dto/update-workflow-item-params.dto';
+import { UpdateWorkflowItemDto } from './dto/update-workflow-item.dto';
+import { UpdateWorkflowStepAssistantBody } from './dto/update-workflow-step-ass.dto';
+import { UpdateWorkflowStepBody } from './dto/update-workflow-step-body.dto';
+import { UpdateWorkflowStepIdsBody } from './dto/update-workflow-step-ids-body.dto';
 import {
   UpdateWorkflowStepAssistantDto,
   UpdateWorkflowStepDto,
 } from './dto/update-workflow-step.dto';
-import { CreateWorkflowStepBody } from './dto/create-workflow-step-body.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { CreateWorkflowRowBody } from './dto/create-workflow-row-body.dts';
-import { CreateWorkflowItemDto } from './dto/create-workflow-item.dto';
-import { UpdateWorkflowStepBody } from './dto/update-workflow-step-body.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { UpdateWorkflowItemDto } from './dto/update-workflow-item.dto';
-import { UpdateWorkflowItemBody } from './dto/update-workflow-item-body.dto';
-import { UpdateWorkflowItemParams } from './dto/update-workflow-item-params.dto';
-import { UpdateWorkflowStepAssistantBody } from './dto/update-workflow-step-ass.dto';
-import { UpdateWorkflowStepIdsBody } from './dto/update-workflow-step-ids-body.dto';
+import { WorkflowStepService } from './workflow-step.service';
 
 @Controller('workflow-step')
 export class WorkflowStepController {
   constructor(private readonly workflowStepService: WorkflowStepService) {}
 
   @Post()
-  async createStep(
-    @ReqUser() user: UserEntity,
-    @Body() body: CreateWorkflowStepBody,
-  ) {
+  async createStep(@ReqUser() reqUser: RequestUser, @Body() body: CreateWorkflowStepBody) {
     const payload = CreateWorkflowStepDto.fromInput({
       workflowId: body.workflowId,
-      teamId: user.teams[0].team.id,
+      teamId: reqUser.activeTeamId,
       name: body.name,
       description: body.description,
       orderColumn: body.orderColumn,
@@ -55,10 +51,7 @@ export class WorkflowStepController {
   }
 
   @Post('row')
-  async createRow(
-    @ReqUser() user: UserEntity,
-    @Body() body: CreateWorkflowRowBody,
-  ) {
+  async createRow(@Body() body: CreateWorkflowRowBody) {
     const workflowItemsDtos = [];
     // is like adding many steps at once
     for (const item of body.items) {
@@ -73,10 +66,7 @@ export class WorkflowStepController {
     }
 
     try {
-      const row = await this.workflowStepService.createRow(
-        body.workflowId,
-        workflowItemsDtos,
-      );
+      const row = await this.workflowStepService.createRow(body.workflowId, workflowItemsDtos);
       return { row };
     } catch (error) {
       throw new InternalServerErrorException('Error creating workflow row');
@@ -84,11 +74,7 @@ export class WorkflowStepController {
   }
 
   @Patch(':id')
-  async update(
-    @ReqUser() user: UserEntity,
-    @Param() param: IdParam,
-    @Body() body: UpdateWorkflowStepBody,
-  ) {
+  async update(@Param() param: IdParam, @Body() body: UpdateWorkflowStepBody) {
     const payload = UpdateWorkflowStepDto.fromInput({
       workflowStepId: param.id,
       name: body.name,
@@ -105,49 +91,32 @@ export class WorkflowStepController {
   }
 
   @Patch(':id/assistant')
-  async updateAssistant(
-    @ReqUser() user: UserEntity,
-    @Param() param: IdParam,
-    @Body() body: UpdateWorkflowStepAssistantBody,
-  ) {
+  async updateAssistant(@Param() param: IdParam, @Body() body: UpdateWorkflowStepAssistantBody) {
     const updatePayload = UpdateWorkflowStepAssistantDto.fromInput({
       workflowStepId: param.id,
       assistantId: body.assistantId,
     });
 
     try {
-      const step =
-        await this.workflowStepService.updateAssistant(updatePayload);
+      const step = await this.workflowStepService.updateAssistant(updatePayload);
       return { step };
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error updating workflow step assistant',
-      );
+      throw new InternalServerErrorException('Error updating workflow step assistant');
     }
   }
 
   @Patch(':id/input-steps')
-  async updateInputSteps(
-    @ReqUser() user: UserEntity,
-    @Param() param: IdParam,
-    @Body() body: UpdateWorkflowStepIdsBody,
-  ) {
+  async updateInputSteps(@Param() param: IdParam, @Body() body: UpdateWorkflowStepIdsBody) {
     try {
-      const steps = await this.workflowStepService.updateInputSteps(
-        param.id,
-        body.inputStepIds,
-      );
+      const steps = await this.workflowStepService.updateInputSteps(param.id, body.inputStepIds);
       return { steps };
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error updating workflow step assistant',
-      );
+      throw new InternalServerErrorException('Error updating workflow step assistant');
     }
   }
 
   @Patch(':stepId/item/:itemId')
   async updateItem(
-    @ReqUser() user: UserEntity,
     @Param() params: UpdateWorkflowItemParams,
     @Body() body: UpdateWorkflowItemBody,
   ) {

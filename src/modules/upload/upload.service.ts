@@ -1,8 +1,7 @@
+import { MediaService } from '@/modules/media/media.service';
+import { StorageService } from '@/modules/storage/storage.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { UploadFileDto } from './dto/file-upload.dto';
-import { UserEntity } from '@/modules/user/entities/user.entity';
-import { StorageService } from '@/modules/storage/storage.service';
-import { MediaService } from '@/modules/media/media.service';
 
 // [fields, files] is a tuple returned by formidable.parse()
 
@@ -23,7 +22,7 @@ export class UploadService {
     return file.mimetype.includes('image');
   }
 
-  async uploadFiles({ files }: ParsedForm, user: UserEntity) {
+  async uploadFiles({ files }: ParsedForm, { userId, teamId }: { userId: string; teamId: string }) {
     try {
       const medias = [];
       let createMediaPayload: any;
@@ -31,8 +30,8 @@ export class UploadService {
       for (const file of files) {
         const uploadPayload = UploadFileDto.fromInput({
           file,
-          userId: user.id,
-          teamId: user.teams[0].team.id,
+          userId,
+          teamId,
         });
 
         if (this.isImage(file)) {
@@ -41,8 +40,7 @@ export class UploadService {
             uploadPayload,
           );
         } else {
-          createMediaPayload =
-            await this.storageService.uploadFile(uploadPayload);
+          createMediaPayload = await this.storageService.uploadFile(uploadPayload);
         }
 
         const media = await this.mediaService.create(createMediaPayload);

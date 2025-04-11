@@ -26,12 +26,16 @@ export class UserRepository {
     this.prisma = this.db.client;
   }
 
-  async findById(payload: { userId: string }) {
+  async findById(
+    payload: { userId: string },
+    options?: { includeDeleted?: boolean; withPassword?: boolean },
+  ) {
     return this.prisma.user.findFirst({
       relationLoadStrategy: 'join',
       select: {
         id: true,
         name: true,
+        password: options?.withPassword ? true : false,
         firstName: true,
         lastName: true,
         email: true,
@@ -61,20 +65,8 @@ export class UserRepository {
       },
       where: {
         id: payload.userId,
-        deletedAt: null,
+        deletedAt: options?.includeDeleted ? undefined : null,
       },
-    });
-  }
-
-  async findByIdWithPassword(id: string) {
-    return this.prisma.user.findFirst({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        password: true,
-      },
-      where: { id },
     });
   }
 

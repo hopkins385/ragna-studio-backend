@@ -7,10 +7,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserService } from '@/modules/user/user.service';
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(
-  Strategy,
-  'jwt-refresh',
-) {
+export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   private readonly logger = new Logger(JwtRefreshStrategy.name);
 
   constructor(
@@ -38,7 +35,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException();
     }
 
-    const sessionData = await this.sessionService.getSession(decodedSessionId);
+    const sessionData = await this.sessionService.getSession({ sessionId: decodedSessionId });
 
     if (!sessionData || !sessionData.user) {
       throw new UnauthorizedException();

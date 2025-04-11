@@ -11,10 +11,10 @@ import { Queue } from 'bullmq';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
 import { SessionService } from '../session/session.service';
 import { r } from '@faker-js/faker/dist/airline-CBNP41sR';
+import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
 
 interface UserPayload {
   userId: string;
-  username: string;
   sessionId: string;
 }
 
@@ -48,17 +48,23 @@ export class AuthService {
     await this.userService.updateLastLogin(userId);
   }
 
-  async validateUser({ email, password }: CredentialsDto): Promise<Partial<UserModel> | null> {
+  async validateUser({ email, password }: CredentialsDto): Promise<AuthUserEntity | null> {
     const user = await this.userService.findByEmail(email);
     if (!user || !user.password || !user.password.length) return null;
 
     const isValidPassword = await comparePassword(password, user.password);
-    return isValidPassword ? user : null;
+
+    if (!isValidPassword) {
+      return null;
+    }
+
+    return new AuthUserEntity({
+      id: user.id,
+    });
   }
 
   async createTokensForUser(user: {
     id: string;
-    name: string;
     sessionId: string;
   }): Promise<TokenResponse | null> {
     if (!user) {
@@ -67,7 +73,6 @@ export class AuthService {
 
     const payload: UserPayload = {
       userId: user.id,
-      username: user.name,
       sessionId: user.sessionId,
     };
 
@@ -161,7 +166,6 @@ export class AuthService {
     }
     return this.generateTokens({
       userId: user.id,
-      username: user.name,
       sessionId: 'session.id',
     });
   }

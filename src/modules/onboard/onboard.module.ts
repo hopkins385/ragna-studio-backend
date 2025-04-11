@@ -1,13 +1,14 @@
-import { OnboardRepository } from './repositories/onboard.repository';
+import { UserModule } from '@/modules/user/user.module';
 import { Module } from '@nestjs/common';
-import { OnboardService } from './onboard.service';
-import { OnboardController } from './onboard.controller';
-import { OnboardingListeners } from './listeners/onboarding.listeners';
-import { SlackModule } from '../slack/slack.module';
 import { MailModule } from '../mail/mail.module';
+import { SlackModule } from '../slack/slack.module';
+import { OnboardingListeners } from './listeners/onboarding.listeners';
+import { OnboardController } from './onboard.controller';
+import { OnboardService } from './onboard.service';
+import { OnboardRepository } from './repositories/onboard.repository';
 
 @Module({
-  imports: [SlackModule, MailModule],
+  imports: [SlackModule, MailModule, UserModule],
   controllers: [OnboardController],
   providers: [OnboardRepository, OnboardService, OnboardingListeners],
 })

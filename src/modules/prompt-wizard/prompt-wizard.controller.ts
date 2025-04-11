@@ -1,13 +1,7 @@
-import {
-  Body,
-  Controller,
-  InternalServerErrorException,
-  Logger,
-  Post,
-} from '@nestjs/common';
-import { PromptWizardService } from './prompt-wizard.service';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { Body, Controller, InternalServerErrorException, Logger, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
+import { PromptWizardService } from './prompt-wizard.service';
 
 @Controller('prompt-wizard')
 export class PromptWizardController {
@@ -16,13 +10,10 @@ export class PromptWizardController {
   constructor(private readonly promptWizardService: PromptWizardService) {}
 
   @Post('create')
-  async createPrompt(
-    @ReqUser() user: UserEntity,
-    @Body() body: { input: string },
-  ) {
+  async createPrompt(@ReqUser() reqUser: RequestUser, @Body() body: { input: string }) {
     const payload = {
       input: body.input,
-      userId: user.id,
+      userId: reqUser.id,
     };
 
     try {

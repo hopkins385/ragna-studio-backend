@@ -1,39 +1,65 @@
-import { Strategy } from 'passport-local';
-import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '@/modules/auth/auth.service';
-import { UserEntity } from '@/modules/user/entities/user.entity';
+import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
+import { SessionService } from '@/modules/session/session.service';
+import { UserService } from '@/modules/user/user.service';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-local';
 import { CredentialsDto } from '../dto/credentials.dto';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
-  constructor(private authService: AuthService) {
+  private readonly logger = new Logger(LocalStrategy.name);
+
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly sessionService: SessionService,
+  ) {
     super({ usernameField: 'email' });
   }
 
-  async validate(
-    email: string,
-    password: string,
-  ): Promise<Partial<UserEntity>> {
+  async validate(email: string, password: string) {
     const payload = new CredentialsDto();
     payload.email = email;
     payload.password = password;
+
     try {
       const randomBetween300and800 = Math.floor(Math.random() * 500) + 300;
-      await new Promise((resolve) =>
-        setTimeout(resolve, randomBetween300and800),
-      );
+      await new Promise((resolve) => setTimeout(resolve, randomBetween300and800));
 
-      const user = await this.authService.validateUser(payload);
-      if (!user) {
+      const authUser = await this.authService.validateUser(payload);
+      if (!authUser) {
         throw new Error('User not found');
       }
 
-      // update last login
-      await this.authService.updateLastLogin({ userId: user.id });
+      const fullUser = await this.userService.findOne({ userId: authUser.id });
 
-      return { id: user.id, name: user.name }; // TODO: which data should be returned? // email: user.email,
-    } catch (error) {
+      const sessionUser = new SessionUserEntity({
+        id: fullUser.id,
+        organisationId: fullUser.organisationId,
+        activeTeamId: fullUser.firstTeamId,
+        firstTeamId: fullUser.firstTeamId,
+        onboardedAt: fullUser.onboardedAt,
+        roles: fullUser.roles,
+      });
+
+      const sessionData = await this.sessionService.createSession({
+        payload: {
+          user: sessionUser,
+        },
+      });
+
+      this.logger.debug(`Created session: sessionId: ${sessionData.id}`);
+
+      // update last login
+      await this.authService.updateLastLogin({ userId: fullUser.id });
+
+      return {
+        authUser,
+        sessionData,
+      };
+    } catch (error: unknown) {
       throw new UnauthorizedException();
     }
   }

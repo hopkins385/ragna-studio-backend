@@ -1,33 +1,27 @@
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  NotFoundException,
-  Query,
+  Get,
   InternalServerErrorException,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
 import { AssistantService } from './assistant.service';
-import {
-  CreateAssistantBody,
-  CreateAssistantDto,
-} from './dto/create-assistant.dto';
-import {
-  UpdateAssistantBody,
-  UpdateAssistantDto,
-} from './dto/update-assistant.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { FindAssistantDto } from './dto/find-assistant.dto';
+import { CreateAssistantBody, CreateAssistantDto } from './dto/create-assistant.dto';
+import { CreateAssistantFromTemplateBody } from './dto/create-from-template.dto';
 import { DeleteAssistantDto } from './dto/delete-assistant.dto';
 import { FindAllAssistantsDto } from './dto/find-all-assistant.dto';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
-import { UserEntity } from '@/modules/user/entities/user.entity';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { FindAssistantDto } from './dto/find-assistant.dto';
 import { UpdateAssistantHasKnowledgeBody } from './dto/update-assistant-knw-body.dto';
-import { CreateAssistantFromTemplateBody } from './dto/create-from-template.dto';
+import { UpdateAssistantBody, UpdateAssistantDto } from './dto/update-assistant.dto';
 
 @Controller('assistant')
 export class AssistantController {
@@ -54,12 +48,12 @@ export class AssistantController {
 
   @Post('from-template')
   async createFromTemplate(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Body() body: CreateAssistantFromTemplateBody,
   ) {
     try {
       const assistant = await this.assistantService.createFromTemplate({
-        teamId: user.firstTeamId,
+        teamId: reqUser.activeTeamId,
         templateId: body.templateId,
         language: body.language,
       });
@@ -70,9 +64,9 @@ export class AssistantController {
   }
 
   @Get()
-  async findAll(@ReqUser() user: UserEntity, @Query() query: PaginateQuery) {
+  async findAll(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
     const findAllAssistantsDto = FindAllAssistantsDto.fromInput({
-      teamId: user.firstTeamId,
+      teamId: reqUser.activeTeamId,
       page: query.page,
       limit: query.limit,
       searchQuery: query.searchQuery,
@@ -137,13 +131,13 @@ export class AssistantController {
 
   @Patch(':id/has-knowledge')
   async updateHasKnowledgeBase(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Param() param: IdParam,
     @Body() body: UpdateAssistantHasKnowledgeBody,
   ) {
     try {
       return await this.assistantService.updateHasKnowledgeBase({
-        teamId: user.firstTeamId,
+        teamId: reqUser.activeTeamId,
         assistantId: param.id,
         hasKnowledgeBase: body.hasKnowledgeBase,
       });
@@ -153,10 +147,10 @@ export class AssistantController {
   }
 
   @Delete(':id')
-  async delete(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+  async delete(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
     const deleteAssistantDto = DeleteAssistantDto.fromInput({
       id: param.id,
-      teamId: user.firstTeamId,
+      teamId: reqUser.activeTeamId,
     });
     try {
       return await this.assistantService.softDelete(deleteAssistantDto);

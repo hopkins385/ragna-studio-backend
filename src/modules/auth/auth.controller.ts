@@ -1,5 +1,11 @@
+import { Public } from '@/common/decorators/public.decorator';
+import { AuthUser } from '@/modules/auth/decorators/auth-user.decorator';
+import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
+import { Session } from '@/modules/session/decorators/session.decorator';
+import { SessionData, SessionService } from '@/modules/session/session.service';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -9,26 +15,19 @@ import {
   Logger,
   Param,
   Post,
-  Req,
   UnauthorizedException,
   UnprocessableEntityException,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService, TokenResponse } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { Request } from 'express';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
-import { RefreshJwtGuard } from './guards/refresh-jwt-auth.guard';
-import { Public } from '@/common/decorators/public.decorator';
-import { UserEntity } from '@/modules/user/entities/user.entity';
-import { CredentialsDto } from './dto/credentials.dto';
-import { UseZodGuard } from 'nestjs-zod';
-import { AuthGoogleService } from './google/auth-google.service';
-import { SocialAuthProviderParam } from './google/social-auth-provider.param';
-import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
-import { RegisterUserBody } from './dto/register-user-body.dto';
-import { SessionService } from '@/modules/session/session.service';
 import { Throttle } from '@nestjs/throttler';
+import { UseZodGuard } from 'nestjs-zod';
+import { AuthService, TokenResponse } from './auth.service';
+import { CredentialsDto } from './dto/credentials.dto';
+import { AuthGoogleService } from './google/auth-google.service';
+import { GoogleAuthCallbackBody } from './google/google-auth-callback-body.dto';
+import { SocialAuthProviderParam } from './google/social-auth-provider.param';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { RefreshJwtGuard } from './guards/refresh-jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -45,32 +44,20 @@ export class AuthController {
   @Post('login')
   @UseGuards(LocalAuthGuard)
   @UseZodGuard('body', CredentialsDto)
-  async login(@Req() req: Request): Promise<TokenResponse> {
-    // @ts-ignore
-    const userId = req.user.id;
-    // @ts-ignore
-    const userName = req.user.name;
+  async login(
+    @AuthUser() authUser: AuthUserEntity,
+    @Session() session: SessionData,
+  ): Promise<TokenResponse> {
     try {
-      const sessionPayload = { user: { id: userId } };
-      const sessionId = await this.sessionService.createSession({
-        payload: {
-          user: { id: userId },
-        },
+      const tokens = await this.authService.createTokensForUser({
+        id: authUser.id,
+        sessionId: session.id,
       });
-
-      this.logger.debug(`Created session: sessionId:${sessionId}`);
-
-      const authUser = {
-        id: userId,
-        name: userName,
-        sessionId,
-      };
-      const tokens = await this.authService.createTokensForUser(authUser);
       if (!tokens) {
         throw new Error('Failed to generate tokens');
       }
       return tokens;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new UnauthorizedException();
     }
   }
@@ -78,15 +65,11 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @UseGuards(RefreshJwtGuard)
-  async refreshTokens(@ReqUser() user: UserEntity): Promise<TokenResponse> {
-    //@ts-ignore
-    const { id: userId, name: username, sessionId } = user;
-
+  async refreshTokens(@ReqUser() reqUser: RequestUser): Promise<TokenResponse> {
     try {
       const tokens = await this.authService.refreshTokens({
-        userId,
-        username,
-        sessionId,
+        userId: reqUser.id,
+        sessionId: reqUser.sessionId,
       });
 
       if (!tokens) {
@@ -119,23 +102,19 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@ReqUser() user: UserEntity) {
-    //@ts-ignore
-    const { sessionId } = user;
-    const result = await this.sessionService.deleteSession(sessionId);
+  async logout(@Session() session: SessionData) {
+    const result = await this.sessionService.deleteSession(session.id);
     return { message: 'Successfully logged out' };
   }
 
   // get current session
   @Get('session')
-  async getSession(@ReqUser() user: UserEntity) {
+  async getSession(@Session() session: SessionData) {
     try {
-      //@ts-ignore
-      const { sessionId } = user;
-      const session = await this.sessionService.getSession(sessionId);
+      const sessionData = await this.sessionService.getSession({ sessionId: session.id });
 
       return {
-        user: session.user,
+        user: sessionData.user,
       };
     } catch (error) {
       throw new UnauthorizedException();

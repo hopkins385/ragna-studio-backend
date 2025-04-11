@@ -1,29 +1,29 @@
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
+  Controller,
+  Delete,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
   Param,
+  Patch,
+  Post,
   Query,
   Res,
   StreamableFile,
-  NotFoundException,
-  Delete,
-  InternalServerErrorException,
-  Logger,
 } from '@nestjs/common';
-import { WorkflowService } from './workflow.service';
-import { CreateWorkflowDto } from './dto/create-workflow.dto';
-import { UpdateWorkflowDto } from './dto/update-workflow.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
-import { FindAllWorkflowsDto } from './dto/find-all-workflows.dto';
-import { CreateWorkflowBody } from './dto/create-workflow-body.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { UpdateWorkflowBody } from './dto/update-workflow-body.dto';
 import { Response } from 'express';
+import { ReqUser } from '../user/decorators/user.decorator';
+import { CreateWorkflowBody } from './dto/create-workflow-body.dto';
+import { CreateWorkflowDto } from './dto/create-workflow.dto';
+import { FindAllWorkflowsDto } from './dto/find-all-workflows.dto';
+import { UpdateWorkflowBody } from './dto/update-workflow-body.dto';
+import { UpdateWorkflowDto } from './dto/update-workflow.dto';
+import { WorkflowService } from './workflow.service';
 
 @Controller('workflow')
 export class WorkflowController {
@@ -32,9 +32,9 @@ export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
   @Post()
-  async create(@ReqUser() user: UserEntity, @Body() body: CreateWorkflowBody) {
+  async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateWorkflowBody) {
     const payload = CreateWorkflowDto.fromInput({
-      teamId: user.firstTeamId,
+      teamId: reqUser.activeTeamId,
       name: body.name,
       description: body.description,
     });
@@ -43,17 +43,13 @@ export class WorkflowController {
   }
 
   @Get()
-  async allPaginated(
-    @ReqUser() user: UserEntity,
-    @Query() query: PaginateQuery,
-  ) {
+  async allPaginated(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
     const payload = FindAllWorkflowsDto.fromInput({
-      teamId: user.firstTeamId,
+      teamId: reqUser.activeTeamId,
       page: query.page,
       limit: query.limit,
     });
-    const [workflows, meta] =
-      await this.workflowService.findAllPaginated(payload);
+    const [workflows, meta] = await this.workflowService.findAllPaginated(payload);
 
     return { workflows, meta };
   }
@@ -91,10 +87,7 @@ export class WorkflowController {
   }
 
   @Get(':id/export')
-  async exportWorkflow(
-    @Param() param: IdParam,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async exportWorkflow(@Param() param: IdParam, @Res({ passthrough: true }) res: Response) {
     try {
       const buffer = await this.workflowService.export(param.id, 'xlsx');
       const file = new StreamableFile(buffer);
@@ -112,19 +105,14 @@ export class WorkflowController {
       return { success: true };
     } catch (error: unknown) {
       if (error instanceof Error) {
-        this.logger.error(
-          `Failed to delete workflow ${workflowId}, ${error.message}`,
-        );
+        this.logger.error(`Failed to delete workflow ${workflowId}, ${error.message}`);
       }
       throw new InternalServerErrorException('Failed to delete workflow');
     }
   }
 
   @Patch(':id/row')
-  async removeRows(
-    @Param() param: IdParam,
-    @Body() body: { orderColumns: number[] },
-  ) {
+  async removeRows(@Param() param: IdParam, @Body() body: { orderColumns: number[] }) {
     const workflowId = param.id;
     const orderColumns = body.orderColumns;
 
@@ -133,9 +121,7 @@ export class WorkflowController {
       return { success: true };
     } catch (error: unknown) {
       if (error instanceof Error) {
-        this.logger.error(
-          `Failed to delete workflow rows ${workflowId}, ${error.message}`,
-        );
+        this.logger.error(`Failed to delete workflow rows ${workflowId}, ${error.message}`);
       }
       throw new InternalServerErrorException('Failed to delete workflow rows');
     }

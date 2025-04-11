@@ -1,3 +1,5 @@
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
   Body,
   Controller,
@@ -6,11 +8,9 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { CreateChatMessageBody, CreateChatMessageDto } from './dto/create-chat-message.dto';
 import { ChatService } from '../chat/chat.service';
-import { IdParam } from '@/common/dto/cuid-param.dto';
+import { ReqUser } from '../user/decorators/user.decorator';
+import { CreateChatMessageBody, CreateChatMessageDto } from './dto/create-chat-message.dto';
 
 @Controller('chat')
 export class ChatMessageController {
@@ -20,14 +20,14 @@ export class ChatMessageController {
   async create(
     @Param() param: IdParam,
     @Body() body: CreateChatMessageBody,
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
   ) {
     const { id: chatId } = param;
     if (!chatId) {
       throw new NotFoundException('Chat not found');
     }
     const payload = CreateChatMessageDto.fromInput({
-      userId: user.id,
+      userId: reqUser.id,
       chatId,
       message: {
         type: body.message.type,

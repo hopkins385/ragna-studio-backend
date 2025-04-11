@@ -22,22 +22,18 @@ import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { UpdateCollectionBody } from './dto/update-collection-body.dto';
 import { CollectionAbleDto } from '../collection-able/dto/collection-able.dto';
 import { FindCollectionForBody } from './dto/find-collection-for-body.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 
 @Controller('collection')
 export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
 
   @Post()
-  async create(
-    @ReqUser() user: UserEntity,
-    @Body() body: CreateCollectionBody,
-  ) {
-    const userTeamId = user.teams[0].team.id;
-
+  async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateCollectionBody) {
     try {
       const collection = await this.collectionService.createCollection(
         CreateCollectionDto.fromInput({
-          teamId: userTeamId,
+          teamId: reqUser.activeTeamId,
           name: body.name,
           description: body.description,
         }),
@@ -49,14 +45,10 @@ export class CollectionController {
   }
 
   @Get()
-  async findAllPaginated(
-    @ReqUser() user: UserEntity,
-    @Query() query: PaginateQuery,
-  ) {
-    const userTeamId = user.teams[0].team.id;
+  async findAllPaginated(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
     try {
       const [collections, meta] = await this.collectionService.findAllPaginated(
-        userTeamId,
+        reqUser.activeTeamId,
         +query.page,
       );
       return { collections, meta };
@@ -66,10 +58,9 @@ export class CollectionController {
   }
 
   @Get('all')
-  async findAll(@ReqUser() user: UserEntity) {
-    const userTeamId = user.teams[0].team.id;
+  async findAll(@ReqUser() reqUser: RequestUser) {
     try {
-      const collections = await this.collectionService.findAll(userTeamId);
+      const collections = await this.collectionService.findAll(reqUser.activeTeamId);
       return { collections };
     } catch (error) {
       throw new NotFoundException('Collections not found');
@@ -93,15 +84,11 @@ export class CollectionController {
   }
 
   @Get(':id')
-  async findOne(@ReqUser() user: UserEntity, @Param() param: IdParam) {
-    const userTeamId = user.teams[0].team.id;
+  async findOne(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
     const collectionId = param.id;
 
     try {
-      const collection = await this.collectionService.findFirst(
-        userTeamId,
-        collectionId,
-      );
+      const collection = await this.collectionService.findFirst(reqUser.activeTeamId, collectionId);
       return { collection };
     } catch (error) {
       throw new NotFoundException('Collection not found');
@@ -110,17 +97,14 @@ export class CollectionController {
 
   @Patch(':id')
   async update(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Param() param: IdParam,
     @Body() body: UpdateCollectionBody,
   ) {
-    const userTeamId = user.teams[0].team.id;
+    const userTeamId = reqUser.activeTeamId;
     const collectionId = param.id;
 
-    const collection = await this.collectionService.findFirst(
-      userTeamId,
-      collectionId,
-    );
+    const collection = await this.collectionService.findFirst(userTeamId, collectionId);
 
     if (!collection) {
       throw new NotFoundException('Collection not found');
@@ -143,15 +127,12 @@ export class CollectionController {
   }
 
   @Delete(':id')
-  async remove(@ReqUser() user: UserEntity, @Param() param: IdParam) {
-    const userTeamId = user.teams[0].team.id;
+  async remove(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
+    const userTeamId = reqUser.activeTeamId;
     const collectionId = param.id;
 
     try {
-      const result = await this.collectionService.delete(
-        userTeamId,
-        collectionId,
-      );
+      const result = await this.collectionService.delete(userTeamId, collectionId);
       return { status: 'ok' };
     } catch (error) {
       throw new InternalServerErrorException('Error deleting collection');

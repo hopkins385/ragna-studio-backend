@@ -1,21 +1,21 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Query,
-  Logger,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { RecordService } from './record.service';
-import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
-import { CreateRecordBody } from './dto/create-record-body.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ReqUser } from '../user/decorators/user.decorator';
+import { CreateRecordBody } from './dto/create-record-body.dto';
+import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
+import { RecordService } from './record.service';
 
 @Controller('record')
 export class RecordController {
@@ -24,8 +24,8 @@ export class RecordController {
   constructor(private readonly recordService: RecordService) {}
 
   @Post()
-  async create(@ReqUser() user: UserEntity, @Body() body: CreateRecordBody) {
-    const teamId = user.teams[0].team.id;
+  async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateRecordBody) {
+    const teamId = reqUser.activeTeamId;
     const payload = CreateRecordDto.fromInput({
       collectionId: body.collectionId,
       mediaId: body.mediaId,
@@ -42,10 +42,10 @@ export class RecordController {
   }
 
   @Get(':id')
-  async findOne(@ReqUser() user: UserEntity, @Param() param: IdParam) {
+  async findOne(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
     const payload = FindRecordsDto.fromInput({
       collectionId: param.id,
-      teamId: user.firstTeamId,
+      teamId: reqUser.activeTeamId,
     });
 
     try {
@@ -59,11 +59,11 @@ export class RecordController {
 
   @Get(':id/paginated')
   async findAllPaginated(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @Param() param: IdParam,
     @Query() query: PaginateQuery,
   ) {
-    const teamId = user.firstTeamId;
+    const teamId = reqUser.activeTeamId;
     const collectionId = param.id;
     const payload = FindRecordsDto.fromInput({
       collectionId,
@@ -84,8 +84,8 @@ export class RecordController {
   }
 
   @Delete(':id')
-  async remove(@ReqUser() user: UserEntity, @Param() param: IdParam) {
-    const teamId = user.firstTeamId;
+  async remove(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
+    const teamId = reqUser.activeTeamId;
     const recordId = param.id;
 
     try {

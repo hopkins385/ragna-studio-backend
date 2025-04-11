@@ -1,29 +1,22 @@
-import {
-  ChatMessageContent,
-  ChatMessageText,
-  isTextMessage,
-} from './../chat-message/dto/create-chat-message.dto';
-import { TokenizerService } from './../tokenizer/tokenizer.service';
-import { Injectable, Logger } from '@nestjs/common';
-import { ChatRepository } from './repositories/chat.repository';
-import { ChatMessage } from '@prisma/client';
-import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
-import { CreateChatMessageDto } from '../chat-message/dto/create-chat-message.dto';
-import { VisionImageUrlContent } from '../chat-message/interfaces/vision-image.interface';
-import { ChatEntity } from './entities/chat.entity';
-import { UserEntity } from '../user/entities/user.entity';
+import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { CreateChatStreamBody } from '@/modules/chat-stream/dto/create-chat-stream-body.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  convertToCoreMessages,
   CoreAssistantMessage,
   CoreMessage,
-  CoreToolMessage,
   CoreUserMessage,
   ToolCallPart,
   ToolResultPart,
 } from 'ai';
-import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
-import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
+import { CreateChatMessageDto } from '../chat-message/dto/create-chat-message.dto';
+import { VisionImageUrlContent } from '../chat-message/interfaces/vision-image.interface';
+import { UserEntity } from '../user/entities/user.entity';
+import { ChatMessageContent, isTextMessage } from './../chat-message/dto/create-chat-message.dto';
+import { TokenizerService } from './../tokenizer/tokenizer.service';
+import { GetAllChatsForUserDto } from './dto/get-all-chats.dto';
+import { ChatEntity } from './entities/chat.entity';
+import { ChatRepository } from './repositories/chat.repository';
 
 function notLowerZero(value: number) {
   return value < 0 ? 0 : value;
@@ -500,13 +493,12 @@ export class ChatService {
 
   // POLICIES
 
-  canCreateChatPolicy(user: UserEntity, assistant: any): boolean {
-    const { firstTeamId: userTeamId } = user;
+  canCreateChatPolicy(user: RequestUser, assistant: any): boolean {
     const {
       team: { id: assistantTeamId },
     } = assistant;
 
-    if (assistantTeamId !== userTeamId) {
+    if (assistantTeamId !== user.activeTeamId) {
       return false;
     }
 

@@ -3,6 +3,7 @@
   "svg.preview.background": "black",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
       "source.fixAll.eslint": "explicit",
       "source.fixAll.stylelint": "explicit"
   },

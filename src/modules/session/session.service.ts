@@ -3,19 +3,17 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { SessionRepository } from './repositories/session.repository';
 import { DeviceInfo } from './entities/device-info.entity';
+import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
 
 type SessionId = string;
-type UserId = string;
 
-export interface SessionUser {
+export interface SessionData {
   id: SessionId;
-  user: {
-    id: UserId;
-  };
+  user: SessionUserEntity;
 }
 
-export interface SessionPayload {
-  user: SessionUser['user'];
+export interface CreateSessionPayload {
+  user: SessionUserEntity;
 }
 
 const SESSION_PREFIX = 'session:';
@@ -28,18 +26,12 @@ export class SessionService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async createSession({
-    payload,
-  }: {
-    payload: SessionPayload;
-  }): Promise<SessionId> {
+  async createSession({ payload }: { payload: CreateSessionPayload }): Promise<SessionData> {
     // create a new session id
     const sessionId = randomCUID2();
-    const sessionData = {
+    const sessionData: SessionData = {
       id: sessionId,
-      user: {
-        id: payload.user.id,
-      },
+      user: payload.user,
     };
 
     const deviceInfo: DeviceInfo = {
@@ -49,11 +41,7 @@ export class SessionService {
       location: 'Unknown',
     };
 
-    await this.cacheManager.set(
-      SESSION_PREFIX + sessionId,
-      sessionData,
-      SESSION_TTL_MS,
-    );
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, SESSION_TTL_MS);
 
     const expires = new Date();
     expires.setTime(expires.getTime() + SESSION_TTL_MS);
@@ -67,17 +55,15 @@ export class SessionService {
       expires,
     });
 
-    return sessionId;
+    return sessionData;
   }
 
-  async getSession(sessionId: SessionId): Promise<SessionUser | null> {
+  async getSession({ sessionId }: { sessionId: SessionId }): Promise<SessionData | null> {
     if (!isCUID2(sessionId)) {
       return null;
     }
 
-    const sessionData = await this.cacheManager.get<SessionUser>(
-      SESSION_PREFIX + sessionId,
-    );
+    const sessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
 
     if (!sessionData || !sessionData.user) {
       return null;
@@ -91,14 +77,12 @@ export class SessionService {
 
   async refreshSession(
     sessionId: SessionId,
-    payload: SessionPayload,
+    payload: CreateSessionPayload,
   ): Promise<SessionId | null> {
     if (!sessionId || !payload || !isCUID2(sessionId)) {
       return null;
     }
-    const oldSessionData = await this.cacheManager.get<SessionUser>(
-      SESSION_PREFIX + sessionId,
-    );
+    const oldSessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
     if (!oldSessionData) {
       return null;
     }
@@ -109,11 +93,7 @@ export class SessionService {
       },
     };
 
-    await this.cacheManager.set(
-      SESSION_PREFIX + sessionId,
-      sessionData,
-      SESSION_TTL_MS,
-    );
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, SESSION_TTL_MS);
 
     const expires = new Date();
     expires.setTime(expires.getTime() + SESSION_TTL_MS);
@@ -204,10 +184,7 @@ export class SessionService {
     });
   }
 
-  async cleanupOldDBSessionsInBatches(payload: {
-    olderThan: Date;
-    batchSize: number;
-  }) {
+  async cleanupOldDBSessionsInBatches(payload: { olderThan: Date; batchSize: number }) {
     throw new Error('Not implemented');
     let deletedCount = 0;
     let continueDeleting = true;

@@ -1,3 +1,5 @@
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
   Controller,
   FileTypeValidator,
@@ -10,10 +12,8 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { UploadService } from './upload.service';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
-import { UserEntity } from '@/modules/user/entities/user.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { UploadService } from './upload.service';
 import { ACCEPTED_FILE_TYPES_REGEXP } from './validations/file-allowed-list';
 import { FilesCountValidator } from './validations/file-size.validation';
 
@@ -26,7 +26,7 @@ export class UploadController {
   @Post()
   @UseInterceptors(FilesInterceptor('file'))
   async uploadFile(
-    @ReqUser() user: UserEntity,
+    @ReqUser() reqUser: RequestUser,
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
@@ -40,7 +40,10 @@ export class UploadController {
     files: Express.Multer.File[],
   ) {
     try {
-      return await this.uploadService.uploadFiles({ files }, user);
+      return await this.uploadService.uploadFiles(
+        { files },
+        { userId: reqUser.id, teamId: reqUser.activeTeamId },
+      );
     } catch (error: any) {
       this.logger.error(`Error uploading file: ${error?.message}`);
       throw new InternalServerErrorException('Error uploading file');

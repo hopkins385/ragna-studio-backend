@@ -1,23 +1,21 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Query,
-  HttpCode,
-  NotFoundException,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
-import { MediaService } from './media.service';
-import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { MediaAbleBody } from '@/modules/media-able/dto/media-able-body.dto';
-import { ReqUser } from '@/modules/user/decorators/user.decorator';
-import { UserEntity } from '@/modules/user/entities/user.entity';
+import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { MediaService } from './media.service';
 
 @Controller('media')
 export class MediaController {
@@ -70,7 +68,7 @@ export class MediaController {
   }
 
   @Delete(':id')
-  async remove(@ReqUser() reqUser: UserEntity, @Param() param: IdParam) {
+  async remove(@Param() param: IdParam) {
     try {
       await this.mediaService.delete({ mediaId: param.id });
       return { status: 'ok' };
