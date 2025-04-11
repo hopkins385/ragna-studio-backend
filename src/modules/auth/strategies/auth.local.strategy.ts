@@ -41,6 +41,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         activeTeamId: fullUser.teams?.[0]?.team.id || null,
         onboardedAt: fullUser.onboardedAt,
         roles: fullUser.roles,
+        teams: fullUser.teams.map((t) => t.team.id),
       });
 
       const sessionData = await this.sessionService.createSession({

@@ -44,6 +44,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       activeTeamId: sessionData.user.activeTeamId,
       onboardedAt: sessionData.user.onboardedAt,
       roles: sessionData.user.roles,
+      teams: sessionData.user.teams,
     });
 
     return {

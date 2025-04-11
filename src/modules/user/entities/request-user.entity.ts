@@ -6,6 +6,7 @@ interface CreateRequestUser {
   activeTeamId: string;
   onboardedAt: Date | null;
   roles: string[];
+  teams: string[];
 }
 
 export class RequestUser {
@@ -15,6 +16,7 @@ export class RequestUser {
   readonly activeTeamId: string;
   readonly onboardedAt: Date | null;
   readonly roles: string[];
+  readonly teams: string[];
 
   constructor({
     id,
@@ -23,6 +25,7 @@ export class RequestUser {
     organisationId,
     activeTeamId,
     roles,
+    teams,
   }: CreateRequestUser) {
     this.id = id;
     this.sessionId = sessionId;
@@ -30,6 +33,7 @@ export class RequestUser {
     this.activeTeamId = activeTeamId;
     this.onboardedAt = onboardedAt;
     this.roles = roles;
+    this.teams = teams;
   }
 
   static fromInput(input: CreateRequestUser): RequestUser {
