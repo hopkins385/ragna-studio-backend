@@ -30,9 +30,11 @@ export class AccountController {
 
   @Get()
   async find(@ReqUser() reqUser: RequestUser) {
-    const { id: userId } = reqUser;
     try {
-      const account = await this.userService.getAccountData({ userId });
+      const account = await this.userService.getAccountData({ userId: reqUser.id });
+      if (!account) {
+        throw new NotFoundException('Account not found');
+      }
       return { account };
     } catch (error) {
       throw new NotFoundException('Account not found');
