@@ -1,8 +1,8 @@
 import { cuidSchema } from '@/common/schemas/cuid.schema';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-export const createAssistantSchema = z.object({
-  teamId: cuidSchema,
+const createAssistantSchema = z.object({
   llmId: cuidSchema,
   title: z.string().min(1).max(255),
   description: z.string().min(1).max(255),
@@ -10,3 +10,5 @@ export const createAssistantSchema = z.object({
   isShared: z.boolean().default(false).optional(),
   tools: z.array(cuidSchema),
 });
+
+export class CreateAssistantBody extends createZodDto(createAssistantSchema) {}

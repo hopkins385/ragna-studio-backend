@@ -1,5 +1,7 @@
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { CreateAssistantBody } from '@/modules/assistant/dto/create-assistant-body.dto';
+import { UpdateAssistantBody } from '@/modules/assistant/dto/update-assistant-body.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
@@ -15,32 +17,32 @@ import {
   Query,
 } from '@nestjs/common';
 import { AssistantService } from './assistant.service';
-import { CreateAssistantBody, CreateAssistantDto } from './dto/create-assistant.dto';
+import { CreateAssistantDto } from './dto/create-assistant.dto';
 import { CreateAssistantFromTemplateBody } from './dto/create-from-template.dto';
 import { DeleteAssistantDto } from './dto/delete-assistant.dto';
 import { FindAllAssistantsDto } from './dto/find-all-assistant.dto';
 import { FindAssistantDto } from './dto/find-assistant.dto';
 import { UpdateAssistantHasKnowledgeBody } from './dto/update-assistant-knw-body.dto';
-import { UpdateAssistantBody, UpdateAssistantDto } from './dto/update-assistant.dto';
+import { UpdateAssistantDto } from './dto/update-assistant.dto';
 
 @Controller('assistant')
 export class AssistantController {
   constructor(private readonly assistantService: AssistantService) {}
 
   @Post()
-  async create(@Body() body: CreateAssistantBody) {
-    const createAssistantDto = CreateAssistantDto.fromInput({
-      teamId: body.teamId,
-      llmId: body.llmId,
-      title: body.title,
-      description: body.description,
-      systemPrompt: body.systemPrompt,
-      isShared: body.isShared,
-      tools: body.tools,
-    });
-
+  async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateAssistantBody) {
     try {
-      return await this.assistantService.create(createAssistantDto);
+      return await this.assistantService.create(
+        CreateAssistantDto.fromInput({
+          teamId: reqUser.activeTeamId,
+          llmId: body.llmId,
+          title: body.title,
+          description: body.description,
+          systemPrompt: body.systemPrompt,
+          isShared: body.isShared,
+          tools: body.tools,
+        }),
+      );
     } catch (error) {
       throw new InternalServerErrorException('Error creating assistant');
     }
@@ -65,15 +67,15 @@ export class AssistantController {
 
   @Get()
   async findAll(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
-    const findAllAssistantsDto = FindAllAssistantsDto.fromInput({
-      teamId: reqUser.activeTeamId,
-      page: query.page,
-      limit: query.limit,
-      searchQuery: query.searchQuery,
-    });
-
     try {
-      const result = await this.assistantService.findAll(findAllAssistantsDto);
+      const result = await this.assistantService.findAll(
+        FindAllAssistantsDto.fromInput({
+          teamId: reqUser.activeTeamId,
+          page: query.page,
+          limit: query.limit,
+          searchQuery: query.searchQuery,
+        }),
+      );
 
       if (!result) {
         throw new Error('Assistants not found');
@@ -90,12 +92,12 @@ export class AssistantController {
 
   @Get(':id')
   async findOne(@Param() param: IdParam) {
-    const findAssistantDto = FindAssistantDto.fromInput({
-      id: param.id,
-    });
-
     try {
-      const assistant = await this.assistantService.getOne(findAssistantDto);
+      const assistant = await this.assistantService.getOne(
+        FindAssistantDto.fromInput({
+          id: param.id,
+        }),
+      );
 
       if (!assistant) {
         throw new Error('Assistant not found');
@@ -108,22 +110,26 @@ export class AssistantController {
   }
 
   @Patch(':id')
-  async update(@Param() param: IdParam, @Body() body: UpdateAssistantBody) {
-    const updateAssistantDto = UpdateAssistantDto.fromInput({
-      id: param.id,
-      teamId: body.teamId,
-      llmId: body.llmId,
-      title: body.title,
-      description: body.description,
-      systemPrompt: body.systemPrompt,
-      isShared: body.isShared,
-      hasKnowledgeBase: body.hasKnowledgeBase,
-      hasWorkflow: body.hasWorkflow,
-      tools: body.tools,
-    });
-
+  async update(
+    @ReqUser() reqUser: RequestUser,
+    @Param() param: IdParam,
+    @Body() body: UpdateAssistantBody,
+  ) {
     try {
-      return await this.assistantService.update(updateAssistantDto);
+      return await this.assistantService.update(
+        UpdateAssistantDto.fromInput({
+          id: param.id,
+          teamId: reqUser.activeTeamId,
+          llmId: body.llmId,
+          title: body.title,
+          description: body.description,
+          systemPrompt: body.systemPrompt,
+          isShared: body.isShared,
+          hasKnowledgeBase: body.hasKnowledgeBase,
+          hasWorkflow: body.hasWorkflow,
+          tools: body.tools,
+        }),
+      );
     } catch (error) {
       throw new NotFoundException('Assistant not found');
     }

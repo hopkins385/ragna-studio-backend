@@ -1,8 +1,8 @@
 import { cuidSchema } from '@/common/schemas/cuid.schema';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-export const updateAssistantSchema = z.object({
-  teamId: cuidSchema,
+const updateAssistantSchema = z.object({
   llmId: cuidSchema,
   title: z.string(),
   description: z.string(),
@@ -12,3 +12,5 @@ export const updateAssistantSchema = z.object({
   hasWorkflow: z.boolean().optional(),
   tools: z.array(cuidSchema),
 });
+
+export class UpdateAssistantBody extends createZodDto(updateAssistantSchema) {}

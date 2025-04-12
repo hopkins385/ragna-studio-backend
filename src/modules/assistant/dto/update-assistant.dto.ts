@@ -1,8 +1,3 @@
-import { createZodDto } from 'nestjs-zod';
-import { updateAssistantSchema } from '../schemas/update-assistant.schema';
-
-export class UpdateAssistantBody extends createZodDto(updateAssistantSchema) {}
-
 export class UpdateAssistantDto {
   readonly teamId: string;
   readonly llmId: string;
