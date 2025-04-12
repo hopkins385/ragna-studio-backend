@@ -1,8 +1,8 @@
-import { createId } from '@paralleldrive/cuid2';
-import { Inject, Injectable } from '@nestjs/common';
-import { CustomPrismaService } from 'nestjs-prisma';
 import { ExtendedPrismaClient } from '@/modules/database/prisma.extension';
+import { Inject, Injectable } from '@nestjs/common';
+import { createId } from '@paralleldrive/cuid2';
 import { User } from '@prisma/client';
+import { CustomPrismaService } from 'nestjs-prisma';
 
 interface PaginationOptions {
   page: number;
@@ -41,6 +41,7 @@ export class UserRepository {
         email: true,
         totalCredits: true,
         onboardedAt: true,
+        image: true,
         teams: {
           select: {
             teamId: true,
@@ -49,6 +50,12 @@ export class UserRepository {
                 id: true,
                 name: true,
                 organisationId: true,
+                organisation: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },

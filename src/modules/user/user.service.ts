@@ -1,4 +1,5 @@
 import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
+import { UserAccountEntity } from '@/modules/account/entities/account.entity';
 import { CreateUserBody } from '@/modules/user/dto/create-user-body.dto';
 import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
@@ -86,6 +87,79 @@ export class UserService {
       user: new UserEntity(newUser as any),
       inviteToken: token,
     };
+  }
+
+  async getAccountData({ userId }: { userId: string }): Promise<UserAccountEntity> {
+    const user = await this.repository.prisma.user.findFirst({
+      relationLoadStrategy: 'join',
+      select: {
+        id: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        image: true,
+        totalCredits: true,
+        onboardedAt: true,
+        lastLoginAt: true,
+        emailVerifiedAt: true,
+        teams: {
+          select: {
+            teamId: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+                organisationId: true,
+                organisation: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        roles: {
+          select: {
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!user.teams || user.teams.length === 0) {
+      throw new NotFoundException(`User ${userId} has no teams`);
+    }
+
+    return UserAccountEntity.fromInput({
+      id: user.id,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      emailVerifiedAt: user.emailVerifiedAt,
+      onboardedAt: user.onboardedAt,
+      lastLoginAt: user.lastLoginAt,
+      roles: user.roles.map((r) => r.role.name),
+      teams: user.teams.map((t) => ({
+        id: t.team.id,
+        name: t.team.name,
+      })),
+      organisation: {
+        id: user.teams[0].team.organisation.id,
+        name: user.teams[0].team.organisation.name,
+      },
+    });
   }
 
   async findOne(payload: { userId: string }): Promise<Partial<UserEntity>> {
