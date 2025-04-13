@@ -1,9 +1,11 @@
 import { isCUID2, randomCUID2 } from '@/common/utils/random-cuid2';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
-import { SessionRepository } from './repositories/session.repository';
-import { DeviceInfo } from './entities/device-info.entity';
 import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import ms, { StringValue } from 'ms';
+import { DeviceInfo } from './entities/device-info.entity';
+import { SessionRepository } from './repositories/session.repository';
 
 type SessionId = string;
 
@@ -17,14 +19,20 @@ export interface CreateSessionPayload {
 }
 
 const SESSION_PREFIX = 'session:';
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 1; // 1 days
 
 @Injectable()
 export class SessionService {
+  private readonly logger = new Logger(SessionService.name);
+  private readonly SESSION_TTL_MS: number;
+
   constructor(
+    private readonly configService: ConfigService,
     private readonly sessionRepo: SessionRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {}
+  ) {
+    const sessionExpiresIn = this.configService.get<StringValue>('SESSION_EXPIRES_IN', '30m');
+    this.SESSION_TTL_MS = ms(sessionExpiresIn);
+  }
 
   async createSession({ payload }: { payload: CreateSessionPayload }): Promise<SessionData> {
     // create a new session id
@@ -41,10 +49,10 @@ export class SessionService {
       location: 'Unknown',
     };
 
-    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, SESSION_TTL_MS);
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, this.SESSION_TTL_MS);
 
     const expires = new Date();
-    expires.setTime(expires.getTime() + SESSION_TTL_MS);
+    expires.setTime(expires.getTime() + this.SESSION_TTL_MS);
 
     await this.createDBSession({
       sessionId,
@@ -58,7 +66,10 @@ export class SessionService {
     return sessionData;
   }
 
-  async getSession({ sessionId }: { sessionId: SessionId }): Promise<SessionData | null> {
+  async getSession(
+    { sessionId }: { sessionId: SessionId },
+    options?: { refresh: boolean },
+  ): Promise<SessionData | null> {
     if (!isCUID2(sessionId)) {
       return null;
     }
@@ -69,41 +80,50 @@ export class SessionService {
       return null;
     }
 
+    if (options?.refresh) {
+      await this.refreshSession({
+        sessionId,
+        sessionData,
+      });
+    }
+
     return {
       id: sessionId,
       user: sessionData.user,
     };
   }
 
-  async refreshSession(
-    sessionId: SessionId,
-    payload: CreateSessionPayload,
-  ): Promise<SessionId | null> {
-    if (!sessionId || !payload || !isCUID2(sessionId)) {
+  async refreshSession({
+    sessionId,
+    sessionData,
+  }: {
+    sessionId: SessionId;
+    sessionData?: any;
+  }): Promise<SessionId | null> {
+    if (!sessionId || !isCUID2(sessionId)) {
       return null;
     }
-    const oldSessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
-    if (!oldSessionData) {
-      return null;
+    if (!sessionData) {
+      const oldSessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
+      if (!oldSessionData) {
+        return null;
+      }
+      sessionData = oldSessionData;
     }
 
-    const sessionData = {
-      user: {
-        id: payload.user.id,
-      },
-    };
-
-    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, SESSION_TTL_MS);
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, this.SESSION_TTL_MS);
 
     const expires = new Date();
-    expires.setTime(expires.getTime() + SESSION_TTL_MS);
+    expires.setTime(expires.getTime() + this.SESSION_TTL_MS);
 
     await this.updateLastAccessed({
       sessionId,
       expires,
     });
 
-    return sessionId;
+    this.logger.debug(`Session refreshed: ${sessionId}`);
+
+    return sessionData;
   }
 
   async deleteSession(sessionId: SessionId): Promise<boolean> {

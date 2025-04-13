@@ -77,6 +77,9 @@ export class AuthController {
         throw new Error('Failed to generate tokens');
       }
 
+      // refresh session
+      await this.sessionService.refreshSession({ sessionId: reqUser.sessionId });
+
       return tokens;
       //
     } catch (error) {
@@ -112,7 +115,13 @@ export class AuthController {
   @Get('session')
   async getSession(@Session() session: SessionData) {
     try {
-      const sessionData = await this.sessionService.getSession({ sessionId: session.id });
+      const sessionData = await this.sessionService.getSession(
+        { sessionId: session.id },
+        { refresh: true },
+      );
+      if (!sessionData) {
+        throw new Error('Session not found');
+      }
 
       return {
         user: sessionData.user,
