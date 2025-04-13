@@ -2,6 +2,7 @@ import { comparePassword, hashPassword } from '@/common/utils/bcrypt';
 import { UserAccountEntity } from '@/modules/account/entities/account.entity';
 import { CreateUserBody } from '@/modules/user/dto/create-user-body.dto';
 import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
+import { DetailedUserEntity } from '@/modules/user/entities/detailed-user.entity';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -263,7 +264,34 @@ export class UserService {
         limit,
       },
     );
-    return [users.map((user) => new UserEntity(user as any)), meta]; // TODO: fix types
+    return [
+      users.map((user) =>
+        DetailedUserEntity.fromInput({
+          id: user.id,
+          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          image: user.image,
+          onboardedAt: user.onboardedAt,
+          lastLoginAt: user.lastLoginAt,
+          emailVerifiedAt: user.emailVerifiedAt,
+          roles: user.roles.map((r) => ({
+            id: r.role.id,
+            name: r.role.name,
+          })),
+          teams: user.teams.map((t) => ({
+            id: t.team.id,
+            name: t.team.name,
+          })),
+          organisation: {
+            id: user.teams[0].team.organisation.id,
+            name: user.teams[0].team.organisation.name,
+          },
+        }),
+      ),
+      meta,
+    ]; // TODO: fix types
   }
 
   async userExists({ userId }: { userId: string }) {

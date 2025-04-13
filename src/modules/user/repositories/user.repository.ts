@@ -113,10 +113,41 @@ export class UserRepository {
         select: {
           id: true,
           name: true,
+          firstName: true,
+          lastName: true,
           email: true,
+          image: true,
           lastLoginAt: true,
+          onboardedAt: true,
+          emailVerifiedAt: true,
           createdAt: true,
           updatedAt: true,
+          teams: {
+            select: {
+              team: {
+                select: {
+                  id: true,
+                  name: true,
+                  organisation: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          roles: {
+            select: {
+              role: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
         where: {
           teams: {
