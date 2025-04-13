@@ -1,21 +1,21 @@
-import { TokenUsageEventEmitter } from './../token-usage/events/token-usage-event.emitter';
-import { ChatService } from '@/modules/chat/chat.service';
-import { Injectable, Logger } from '@nestjs/common';
-import { ChatEntity } from '@/modules/chat/entities/chat.entity';
-import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
-import { CoreMessage, LanguageModelUsage, LanguageModelV1, streamText, StreamTextResult } from 'ai';
-import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
-import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
-import { Readable, Transform } from 'node:stream';
-import fastJson from 'fast-json-stringify';
+import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
+import { ChatService } from '@/modules/chat/chat.service';
+import { ChatEntity } from '@/modules/chat/entities/chat.entity';
+import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CoreMessage, LanguageModelUsage, LanguageModelV1, streamText, StreamTextResult } from 'ai';
+import fastJson from 'fast-json-stringify';
+import { Readable, Transform } from 'node:stream';
 import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
-import { FirstUserMessageEventDto } from '../chat/events/first-user-message.event';
 import { ChatEventEmitter } from '../chat/events/chat-event.emitter';
+import { FirstUserMessageEventDto } from '../chat/events/first-user-message.event';
 import { TokenUsageEventDto } from '../token-usage/events/token-usage-event.dto';
+import { TokenUsageEventEmitter } from './../token-usage/events/token-usage-event.emitter';
+import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
 
 type LanguageModelUsageType = 'text' | 'tool';
 
@@ -403,6 +403,8 @@ export class ChatStreamService {
       }),
     );
 
+    let isFirstTextDelta = true;
+
     for await (const chunk of toolCallStreamTextResult.fullStream) {
       if (abortSignal.aborted) return;
 
@@ -445,7 +447,13 @@ export class ChatStreamService {
       }
 
       if (chunk.type === 'text-delta') {
-        yield chunk.textDelta;
+        // add \n\n to the first iteration
+        if (isFirstTextDelta) {
+          yield `\n\n${chunk.textDelta}`;
+          isFirstTextDelta = false;
+        } else {
+          yield chunk.textDelta;
+        }
       }
 
       await this.sleep();
