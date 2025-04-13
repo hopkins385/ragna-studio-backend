@@ -1,13 +1,14 @@
-import type { NestExpressApplication } from '@nestjs/platform-express';
-import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { ThrottlerExceptionFilter } from '@/filter/throttler-exception.filter';
+import { JsonWebTokenErrorFilter } from '@/filter/token-exception.filter';
 import { ClassSerializerInterceptor } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { json, urlencoded } from 'body-parser';
+import helmet from 'helmet';
+import { AppModule } from './app.module';
 import { SwaggerConfig } from './config/swagger.config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
 import { ZodValidationExceptionFilter } from './filter/zod-exception.filter';
-import helmet from 'helmet';
-import { JsonWebTokenErrorFilter } from '@/filter/token-exception.filter';
-import { ThrottlerExceptionFilter } from '@/filter/throttler-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -27,6 +28,9 @@ async function bootstrap() {
       crossOriginEmbedderPolicy: false,
     }),
   );
+
+  app.use(json({ limit: '300kb' }));
+  app.use(urlencoded({ limit: '300kb', extended: true }));
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
