@@ -1,14 +1,15 @@
+import { HTTP_CLIENT } from '@/modules/http-client/constants';
 import { StorageService } from '@/modules/storage/storage.service';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
-import { ImageConversionJobDataDto } from '../dto/image-conversion-job-data.dto';
 import { Inject, Logger } from '@nestjs/common';
-import { readFile } from 'node:fs/promises';
 import { AxiosInstance } from 'axios';
-import { HTTP_CLIENT } from '@/modules/http-client/constants';
+import { Job } from 'bullmq';
+import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Worker } from 'worker_threads';
-import { spawn } from 'node:child_process';
+import { ImageConversionJobDataDto } from '../dto/image-conversion-job-data.dto';
+import { ImageProcessingService } from './image-processing.service';
 
 interface WorkerResult {
   avifBuffer: Buffer;
@@ -29,6 +30,7 @@ export class ImageConversionProcessor extends WorkerHost {
   private readonly imageConversionTimeout: number = 30000; // 30 seconds
 
   constructor(
+    private readonly imageProcessingService: ImageProcessingService,
     private readonly storageService: StorageService,
     @Inject(HTTP_CLIENT)
     private readonly httpClient: AxiosInstance,
@@ -57,61 +59,7 @@ export class ImageConversionProcessor extends WorkerHost {
       fileBuffer = await readFile(filePathOrUrl);
     }
 
-    throw new Error('Image conversion temporarily disabled');
-
-    /*
-        const res = await goWorker(fileBuffer);
-    const { avifBuffer, webpBuffer } = res as WorkerResult;
-    console.log('res', res);
-    throw new Error('Image conversion temporarily disabled');
-
-    this.logger.debug(`Converting image', oldBucketPath: ${oldBucketPath}, fileName: ${fileName}`);
-
-    this.imageWorker.postMessage(fileBuffer);
-
-    const result: WorkerResult = await Promise.race([
-      new Promise<WorkerResult>((resolve, reject) => {
-        const messageListener = (message: WorkerResult) => {
-          if (message.error) {
-            reject(message.error);
-          } else {
-            resolve(message);
-          }
-          this.imageWorker.removeListener('message', messageListener);
-          this.imageWorker.removeListener('error', errorListener);
-          this.imageWorker.removeListener('exit', exitListener);
-        };
-
-        const errorListener = (err: any) => {
-          reject(err);
-          this.imageWorker.removeListener('message', messageListener);
-          this.imageWorker.removeListener('error', errorListener);
-          this.imageWorker.removeListener('exit', exitListener);
-        };
-
-        const exitListener = (code: number) => {
-          reject(new Error(`Worker stopped with exit code ${code}`));
-          this.imageWorker.removeListener('message', messageListener);
-          this.imageWorker.removeListener('error', errorListener);
-          this.imageWorker.removeListener('exit', exitListener);
-        };
-
-        this.imageWorker.on('message', messageListener);
-        this.imageWorker.on('error', errorListener);
-        this.imageWorker.on('exit', exitListener);
-      }),
-      new Promise<WorkerResult>((_, reject) =>
-        setTimeout(() => {
-          reject(new Error('Image conversion timed out'));
-        }, this.imageConversionTimeout),
-      ),
-    ]);
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    const { avifBuffer, webpBuffer } = result;
+    const { avifBuffer, webpBuffer } = await this.imageProcessingService.processImage(fileBuffer);
 
     const newBucketPath = `${oldBucketPath}/converted`;
     // remove file extension (e.g. abc-file.jpg -> abc-file)

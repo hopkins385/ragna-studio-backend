@@ -1,12 +1,13 @@
-import { TextToImageRepository } from './repositories/text-to-image.repository';
-import { Module } from '@nestjs/common';
-import { TextToImageService } from './text-to-image.service';
-import { TextToImageController } from './text-to-image.controller';
-import { FluxImageGenerator } from './utils/flux-image';
-import { StorageService } from '@/modules/storage/storage.service';
-import { BullModule } from '@nestjs/bullmq';
-import { ImageConversionProcessor } from './processors/image-conversion.processor';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
+import { StorageService } from '@/modules/storage/storage.service';
+import { ImageProcessingService } from '@/modules/text-to-image/processors/image-processing.service';
+import { BullModule } from '@nestjs/bullmq';
+import { Module } from '@nestjs/common';
+import { ImageConversionProcessor } from './processors/image-conversion.processor';
+import { TextToImageRepository } from './repositories/text-to-image.repository';
+import { TextToImageController } from './text-to-image.controller';
+import { TextToImageService } from './text-to-image.service';
+import { FluxImageGenerator } from './utils/flux-image';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { QueueName } from '@/modules/queue/enums/queue-name.enum';
     StorageService,
     // Processors
     ImageConversionProcessor,
+    ImageProcessingService,
   ],
 })
 export class TextToImageModule {}
