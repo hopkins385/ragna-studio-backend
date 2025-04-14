@@ -121,8 +121,6 @@ export class SessionService {
       expires,
     });
 
-    this.logger.debug(`Session refreshed: ${sessionId}`);
-
     return sessionData;
   }
 
