@@ -1,12 +1,5 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import {
-  Body,
-  Controller,
-  Inject,
-  InternalServerErrorException,
-  Post,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Inject } from '@nestjs/common';
 
 @Controller('cache-manager')
 export class CacheManagerController {
@@ -15,7 +8,7 @@ export class CacheManagerController {
     private readonly cacheManager: Cache,
   ) {}
 
-  @Post('purge')
+  /*@Post('purge')
   async purgeCache(
     @Body() body: { token: string },
   ): Promise<{ message: string }> {
@@ -28,5 +21,5 @@ export class CacheManagerController {
     } catch (error) {
       throw new InternalServerErrorException('Failed to purge cache');
     }
-  }
+  }*/
 }
