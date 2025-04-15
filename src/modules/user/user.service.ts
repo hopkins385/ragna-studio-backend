@@ -21,7 +21,7 @@ export class UserService {
     // super(UserService.name);
   }
 
-  async create({ name, email, password }: CreateUserBody) {
+  async create({ name, email, password, roleName }: CreateUserBody) {
     const exists = await this.findByEmail(email);
     if (exists) throw new ConflictException('User already registered');
 
@@ -30,20 +30,41 @@ export class UserService {
       name,
       email,
       password: hasedPassword,
+      roleName,
     });
   }
 
-  async createWithoutPassword({ name, email }: { name: string; email: string }) {
+  async createWithoutPassword({
+    name,
+    email,
+    roleName,
+  }: {
+    name: string;
+    email: string;
+    roleName: string;
+  }) {
     const exists = await this.findByEmail(email);
     if (exists) throw new Error('Email already registered');
 
     return this.repository.create({
       name,
       email,
+      password: null,
+      roleName,
     });
   }
 
-  async invite({ name, email, teamId }: { name: string; email: string; teamId: string }) {
+  async invite({
+    name,
+    email,
+    teamId,
+    roleName,
+  }: {
+    name: string;
+    email: string;
+    teamId: string;
+    roleName: string;
+  }) {
     const exists = await this.findByEmail(email);
     if (exists) throw new ConflictException('User already registered');
 
@@ -51,25 +72,8 @@ export class UserService {
       name,
       email,
       password: null,
+      roleName,
       onboardedAt: new Date(),
-    });
-
-    // assign to user the standard user-role
-    const role = await this.repository.prisma.role.findFirst({
-      where: {
-        name: 'user',
-      },
-      select: {
-        id: true,
-      },
-    });
-    if (!role) throw new Error('Role not found');
-
-    await this.repository.prisma.userRole.create({
-      data: {
-        userId: newUser.id,
-        roleId: role.id,
-      },
     });
 
     // add user to team
@@ -85,7 +89,7 @@ export class UserService {
     });
 
     return {
-      user: new UserEntity(newUser as any),
+      user: new UserEntity(newUser as any), // TODO: fix types
       inviteToken: token,
     };
   }

@@ -12,6 +12,7 @@ interface PaginationOptions {
 interface CreateUser {
   name: string;
   email: string;
+  roleName: string;
   password?: string;
   onboardedAt?: Date;
 }
@@ -159,6 +160,9 @@ export class UserRepository {
           },
           deletedAt: null,
         },
+        orderBy: {
+          name: 'asc',
+        },
       })
       .withPages({ page, limit, includePageCount: true });
   }
@@ -170,10 +174,19 @@ export class UserRepository {
     return !!user;
   }
 
-  async create({ name, email, password, onboardedAt }: CreateUser): Promise<User> {
+  async create({ name, email, password, roleName, onboardedAt }: CreateUser): Promise<User> {
     const firstName = name.split(' ')[0];
     const lastName = name.split(' ').slice(1).join(' ');
-    return this.prisma.user.create({
+
+    const role = await this.prisma.role.findFirst({
+      where: { name: roleName },
+    });
+
+    if (!role.id) {
+      throw new Error('Role not found');
+    }
+
+    const user = await this.prisma.user.create({
       data: {
         id: createId(),
         name,
@@ -184,6 +197,15 @@ export class UserRepository {
         onboardedAt,
       },
     });
+
+    await this.prisma.userRole.create({
+      data: {
+        userId: user.id,
+        roleId: role.id,
+      },
+    });
+
+    return user;
   }
 
   async update(id: string, data: Partial<User>) {

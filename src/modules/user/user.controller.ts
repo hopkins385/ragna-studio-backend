@@ -38,7 +38,12 @@ export class UserController {
   @Roles(Role.ADMIN)
   async create(@Body() createUserBody: CreateUserBody) {
     try {
-      return await this.userService.create(createUserBody);
+      return await this.userService.create({
+        name: createUserBody.name,
+        email: createUserBody.email,
+        password: createUserBody.password,
+        roleName: createUserBody.roleName,
+      });
     } catch (error: unknown) {
       this.logger.error(`Error creating user`, error);
       if (error instanceof ConflictException) {
@@ -56,6 +61,7 @@ export class UserController {
         name: inviteUserBody.name,
         email: inviteUserBody.email,
         teamId: reqUser.activeTeamId,
+        roleName: inviteUserBody.roleName,
       });
       return { inviteToken };
     } catch (error: unknown) {
