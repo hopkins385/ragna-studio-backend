@@ -12,18 +12,8 @@ export function getExtendedPrismaClient(url: string) {
     },
   })
     .$extends(cuid2Extension())
-    .$extends(pagination())
-    .$extends({
-      model: {
-        user: {
-          findByEmail: async (email: string) => {
-            return extendedPrismaClient.user.findFirstOrThrow({
-              where: { email },
-            });
-          },
-        },
-      },
-    });
+    .$extends(pagination());
+
   return extendedPrismaClient;
 }
 
