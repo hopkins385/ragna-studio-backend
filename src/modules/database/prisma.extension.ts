@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { pagination } from 'prisma-extension-pagination';
 import cuid2Extension from 'prisma-extension-cuid2';
+import { pagination } from 'prisma-extension-pagination';
 
 export function getExtendedPrismaClient(url: string) {
   const extendedPrismaClient = new PrismaClient({
