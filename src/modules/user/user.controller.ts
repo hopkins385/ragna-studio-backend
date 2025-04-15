@@ -73,20 +73,6 @@ export class UserController {
     }
   }
 
-  /*@Get('/invite-token')
-  @Roles(Role.ADMIN)
-  async createInviteToken(@ReqUser() reqUser: RequestUser) {
-    try {
-      const token = await this.userService.createInviteToken({
-        reqUserId: reqUser.id,
-      });
-      return { token };
-    } catch (error: unknown) {
-      this.logger.error(`Error creating invite token`, error);
-      throw new InternalServerErrorException('Error creating invite token');
-    }
-  }*/
-
   @Get()
   @Roles(Role.ADMIN)
   async findAll(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
