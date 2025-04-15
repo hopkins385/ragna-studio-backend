@@ -15,6 +15,18 @@
     ],
     "assets": [
       {
+        "include": "../bin",
+        "outDir": "dist/bin"
+      },
+      {
+        "include": "../prisma/migrations",
+        "outDir": "dist/prisma"
+      },
+      {
+        "include": "../prisma/schema.prisma",
+        "outDir": "dist/prisma"
+      },
+      {
         "include": "modules/mail/templates",
         "outDir": "dist"
       }

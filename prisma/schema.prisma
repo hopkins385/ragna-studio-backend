@@ -5,6 +5,7 @@ generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["relationJoins"]
   binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  output          = "client"
 }
 
 generator json {
@@ -306,6 +307,7 @@ model Tool {
   name         String
   description  String?
   iconName     String?   @map("icon_name")
+  orderColumn  Int?      @map("order_column") @db.SmallInt
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
