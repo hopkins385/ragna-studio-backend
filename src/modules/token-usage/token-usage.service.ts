@@ -123,7 +123,12 @@ function getLlmPricing(provider: string, model: string): LlmPricing {
   }
 
   if (!modelPricing) {
-    throw new Error(`Model ${model} not found for provider ${provider}`);
+    // set to zero
+    modelPricing = {
+      inputTokenPrice: 0,
+      outputTokenPrice: 0,
+      currency: 'USD',
+    };
   }
 
   return {
