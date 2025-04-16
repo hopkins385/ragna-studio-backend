@@ -1,6 +1,6 @@
 // token-usage.repository.ts
-import { Inject, Injectable } from '@nestjs/common';
 import { ExtendedPrismaClient } from '@/modules/database/prisma.extension';
+import { Inject, Injectable } from '@nestjs/common';
 import { CustomPrismaService } from 'nestjs-prisma';
 import { TokenUsagePayload } from '../interfaces/token-usage-payload.interface';
 
@@ -68,6 +68,7 @@ export class TokenUsageRepository {
         llm: {
           select: {
             provider: true,
+            apiName: true,
             displayName: true,
             llmPrices: {
               select: { inputTokenPrice: true, outputTokenPrice: true, currency: true },
