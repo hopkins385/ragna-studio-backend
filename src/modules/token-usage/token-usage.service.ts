@@ -1,3 +1,4 @@
+import { TokenUsageEntity } from '@/modules/token-usage/entities/token-usage.entity';
 import { Injectable } from '@nestjs/common';
 import { TokenUsagePayload } from './interfaces/token-usage-payload.interface';
 import { TokenUsageRepository } from './repositories/token-usage.repository';
@@ -100,13 +101,19 @@ const llmPricing: Map<string, ModelPricingMap> = new Map([
   ],
 ]);
 
-const ragnaPercent = 0.15 / 100; // 15% of the total price
+const ragnaPricing = {
+  percentage: 0.15, // / 100, // 15% of the total price
+};
 
-function getLlmPricing(provider: string, model: string): LlmPricing {
+function getLlmPricing({ provider, model }: { provider: string; model: string }): LlmPricing {
   // Get the provider map
   const providerPricing = llmPricing.get(provider);
   if (!providerPricing) {
-    throw new Error(`Provider ${provider} not found`);
+    return {
+      inputTokenPrice: 0,
+      outputTokenPrice: 0,
+      currency: 'USD',
+    };
   }
 
   // Find the model pricing (with partial matching)
@@ -115,9 +122,6 @@ function getLlmPricing(provider: string, model: string): LlmPricing {
   for (const [modelName, pricing] of providerPricing.entries()) {
     if (modelName.includes(model) || model.includes(modelName)) {
       modelPricing = pricing;
-      // add ragnaPercent to the input and output token prices
-      modelPricing.inputTokenPrice += modelPricing.inputTokenPrice * ragnaPercent;
-      modelPricing.outputTokenPrice += modelPricing.outputTokenPrice * ragnaPercent;
       break;
     }
   }
@@ -131,9 +135,13 @@ function getLlmPricing(provider: string, model: string): LlmPricing {
     };
   }
 
+  const conversionFactor = {
+    divisor: 1000 * 1000 * 100,
+  };
+
   return {
-    inputTokenPrice: modelPricing.inputTokenPrice / (1000 * 1000 * 100),
-    outputTokenPrice: modelPricing.outputTokenPrice / (1000 * 1000 * 100),
+    inputTokenPrice: modelPricing.inputTokenPrice / conversionFactor.divisor,
+    outputTokenPrice: modelPricing.outputTokenPrice / conversionFactor.divisor,
     currency: modelPricing.currency,
   };
 }
@@ -146,7 +154,7 @@ export class TokenUsageService {
     await this.tokenUsageRepository.logTokenUsage(payload);
   }
 
-  async getTokenUsageHistory(payload: TokenUsageHistoryPayload) {
+  async getTokenUsageHistory(payload: TokenUsageHistoryPayload): Promise<TokenUsageEntity[]> {
     const fromDate = new Date(
       `${payload.from.year}-${payload.from.month}-${payload.from.day ?? '01'}`,
     );
@@ -160,48 +168,92 @@ export class TokenUsageService {
       },
     });
 
-    /* example response
-            [{
-            "promptTokens": 7024,
-            "completionTokens": 1130,
-            "totalTokens": 8154,
-            "createdAt": "2025-04-01T09:15:32.570Z",
-            "llm": {
-                "provider": "anthropic",
-                "displayName": "Claude 3.7 Sonnet",
-                "llmPrices": [
-                    {
-                        "inputTokenPrice": 300,
-                        "outputTokenPrice": 1500,
-                        "currency": "USD"
-                    }
-                ]
-            }
-        }],
-        */
+    const PricingCalculator = {
+      applyMarkup: (pricing: LlmPricing, markup: { percentage: number }): LlmPricing => {
+        return {
+          inputTokenPrice: pricing.inputTokenPrice * (1 + markup.percentage),
+          outputTokenPrice: pricing.outputTokenPrice * (1 + markup.percentage),
+          currency: pricing.currency,
+        };
+      },
+
+      calculateTokenCosts: (
+        pricing: LlmPricing,
+        tokens: { prompt: number; completion: number },
+      ): {
+        promptPrice: number;
+        completionPrice: number;
+        totalPrice: number;
+      } => {
+        const promptPrice = pricing.inputTokenPrice * tokens.prompt;
+        const completionPrice = pricing.outputTokenPrice * tokens.completion;
+
+        return {
+          promptPrice,
+          completionPrice,
+          totalPrice: promptPrice + completionPrice,
+        };
+      },
+
+      formatPrices: (prices: {
+        promptPrice: number;
+        completionPrice: number;
+        totalPrice: number;
+      }): {
+        promptPrice: number;
+        completionPrice: number;
+        totalPrice: number;
+      } => {
+        const formatter = {
+          precision: 4,
+          convert: (value: number): number => {
+            // Parse the fixed string back to a number with 4 decimal places
+            return parseFloat(value.toFixed(formatter.precision));
+          },
+        };
+
+        return {
+          promptPrice: formatter.convert(prices.promptPrice),
+          completionPrice: formatter.convert(prices.completionPrice),
+          totalPrice: formatter.convert(prices.totalPrice),
+        };
+      },
+    };
 
     return usages.map((usage) => {
-      const { inputTokenPrice, outputTokenPrice } = getLlmPricing(
-        usage.llm?.provider,
-        usage.llm?.apiName,
+      const basePricing = getLlmPricing({
+        provider: usage.llm.provider,
+        model: usage.llm.apiName,
+      });
+
+      // Apply Ragna percentage markup using the calculator
+      const pricingWithMarkup = PricingCalculator.applyMarkup(basePricing, ragnaPricing);
+
+      // Calculate token costs
+      const tokenCounts = {
+        prompt: usage.promptTokens,
+        completion: usage.completionTokens,
+      };
+
+      const calculatedPrices = PricingCalculator.calculateTokenCosts(
+        pricingWithMarkup,
+        tokenCounts,
       );
+      const formattedPrices = PricingCalculator.formatPrices(calculatedPrices);
 
-      const tempTotalPrice =
-        inputTokenPrice * usage.promptTokens + outputTokenPrice * usage.completionTokens;
-
-      return {
+      return TokenUsageEntity.fromInput({
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
         totalTokens: usage.totalTokens,
         createdAt: usage.createdAt,
-        promptPrice: (inputTokenPrice * usage.promptTokens).toFixed(4),
-        completionPrice: (outputTokenPrice * usage.completionTokens).toFixed(4),
-        totalPrice: tempTotalPrice.toFixed(4),
+        promptPrice: formattedPrices.promptPrice,
+        completionPrice: formattedPrices.completionPrice,
+        totalPrice: formattedPrices.totalPrice,
         llm: {
-          provider: usage.llm?.provider,
-          displayName: usage.llm?.displayName,
+          provider: usage.llm.provider,
+          displayName: usage.llm.displayName,
         },
-      };
+      });
     });
   }
 }
