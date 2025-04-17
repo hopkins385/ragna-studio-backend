@@ -26,7 +26,7 @@ export class TeamService {
   }
 
   /**
-   * Edit team name
+   * Edit team (currently only name)
    * @param payload.teamId - The ID of the team to edit
    * @param payload.userId - The ID of the user who is editing the team
    * @param payload.name - The new name of the team
