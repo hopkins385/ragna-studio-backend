@@ -1,17 +1,15 @@
-import { UserService } from '@/modules/user/user.service';
-import { Injectable, Logger } from '@nestjs/common';
 import { comparePassword } from '@/common/utils/bcrypt';
-import { JwtService } from '@nestjs/jwt';
+import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
+import { QueueName } from '@/modules/queue/enums/queue-name.enum';
+import { UserService } from '@/modules/user/user.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { User as UserModel } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
+import { Queue } from 'bullmq';
+import { SessionService } from '../session/session.service';
 import { CredentialsDto } from './dto/credentials.dto';
 import { SocialAuthResponseDto } from './google/social-auth-response.dto';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { QueueName } from '@/modules/queue/enums/queue-name.enum';
-import { SessionService } from '../session/session.service';
-import { r } from '@faker-js/faker/dist/airline-CBNP41sR';
-import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
 
 interface UserPayload {
   userId: string;
@@ -162,6 +160,7 @@ export class AuthService {
       user = await this.userService.createWithoutPassword({
         email: socialAuth.email,
         name: userName,
+        roleName: 'user',
       });
     }
     return this.generateTokens({
