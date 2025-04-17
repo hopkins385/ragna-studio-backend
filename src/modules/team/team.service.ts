@@ -1,5 +1,11 @@
 import { TeamRepository } from '@/modules/team/repositories/team.repository';
-import { HttpException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 @Injectable()
 export class TeamService {
@@ -24,19 +30,21 @@ export class TeamService {
    * @param payload.teamId - The ID of the team to edit
    * @param payload.userId - The ID of the user who is editing the team
    * @param payload.name - The new name of the team
+   * @throws NotFoundException if the team is not found
    * @throws UnauthorizedException if the user is not a member of the team
-   * @throws Error if the team is not found or if the edit operation fails
+   * @throws Error if the edit operation fails
    * @returns
    */
   async editTeam({ teamId, userId, name }: { teamId: string; userId: string; name: string }) {
     try {
-      // check if user can edit team
+      // check if team exists
       const existTeam = await this.teamRepo.findTeamById(teamId);
 
       if (!existTeam) {
-        throw new Error('Team not found');
+        throw new NotFoundException('Team not found');
       }
 
+      // check if user can edit team
       if (!existTeam.users.some((teamUser) => teamUser.userId === userId)) {
         throw new UnauthorizedException('You are not a member of this team');
       }

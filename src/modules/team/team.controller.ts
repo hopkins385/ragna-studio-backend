@@ -34,8 +34,8 @@ export class TeamController {
         userId: reqUser.id,
         name: body.name,
       });
-
       return { team };
+      //
     } catch (error: unknown) {
       if (error instanceof HttpException) {
         throw error;
