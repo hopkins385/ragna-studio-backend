@@ -12,7 +12,11 @@ export class TeamRepository {
     this.prisma = this.db.client;
   }
 
-  // find team by id
+  /**
+   * Find a team by ID
+   * @param teamId - The ID of the team to find
+   * @returns
+   */
   async findTeamById(teamId: string) {
     return this.prisma.team.findUnique({
       select: {
@@ -20,24 +24,32 @@ export class TeamRepository {
         name: true,
         users: {
           select: {
-            id: true,
+            userId: true,
           },
         },
       },
       where: {
         id: teamId,
+        deletedAt: null,
       },
     });
   }
 
-  // change team name
+  /**
+   * Edit team name
+   * @param payload.teamId - The ID of the team to edit
+   * @param payload.name - The new name of the team
+   * @returns
+   */
   async editTeamName({ teamId, name }: { teamId: string; name: string }) {
     return this.prisma.team.update({
       where: {
         id: teamId,
+        deletedAt: null,
       },
       data: {
         name,
+        updatedAt: new Date(),
       },
     });
   }

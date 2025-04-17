@@ -11,7 +11,7 @@ import {
   HttpException,
   InternalServerErrorException,
   Param,
-  Post,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import { TeamService } from './team.service';
@@ -21,7 +21,7 @@ import { TeamService } from './team.service';
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
-  @Post(':id/edit')
+  @Patch(':id/edit')
   @Roles(Role.ADMIN)
   async editTeam(
     @Param() param: IdParam,
@@ -34,10 +34,6 @@ export class TeamController {
         userId: reqUser.id,
         name: body.name,
       });
-
-      if (!team) {
-        throw new Error('Team not found');
-      }
 
       return { team };
     } catch (error: unknown) {
