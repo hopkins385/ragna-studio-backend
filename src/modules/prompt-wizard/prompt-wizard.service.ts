@@ -1,12 +1,12 @@
-import { ConfigService } from '@nestjs/config';
-import { Injectable, Logger } from '@nestjs/common';
-import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
-import { CoreMessage, generateText } from 'ai';
 import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CoreMessage, generateText } from 'ai';
 import {
-  systemPromptTemplate,
   basicPromptImprovementTemplate,
   finalzingPromptTemplate,
+  systemPromptTemplate,
 } from './constants/prompt-templates';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class PromptWizardService {
 
     modelFactory.setConfig({
       provider: ProviderType.OPENAI,
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
     });
 
     let userContent = basicPromptImprovementTemplate
@@ -69,7 +69,7 @@ export class PromptWizardService {
 
     modelFactory.setConfig({
       provider: ProviderType.OPENAI,
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
     });
 
     let userContent = basicPromptImprovementTemplate
@@ -101,7 +101,7 @@ export class PromptWizardService {
 
     modelFactory.setConfig({
       provider: ProviderType.OPENAI,
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
     });
 
     let userContent = finalzingPromptTemplate

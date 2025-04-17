@@ -53,9 +53,7 @@ export class AssistantRepository {
     });
   }
 
-  async createAssistantFromTemplate(
-    payload: CreateAssistantFromTemplatePayload,
-  ) {
+  async createAssistantFromTemplate(payload: CreateAssistantFromTemplatePayload) {
     // find template
     const template = await this.prisma.assistantTemplate.findFirst({
       select: {
@@ -76,8 +74,7 @@ export class AssistantRepository {
       throw new Error('Template not found');
     }
 
-    const templateSystemPrompt =
-      template.assistantSystemPrompt[payload.language];
+    const templateSystemPrompt = template.assistantSystemPrompt[payload.language];
 
     const data: CreateAssistantPayload = {
       teamId: payload.teamId,
@@ -104,13 +101,7 @@ export class AssistantRepository {
     });
   }
 
-  async getManyAssistants({
-    teamId,
-    assistantIds,
-  }: {
-    teamId: string;
-    assistantIds: string[];
-  }) {
+  async getManyAssistants({ teamId, assistantIds }: { teamId: string; assistantIds: string[] }) {
     return this.prisma.assistant.findMany({
       where: {
         teamId,
@@ -219,6 +210,9 @@ export class AssistantRepository {
           },
           deletedAt: null,
         },
+        orderBy: {
+          title: 'asc',
+        },
       })
       .withPages({
         limit,
@@ -292,13 +286,7 @@ export class AssistantRepository {
 
   // *~ DELETE ~* //
 
-  async softDeleteAssistant({
-    teamId,
-    assistantId,
-  }: {
-    teamId: string;
-    assistantId: string;
-  }) {
+  async softDeleteAssistant({ teamId, assistantId }: { teamId: string; assistantId: string }) {
     return this.prisma.assistant.update({
       where: {
         teamId,
@@ -310,13 +298,7 @@ export class AssistantRepository {
     });
   }
 
-  async hardDeleteAssistant({
-    teamId,
-    assistantId,
-  }: {
-    teamId: string;
-    assistantId: string;
-  }) {
+  async hardDeleteAssistant({ teamId, assistantId }: { teamId: string; assistantId: string }) {
     return this.prisma.assistant.delete({
       where: {
         teamId,
