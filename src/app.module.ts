@@ -56,6 +56,7 @@ import { TokenUsageModule } from './modules/token-usage/token-usage.module';
 import { AssistantTeamModule } from './modules/assistant-team/assistant-team.module';
 import { NerModule } from './modules/ner/ner.module';
 import { ThrottlerBehindProxyGuard } from '@/common/guards/throttler.guard';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -190,6 +191,8 @@ import { ThrottlerBehindProxyGuard } from '@/common/guards/throttler.guard';
     AssistantTeamModule,
 
     NerModule,
+
+    TeamModule,
     // ,
   ],
   controllers: [ChatMessageController],
