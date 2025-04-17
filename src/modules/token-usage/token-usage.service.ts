@@ -90,7 +90,31 @@ const llmPricing: Map<string, ModelPricingMap> = new Map([
         },
       ],
       [
+        'o1',
+        {
+          inputTokenPrice: 1500,
+          outputTokenPrice: 6000,
+          currency: 'USD',
+        },
+      ],
+      [
         'o1-mini',
+        {
+          inputTokenPrice: 110,
+          outputTokenPrice: 440,
+          currency: 'USD',
+        },
+      ],
+      [
+        'o3',
+        {
+          inputTokenPrice: 1000,
+          outputTokenPrice: 4000,
+          currency: 'USD',
+        },
+      ],
+      [
+        'o3-mini',
         {
           inputTokenPrice: 110,
           outputTokenPrice: 440,
@@ -230,15 +254,12 @@ export class TokenUsageService {
       const pricingWithMarkup = PricingCalculator.applyMarkup(basePricing, ragnaPricing);
 
       // Calculate token costs
-      const tokenCounts = {
+      const tokenUsage = {
         prompt: usage.promptTokens,
         completion: usage.completionTokens,
       };
 
-      const calculatedPrices = PricingCalculator.calculateTokenCosts(
-        pricingWithMarkup,
-        tokenCounts,
-      );
+      const calculatedPrices = PricingCalculator.calculateTokenCosts(pricingWithMarkup, tokenUsage);
       const formattedPrices = PricingCalculator.formatPrices(calculatedPrices);
 
       return TokenUsageEntity.fromInput({
