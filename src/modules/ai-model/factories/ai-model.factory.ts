@@ -1,18 +1,18 @@
-import { createOpenAI } from '@ai-sdk/openai';
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { createMistral } from '@ai-sdk/mistral';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import {
-  AiModelProvider,
-  AiModelProviderOptions,
-} from '@/modules/ai-model/schemas/aiModelProvider';
-import { ConfigService } from '@nestjs/config';
+import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
 import {
   ProviderClass,
   ProviderModelConfig,
 } from '@/modules/ai-model/interfaces/provider-model.interface';
+import {
+  AiModelProvider,
+  AiModelProviderOptions,
+} from '@/modules/ai-model/schemas/aiModelProvider';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createMistral } from '@ai-sdk/mistral';
+import { createOpenAI } from '@ai-sdk/openai';
 import { Logger } from '@nestjs/common';
-import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import { ConfigService } from '@nestjs/config';
 import type { LanguageModelV1 } from 'ai';
 
 class OpenAIProvider extends AiModelProvider {
@@ -143,12 +143,6 @@ export class AiModelFactory {
     if (!ProviderClass) {
       throw new Error(`Provider ${this.provider} not supported`);
     }
-
-    // this.logger.debug(`getModel()`, {
-    //   provider: this.provider,
-    //   model: this.model,
-    //   options: this.options,
-    // });
 
     return new ProviderClass(this.model, this.config, this.options).createModel();
   }
