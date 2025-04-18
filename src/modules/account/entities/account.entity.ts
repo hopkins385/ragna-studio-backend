@@ -20,6 +20,7 @@ export class UserAccountEntity {
     readonly email: string,
     readonly image: string,
     readonly roles: string[],
+    readonly activeTeamId: string,
     readonly teams: Team[],
     readonly organisation: Organisation,
     readonly lastLoginAt: Date,
@@ -37,6 +38,7 @@ export class UserAccountEntity {
     lastName: string;
     email: string;
     image: string;
+    activeTeamId: string;
     roles: string[];
     teams: Team[];
     organisation: Organisation;
@@ -52,6 +54,7 @@ export class UserAccountEntity {
       input.email,
       input.image,
       input.roles,
+      input.activeTeamId,
       input.teams,
       input.organisation,
       input.lastLoginAt,
