@@ -1,23 +1,24 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import { Controller, Get, Logger, NotFoundException, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { GoogleDriveCodeQuery } from './dto/google-drive-code-query.dto';
 import { GoogleDriveSearchQuery } from './dto/google-drive-search-query.dto';
 import { GoogleDriveService } from './google-drive.service';
 
 @Controller('google-drive')
-export class GoogleDriveController {
-  private readonly logger = new Logger(GoogleDriveController.name);
-
-  constructor(private readonly googleDriveService: GoogleDriveService) {}
+export class GoogleDriveController extends BaseController {
+  constructor(private readonly googleDriveService: GoogleDriveService) {
+    super();
+  }
 
   @Get('consent-url')
   async getConsentURL() {
     try {
       const url = await this.googleDriveService.getConsentURL();
       return { url };
-    } catch (error) {
-      throw new NotFoundException('Resource not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -31,8 +32,8 @@ export class GoogleDriveController {
         },
       );
       return { status: 'Google Drive connected' };
-    } catch (error) {
-      throw new NotFoundException('Resource not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -45,8 +46,8 @@ export class GoogleDriveController {
         type: 'googledrive',
       });
       return { hasAccess: value };
-    } catch (error) {
-      throw new NotFoundException('Resource not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -62,9 +63,8 @@ export class GoogleDriveController {
         },
       );
       return { nextPageToken: data.nextPageToken, files: data.files };
-    } catch (error: any) {
-      this.logger.error(`Failed to find data: ${error?.message}`);
-      throw new NotFoundException('Resource not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

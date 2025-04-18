@@ -1,14 +1,7 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import {
-  Body,
-  Controller,
-  Delete,
-  InternalServerErrorException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { CreateWorkflowItemDto } from './dto/create-workflow-item.dto';
 import { CreateWorkflowRowBody } from './dto/create-workflow-row-body.dts';
@@ -27,26 +20,28 @@ import {
 import { WorkflowStepService } from './workflow-step.service';
 
 @Controller('workflow-step')
-export class WorkflowStepController {
-  constructor(private readonly workflowStepService: WorkflowStepService) {}
+export class WorkflowStepController extends BaseController {
+  constructor(private readonly workflowStepService: WorkflowStepService) {
+    super();
+  }
 
   @Post()
   async createStep(@ReqUser() reqUser: RequestUser, @Body() body: CreateWorkflowStepBody) {
-    const payload = CreateWorkflowStepDto.fromInput({
-      workflowId: body.workflowId,
-      teamId: reqUser.activeTeamId,
-      name: body.name,
-      description: body.description,
-      orderColumn: body.orderColumn,
-      rowCount: body.rowCount,
-      assistantId: body.assistantId,
-    });
-
     try {
-      const step = await this.workflowStepService.create(payload);
+      const step = await this.workflowStepService.create(
+        CreateWorkflowStepDto.fromInput({
+          workflowId: body.workflowId,
+          teamId: reqUser.activeTeamId,
+          name: body.name,
+          description: body.description,
+          orderColumn: body.orderColumn,
+          rowCount: body.rowCount,
+          assistantId: body.assistantId,
+        }),
+      );
       return { step };
-    } catch (error) {
-      throw new InternalServerErrorException('Error creating workflow');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -68,8 +63,8 @@ export class WorkflowStepController {
     try {
       const row = await this.workflowStepService.createRow(body.workflowId, workflowItemsDtos);
       return { row };
-    } catch (error) {
-      throw new InternalServerErrorException('Error creating workflow row');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -85,8 +80,8 @@ export class WorkflowStepController {
     try {
       const step = await this.workflowStepService.update(payload);
       return { step };
-    } catch (error) {
-      throw new InternalServerErrorException('Error updating workflow step');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -100,8 +95,8 @@ export class WorkflowStepController {
     try {
       const step = await this.workflowStepService.updateAssistant(updatePayload);
       return { step };
-    } catch (error) {
-      throw new InternalServerErrorException('Error updating workflow step assistant');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -110,8 +105,8 @@ export class WorkflowStepController {
     try {
       const steps = await this.workflowStepService.updateInputSteps(param.id, body.inputStepIds);
       return { steps };
-    } catch (error) {
-      throw new InternalServerErrorException('Error updating workflow step assistant');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -120,17 +115,17 @@ export class WorkflowStepController {
     @Param() params: UpdateWorkflowItemParams,
     @Body() body: UpdateWorkflowItemBody,
   ) {
-    const payload = UpdateWorkflowItemDto.fromInput({
-      workflowStepId: params.stepId,
-      itemId: params.itemId,
-      itemContent: body.itemContent,
-    });
-
     try {
-      const step = await this.workflowStepService.updateItem(payload);
+      const step = await this.workflowStepService.updateItem(
+        UpdateWorkflowItemDto.fromInput({
+          workflowStepId: params.stepId,
+          itemId: params.itemId,
+          itemContent: body.itemContent,
+        }),
+      );
       return { step };
-    } catch (error) {
-      throw new InternalServerErrorException('Error updating workflow item');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -140,8 +135,8 @@ export class WorkflowStepController {
     try {
       const step = await this.workflowStepService.delete(workflowStepId);
       return { step };
-    } catch (error) {
-      throw new InternalServerErrorException('Error deleting workflow step');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

@@ -1,32 +1,33 @@
+import { BaseController } from '@/common/controllers/base.controller';
+import { IdParam } from '@/common/dto/cuid-param.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  NotFoundException,
+  Get,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { CollectionService } from './collection.service';
-import { CreateCollectionDto } from './dto/create-collection.dto';
-import { IdParam } from '@/common/dto/cuid-param.dto';
-import { CreateCollectionBody } from './dto/create-collection-body.dto';
-import { ReqUser } from '../user/decorators/user.decorator';
-import { UserEntity } from '../user/entities/user.entity';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
-import { UpdateCollectionBody } from './dto/update-collection-body.dto';
 import { CollectionAbleDto } from '../collection-able/dto/collection-able.dto';
+import { ReqUser } from '../user/decorators/user.decorator';
+import { CollectionService } from './collection.service';
+import { CreateCollectionBody } from './dto/create-collection-body.dto';
+import { CreateCollectionDto } from './dto/create-collection.dto';
 import { FindCollectionForBody } from './dto/find-collection-for-body.dto';
-import { RequestUser } from '@/modules/user/entities/request-user.entity';
+import { UpdateCollectionBody } from './dto/update-collection-body.dto';
 
 @Controller('collection')
-export class CollectionController {
-  constructor(private readonly collectionService: CollectionService) {}
+export class CollectionController extends BaseController {
+  constructor(private readonly collectionService: CollectionService) {
+    super();
+  }
 
   @Post()
   async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateCollectionBody) {
@@ -40,7 +41,7 @@ export class CollectionController {
       );
       return { collection };
     } catch (error) {
-      throw new NotFoundException('Collection not found');
+      this.handleError(error);
     }
   }
 
@@ -53,7 +54,7 @@ export class CollectionController {
       );
       return { collections, meta };
     } catch (error) {
-      throw new NotFoundException('Collections not found');
+      this.handleError(error);
     }
   }
 
@@ -63,7 +64,7 @@ export class CollectionController {
       const collections = await this.collectionService.findAll(reqUser.activeTeamId);
       return { collections };
     } catch (error) {
-      throw new NotFoundException('Collections not found');
+      this.handleError(error);
     }
   }
 
@@ -79,7 +80,7 @@ export class CollectionController {
       const collections = await this.collectionService.findAllFor(payload);
       return { collections };
     } catch (error) {
-      throw new NotFoundException('Collections not found');
+      this.handleError(error);
     }
   }
 
@@ -91,7 +92,7 @@ export class CollectionController {
       const collection = await this.collectionService.findFirst(reqUser.activeTeamId, collectionId);
       return { collection };
     } catch (error) {
-      throw new NotFoundException('Collection not found');
+      this.handleError(error);
     }
   }
 
@@ -122,7 +123,7 @@ export class CollectionController {
       );
       return { collection: collectionUpdated };
     } catch (error) {
-      throw new InternalServerErrorException('Error updating collection');
+      this.handleError(error);
     }
   }
 
@@ -135,7 +136,7 @@ export class CollectionController {
       const result = await this.collectionService.delete(userTeamId, collectionId);
       return { status: 'ok' };
     } catch (error) {
-      throw new InternalServerErrorException('Error deleting collection');
+      this.handleError(error);
     }
   }
 }

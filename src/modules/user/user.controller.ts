@@ -1,3 +1,4 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
@@ -6,13 +7,10 @@ import { UpdateUserBody } from '@/modules/user/dto/update-user-body.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
   Body,
-  ConflictException,
   Controller,
   Delete,
   ForbiddenException,
   Get,
-  InternalServerErrorException,
-  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -29,10 +27,10 @@ import { UserService } from './user.service';
 
 @Controller('user')
 @UseGuards(RolesGuard)
-export class UserController {
-  private readonly logger = new Logger(UserController.name);
-
-  constructor(private readonly userService: UserService) {}
+export class UserController extends BaseController {
+  constructor(private readonly userService: UserService) {
+    super();
+  }
 
   @Post()
   @Roles(Role.ADMIN)
@@ -45,11 +43,7 @@ export class UserController {
         roleName: createUserBody.roleName,
       });
     } catch (error: unknown) {
-      this.logger.error(`Error creating user`, error);
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Error creating user');
+      this.handleError(error);
     }
   }
 
@@ -65,11 +59,7 @@ export class UserController {
       });
       return { inviteToken };
     } catch (error: unknown) {
-      this.logger.error(`Error creating user`, error);
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Error creating user');
+      this.handleError(error);
     }
   }
 
@@ -84,8 +74,7 @@ export class UserController {
       });
       return { users, meta };
     } catch (error: unknown) {
-      this.logger.error(`Error getting users`, error);
-      throw new NotFoundException('Users not found');
+      this.handleError(error);
     }
   }
 
@@ -98,16 +87,15 @@ export class UserController {
       user = await this.userService.findOne({
         userId: id,
       });
+
+      if (!user || !this.userService.canAccessUser(reqUser, user as any)) {
+        throw new NotFoundException('User not found');
+      }
+
+      return { user };
     } catch (error: unknown) {
-      this.logger.error(`Error getting user`, error);
-      throw new InternalServerErrorException('Error getting user');
+      this.handleError(error);
     }
-
-    if (!user || !this.userService.canAccessUser(reqUser, user as any)) {
-      throw new NotFoundException('User not found');
-    }
-
-    return { user };
   }
 
   @Patch(':id')
@@ -117,8 +105,7 @@ export class UserController {
       const user = await this.userService.update(id, updateUserBody);
       return { user };
     } catch (error: unknown) {
-      this.logger.error(`Error updating user`, error);
-      throw new InternalServerErrorException('Error updating user');
+      this.handleError(error);
     }
   }
 
@@ -133,8 +120,7 @@ export class UserController {
       const result = await this.userService.delete(id);
       return { result };
     } catch (error: unknown) {
-      this.logger.error(`Error deleting user`, error);
-      throw new InternalServerErrorException('Error deleting user');
+      this.handleError(error);
     }
   }
 }

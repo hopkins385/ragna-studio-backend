@@ -1,11 +1,10 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
   Controller,
   FileTypeValidator,
   HttpStatus,
-  InternalServerErrorException,
-  Logger,
   MaxFileSizeValidator,
   ParseFilePipe,
   Post,
@@ -18,10 +17,10 @@ import { ACCEPTED_FILE_TYPES_REGEXP } from './validations/file-allowed-list';
 import { FilesCountValidator } from './validations/file-size.validation';
 
 @Controller('upload')
-export class UploadController {
-  private readonly logger = new Logger(UploadController.name);
-
-  constructor(private readonly uploadService: UploadService) {}
+export class UploadController extends BaseController {
+  constructor(private readonly uploadService: UploadService) {
+    super();
+  }
 
   @Post()
   @UseInterceptors(FilesInterceptor('file'))
@@ -44,9 +43,8 @@ export class UploadController {
         { files },
         { userId: reqUser.id, teamId: reqUser.activeTeamId },
       );
-    } catch (error: any) {
-      this.logger.error(`Error uploading file: ${error?.message}`);
-      throw new InternalServerErrorException('Error uploading file');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

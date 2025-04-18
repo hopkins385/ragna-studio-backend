@@ -1,21 +1,11 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { CreateAssistantBody } from '@/modules/assistant/dto/create-assistant-body.dto';
 import { UpdateAssistantBody } from '@/modules/assistant/dto/update-assistant-body.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  InternalServerErrorException,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AssistantService } from './assistant.service';
 import { CreateAssistantDto } from './dto/create-assistant.dto';
 import { CreateAssistantFromTemplateBody } from './dto/create-from-template.dto';
@@ -26,8 +16,10 @@ import { UpdateAssistantHasKnowledgeBody } from './dto/update-assistant-knw-body
 import { UpdateAssistantDto } from './dto/update-assistant.dto';
 
 @Controller('assistant')
-export class AssistantController {
-  constructor(private readonly assistantService: AssistantService) {}
+export class AssistantController extends BaseController {
+  constructor(private readonly assistantService: AssistantService) {
+    super();
+  }
 
   @Post()
   async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateAssistantBody) {
@@ -44,7 +36,7 @@ export class AssistantController {
         }),
       );
     } catch (error) {
-      throw new InternalServerErrorException('Error creating assistant');
+      this.handleError(error);
     }
   }
 
@@ -61,7 +53,7 @@ export class AssistantController {
       });
       return { assistant };
     } catch (error) {
-      throw new InternalServerErrorException('Error creating assistant');
+      this.handleError(error);
     }
   }
 
@@ -76,17 +68,12 @@ export class AssistantController {
           searchQuery: query.searchQuery,
         }),
       );
-
-      if (!result) {
-        throw new Error('Assistants not found');
-      }
-
       return {
         assistants: result.assistants,
         meta: result.meta,
       };
     } catch (error) {
-      throw new NotFoundException('Assistants not found');
+      this.handleError(error);
     }
   }
 
@@ -98,14 +85,9 @@ export class AssistantController {
           id: param.id,
         }),
       );
-
-      if (!assistant) {
-        throw new Error('Assistant not found');
-      }
-
       return { assistant };
     } catch (error) {
-      throw new NotFoundException('Assistant not found');
+      this.handleError(error);
     }
   }
 
@@ -131,7 +113,7 @@ export class AssistantController {
         }),
       );
     } catch (error) {
-      throw new NotFoundException('Assistant not found');
+      this.handleError(error);
     }
   }
 
@@ -148,20 +130,21 @@ export class AssistantController {
         hasKnowledgeBase: body.hasKnowledgeBase,
       });
     } catch (error) {
-      throw new NotFoundException('Assistant not found');
+      this.handleError(error);
     }
   }
 
   @Delete(':id')
   async delete(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
-    const deleteAssistantDto = DeleteAssistantDto.fromInput({
-      id: param.id,
-      teamId: reqUser.activeTeamId,
-    });
     try {
-      return await this.assistantService.softDelete(deleteAssistantDto);
+      return await this.assistantService.softDelete(
+        DeleteAssistantDto.fromInput({
+          id: param.id,
+          teamId: reqUser.activeTeamId,
+        }),
+      );
     } catch (error) {
-      throw new NotFoundException('Assistant not found');
+      this.handleError(error);
     }
   }
 }

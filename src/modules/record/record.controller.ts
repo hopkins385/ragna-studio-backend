@@ -1,59 +1,47 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  InternalServerErrorException,
-  Logger,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { CreateRecordBody } from './dto/create-record-body.dto';
 import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
 import { RecordService } from './record.service';
 
 @Controller('record')
-export class RecordController {
-  private readonly logger = new Logger(RecordController.name);
-
-  constructor(private readonly recordService: RecordService) {}
+export class RecordController extends BaseController {
+  constructor(private readonly recordService: RecordService) {
+    super();
+  }
 
   @Post()
   async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateRecordBody) {
-    const teamId = reqUser.activeTeamId;
-    const payload = CreateRecordDto.fromInput({
-      collectionId: body.collectionId,
-      mediaId: body.mediaId,
-      teamId,
-    });
-
     try {
-      const record = await this.recordService.create(payload);
+      const record = await this.recordService.create(
+        CreateRecordDto.fromInput({
+          collectionId: body.collectionId,
+          mediaId: body.mediaId,
+          teamId: reqUser.activeTeamId,
+        }),
+      );
       return { record };
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      throw new InternalServerErrorException('Failed to create record');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
   @Get(':id')
   async findOne(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
-    const payload = FindRecordsDto.fromInput({
-      collectionId: param.id,
-      teamId: reqUser.activeTeamId,
-    });
-
     try {
-      const records = await this.recordService.findAll(payload);
+      const records = await this.recordService.findAll(
+        FindRecordsDto.fromInput({
+          collectionId: param.id,
+          teamId: reqUser.activeTeamId,
+        }),
+      );
       return { records };
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      throw new InternalServerErrorException('Failed to fetch record');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -78,25 +66,20 @@ export class RecordController {
       );
       return { records, meta };
     } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      throw new InternalServerErrorException('Failed to fetch records');
+      this.handleError(error);
     }
   }
 
   @Delete(':id')
   async remove(@ReqUser() reqUser: RequestUser, @Param() param: IdParam) {
-    const teamId = reqUser.activeTeamId;
-    const recordId = param.id;
-
     try {
       await this.recordService.delete({
-        teamId,
-        recordId,
+        teamId: reqUser.activeTeamId,
+        recordId: param.id,
       });
-      return { message: 'Record deleted successfully' };
+      return { success: true };
     } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      throw new InternalServerErrorException('Failed to delete record');
+      this.handleError(error);
     }
   }
 }

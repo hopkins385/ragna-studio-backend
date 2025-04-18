@@ -1,58 +1,49 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { MediaAbleBody } from '@/modules/media-able/dto/media-able-body.dto';
 import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { MediaService } from './media.service';
 
 @Controller('media')
-export class MediaController {
-  private readonly logger = new Logger(MediaController.name);
-
-  constructor(private readonly mediaService: MediaService) {}
+export class MediaController extends BaseController {
+  constructor(private readonly mediaService: MediaService) {
+    super();
+  }
 
   @Get(':id')
   async findFirst(@Param() param: IdParam) {
-    const media = await this.mediaService.findFirst(param.id);
-    return { media };
+    try {
+      const media = await this.mediaService.findFirst(param.id);
+      return { media };
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
   }
 
   @Post('for')
   @HttpCode(200)
   async findAllFor(@Body() body: MediaAbleBody) {
-    const { model } = body;
-    const mediaAbleDto = MediaAbleDto.fromInput({
-      id: model.id,
-      type: model.type,
-    });
-
     try {
-      const medias = await this.mediaService.findAllFor(mediaAbleDto);
+      const medias = await this.mediaService.findAllFor(
+        MediaAbleDto.fromInput({
+          id: body.model.id,
+          type: body.model.type,
+        }),
+      );
       return { medias };
-    } catch (error) {
-      throw new NotFoundException('Media not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
   @Post('for/paginate')
   @HttpCode(200)
   async paginateFindAllFor(@Body() body: MediaAbleBody, @Query() query: PaginateQuery) {
-    const { model } = body;
     const mediaAbleDto = MediaAbleDto.fromInput({
-      id: model.id,
-      type: model.type,
+      id: body.model.id,
+      type: body.model.type,
     });
 
     try {
@@ -62,8 +53,8 @@ export class MediaController {
         query.limit,
       );
       return { medias, meta };
-    } catch (error) {
-      throw new NotFoundException('Media not found');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -72,9 +63,8 @@ export class MediaController {
     try {
       await this.mediaService.delete({ mediaId: param.id });
       return { status: 'ok' };
-    } catch (error: any) {
-      this.logger.error(`Failed to delete media: ${error?.message}`, error?.stack);
-      throw new InternalServerErrorException('Error deleting media');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

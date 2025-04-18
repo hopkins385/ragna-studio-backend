@@ -1,16 +1,17 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { InlineCompletionBody } from '@/modules/editor/dto/editor-inline-completion-body.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import { Body, Controller, InternalServerErrorException, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { EditorCompletionBody } from './dto/editor-completion-body.dto';
 import { EditorCompletionDto } from './dto/editor-completion.dto';
 import { EditorService } from './editor.service';
 
 @Controller('editor')
-export class EditorController {
-  private readonly logger = new Logger(EditorController.name);
-
-  constructor(private readonly editorService: EditorService) {}
+export class EditorController extends BaseController {
+  constructor(private readonly editorService: EditorService) {
+    super();
+  }
 
   @Post('completion')
   async completion(@ReqUser() reqUser: RequestUser, @Body() body: EditorCompletionBody) {
@@ -24,9 +25,8 @@ export class EditorController {
       const { completion } = await this.editorService.completion(editorCompletionDto);
       return { completion };
       //
-    } catch (error: any) {
-      this.logger.error(`Error in completion: ${error?.message}`);
-      throw new InternalServerErrorException();
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 
@@ -39,9 +39,8 @@ export class EditorController {
     try {
       const result = await this.editorService.inlineCompletion(inlineCompletionDto);
       return { inlineCompletion: result.inlineCompletion };
-    } catch (error: any) {
-      this.logger.error(`Error in inline-completion: ${error?.message}`);
-      throw new InternalServerErrorException();
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

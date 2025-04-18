@@ -1,17 +1,8 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { AddUserFavoriteBody } from './dto/add-user-favorites-body.dto';
 import { FavoriteTypeBody, FavoriteTypeParam } from './dto/favorite-type-param.dto';
 import { GetAllFavoritesDto } from './dto/get-all-user-favorites.dto';
@@ -23,9 +14,10 @@ import {
 import { UserFavoriteService } from './user-favorite.service';
 
 @Controller('user-favorite')
-export class UserFavoriteController {
-  private readonly logger = new Logger(UserFavoriteController.name);
-  constructor(private readonly userFavoriteService: UserFavoriteService) {}
+export class UserFavoriteController extends BaseController {
+  constructor(private readonly userFavoriteService: UserFavoriteService) {
+    super();
+  }
 
   @Post()
   async createFavorite(
@@ -43,7 +35,7 @@ export class UserFavoriteController {
       const favorite = await this.userFavoriteService.create(favoriteDto);
       return { favorite };
     } catch (error) {
-      throw new InternalServerErrorException('Error adding favorite');
+      this.handleError(error);
     }
   }
 
@@ -58,7 +50,7 @@ export class UserFavoriteController {
       const favorites = await this.userFavoriteService.getAll(getAllFavoritesDto);
       return { favorites };
     } catch (error) {
-      throw new NotFoundException('Not found');
+      this.handleError(error);
     }
   }
 
@@ -71,7 +63,7 @@ export class UserFavoriteController {
       );
       return { favorites };
     } catch (error) {
-      throw new NotFoundException('Not found');
+      this.handleError(error);
     }
   }
 
@@ -95,8 +87,7 @@ export class UserFavoriteController {
       }
       return { success: true };
     } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException('Error removing favorite');
+      this.handleError(error);
     }
   }
 }

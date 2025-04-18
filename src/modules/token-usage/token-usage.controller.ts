@@ -1,14 +1,15 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import { Controller, Get, InternalServerErrorException, Logger, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { TokenUsageHistoryQuery } from './dto/token-usage-history.query.dto';
 import { TokenUsageService } from './token-usage.service';
 
 @Controller('token-usage')
-export class TokenUsageController {
-  private readonly logger = new Logger(TokenUsageController.name);
-
-  constructor(private tokenUsageService: TokenUsageService) {}
+export class TokenUsageController extends BaseController {
+  constructor(private tokenUsageService: TokenUsageService) {
+    super();
+  }
 
   @Get('history')
   async getTokenUsageHistory(
@@ -32,8 +33,7 @@ export class TokenUsageController {
       return { tokenUsages };
       //
     } catch (error: unknown) {
-      this.logger.error(`Error getting token usage history`, error);
-      throw new InternalServerErrorException();
+      this.handleError(error);
     }
   }
 }

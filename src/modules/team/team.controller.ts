@@ -1,3 +1,4 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { EditTeamBody } from '@/modules/team/dto/edit-team-body.dto';
@@ -5,21 +6,15 @@ import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { Role } from '@/modules/user/enums/role.enum';
 import { RolesGuard } from '@/modules/user/guards/roles.guard';
-import {
-  Body,
-  Controller,
-  HttpException,
-  InternalServerErrorException,
-  Param,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
 import { TeamService } from './team.service';
 
 @Controller('team')
 @UseGuards(RolesGuard)
-export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+export class TeamController extends BaseController {
+  constructor(private readonly teamService: TeamService) {
+    super();
+  }
 
   @Patch(':id/edit')
   @Roles(Role.ADMIN)
@@ -35,12 +30,8 @@ export class TeamController {
         name: body.name,
       });
       return { team };
-      //
     } catch (error: unknown) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('An error occurred while editing the team');
+      this.handleError(error);
     }
   }
 }

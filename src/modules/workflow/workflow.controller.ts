@@ -1,3 +1,4 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
@@ -6,9 +7,6 @@ import {
   Controller,
   Delete,
   Get,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -26,38 +24,52 @@ import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import { WorkflowService } from './workflow.service';
 
 @Controller('workflow')
-export class WorkflowController {
-  private readonly logger = new Logger(WorkflowController.name);
-
-  constructor(private readonly workflowService: WorkflowService) {}
+export class WorkflowController extends BaseController {
+  constructor(private readonly workflowService: WorkflowService) {
+    super();
+  }
 
   @Post()
   async create(@ReqUser() reqUser: RequestUser, @Body() body: CreateWorkflowBody) {
-    const payload = CreateWorkflowDto.fromInput({
-      teamId: reqUser.activeTeamId,
-      name: body.name,
-      description: body.description,
-    });
-    const workflow = await this.workflowService.create(payload);
-    return { workflow };
+    try {
+      const workflow = await this.workflowService.create(
+        CreateWorkflowDto.fromInput({
+          teamId: reqUser.activeTeamId,
+          name: body.name,
+          description: body.description,
+        }),
+      );
+      return { workflow };
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
   }
 
   @Get()
   async allPaginated(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
-    const payload = FindAllWorkflowsDto.fromInput({
-      teamId: reqUser.activeTeamId,
-      page: query.page,
-      limit: query.limit,
-    });
-    const [workflows, meta] = await this.workflowService.findAllPaginated(payload);
+    try {
+      const [workflows, meta] = await this.workflowService.findAllPaginated(
+        FindAllWorkflowsDto.fromInput({
+          teamId: reqUser.activeTeamId,
+          page: query.page,
+          limit: query.limit,
+        }),
+      );
 
-    return { workflows, meta };
+      return { workflows, meta };
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
   }
 
   @Get(':id')
   async findOne(@Param() param: IdParam) {
-    const workflow = await this.workflowService.findFirst(param.id);
-    return { workflow };
+    try {
+      const workflow = await this.workflowService.findFirst(param.id);
+      return { workflow };
+    } catch (error: unknown) {
+      this.handleError(error);
+    }
   }
 
   @Get(':id/full')
@@ -66,23 +78,23 @@ export class WorkflowController {
       const workflow = await this.workflowService.findFirstWithSteps(param.id);
       return { workflow };
     } catch (error) {
-      throw new NotFoundException('Workflow not found');
+      this.handleError(error);
     }
   }
 
   @Patch(':id')
   async update(@Param() param: IdParam, @Body() body: UpdateWorkflowBody) {
-    const payload = UpdateWorkflowDto.fromInput({
-      workflowId: param.id,
-      name: body.name,
-      description: body.description,
-    });
-
     try {
-      const workflow = await this.workflowService.update(payload);
+      const workflow = await this.workflowService.update(
+        UpdateWorkflowDto.fromInput({
+          workflowId: param.id,
+          name: body.name,
+          description: body.description,
+        }),
+      );
       return { workflow };
     } catch (error) {
-      throw new NotFoundException('Workflow not found');
+      this.handleError(error);
     }
   }
 
@@ -93,7 +105,7 @@ export class WorkflowController {
       const file = new StreamableFile(buffer);
       return file;
     } catch (error) {
-      throw new NotFoundException('Workflow not found');
+      this.handleError(error);
     }
   }
 
@@ -104,10 +116,7 @@ export class WorkflowController {
       await this.workflowService.delete({ workflowId });
       return { success: true };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error(`Failed to delete workflow ${workflowId}, ${error.message}`);
-      }
-      throw new InternalServerErrorException('Failed to delete workflow');
+      this.handleError(error);
     }
   }
 
@@ -120,10 +129,7 @@ export class WorkflowController {
       await this.workflowService.deleteRows({ workflowId, orderColumns });
       return { success: true };
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error(`Failed to delete workflow rows ${workflowId}, ${error.message}`);
-      }
-      throw new InternalServerErrorException('Failed to delete workflow rows');
+      this.handleError(error);
     }
   }
 }

@@ -1,29 +1,15 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Logger,
-  NotFoundException,
-  Query,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import { AssistantTemplateService } from './assistant-template.service';
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
-import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { LimitQuery } from '@/common/dto/limit-query.dto';
+import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { AssistantTemplateService } from './assistant-template.service';
 
 @Controller('assistant-template')
-export class AssistantTemplateController {
-  private readonly logger = new Logger(AssistantTemplateController.name);
-
-  constructor(
-    private readonly assistantTemplateService: AssistantTemplateService,
-  ) {}
+export class AssistantTemplateController extends BaseController {
+  constructor(private readonly assistantTemplateService: AssistantTemplateService) {
+    super();
+  }
 
   @Get()
   async findAll() {
@@ -32,33 +18,22 @@ export class AssistantTemplateController {
       return { templates };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(`Error fetching assistant templates: ${e.message}`);
-      } else {
-        this.logger.error(`Error fetching assistant templates`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
   @Get('paginated')
   async findAllPaginated(@Query() query: PaginateQuery) {
     try {
-      const { templates, meta } =
-        await this.assistantTemplateService.findAllPaginated({
-          page: query.page,
-          limit: query.limit,
-          searchQuery: query.searchQuery,
-        });
+      const { templates, meta } = await this.assistantTemplateService.findAllPaginated({
+        page: query.page,
+        limit: query.limit,
+        searchQuery: query.searchQuery,
+      });
       return { templates, meta };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(`Error fetching assistant templates: ${e.message}`);
-      } else {
-        this.logger.error(`Error fetching assistant templates`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
@@ -71,14 +46,7 @@ export class AssistantTemplateController {
       return { templates };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(
-          `Error fetching random assistant template: ${e.message}`,
-        );
-      } else {
-        this.logger.error(`Error fetching random assistant template`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
@@ -90,12 +58,7 @@ export class AssistantTemplateController {
       return { template };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(`Error fetching assistant template: ${e.message}`);
-      } else {
-        this.logger.error(`Error fetching assistant template`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
@@ -103,42 +66,26 @@ export class AssistantTemplateController {
   @Get('category')
   async findAllCategories() {
     try {
-      const categories =
-        await this.assistantTemplateService.findAllCategories();
+      const categories = await this.assistantTemplateService.findAllCategories();
       return { categories };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(
-          `Error fetching assistant template categories: ${e.message}`,
-        );
-      } else {
-        this.logger.error(`Error fetching assistant template categories`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
   @Get('category/paginated')
   async findAllCategoriesPaginated(@Query() query: PaginateQuery) {
     try {
-      const [categories, meta] =
-        await this.assistantTemplateService.findAllCategoriesPaginated({
-          page: query.page,
-          limit: query.limit,
-          searchQuery: query.searchQuery,
-        });
+      const [categories, meta] = await this.assistantTemplateService.findAllCategoriesPaginated({
+        page: query.page,
+        limit: query.limit,
+        searchQuery: query.searchQuery,
+      });
       return { categories, meta };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(
-          `Error fetching assistant template categories: ${e.message}`,
-        );
-      } else {
-        this.logger.error(`Error fetching assistant template categories`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
@@ -146,19 +93,11 @@ export class AssistantTemplateController {
   async findOneCategory(@Param() param: IdParam) {
     const categoryId = param.id;
     try {
-      const templates =
-        await this.assistantTemplateService.findTemplatesByCategory(categoryId);
+      const templates = await this.assistantTemplateService.findTemplatesByCategory(categoryId);
       return { templates };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(
-          `Error fetching assistant template category: ${e.message}`,
-        );
-      } else {
-        this.logger.error(`Error fetching assistant template category`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 
@@ -167,20 +106,11 @@ export class AssistantTemplateController {
   async findTemplatesByCategories(@Body('categoryIds') categoryIds: string[]) {
     try {
       const categories =
-        await this.assistantTemplateService.findTemplatesByCategoryIds(
-          categoryIds,
-        );
+        await this.assistantTemplateService.findTemplatesByCategoryIds(categoryIds);
       return { categories };
       //
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        this.logger.error(
-          `Error fetching assistant template categories: ${e.message}`,
-        );
-      } else {
-        this.logger.error(`Error fetching assistant template categories`);
-      }
-      throw new NotFoundException();
+      this.handleError(e);
     }
   }
 }

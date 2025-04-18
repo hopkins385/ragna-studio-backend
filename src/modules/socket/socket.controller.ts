@@ -1,11 +1,14 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
-import { Controller, InternalServerErrorException, Post } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { SocketService } from './socket.service';
 
 @Controller('socket')
-export class SocketController {
-  constructor(private readonly socketService: SocketService) {}
+export class SocketController extends BaseController {
+  constructor(private readonly socketService: SocketService) {
+    super();
+  }
 
   @Post('user-auth')
   async createAuthToken(@ReqUser() { id, roles }: RequestUser) {
@@ -15,8 +18,8 @@ export class SocketController {
         roles,
       });
       return { token };
-    } catch (error) {
-      throw new InternalServerErrorException('Error creating auth token');
+    } catch (error: unknown) {
+      this.handleError(error);
     }
   }
 }

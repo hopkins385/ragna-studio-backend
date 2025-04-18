@@ -1,23 +1,20 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { UserService } from '@/modules/user/user.service';
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  InternalServerErrorException,
-  Post,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
 import { OnboardUserBody } from './dto/onboard-user-body.dto';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 import { OnboardService } from './onboard.service';
 
 @Controller('onboard')
-export class OnboardController {
+export class OnboardController extends BaseController {
   constructor(
     private readonly onboardService: OnboardService,
     private readonly userService: UserService,
-  ) {}
+  ) {
+    super();
+  }
 
   @Post('user')
   async onboardUser(@ReqUser() reqUser: RequestUser, @Body() body: OnboardUserBody) {
@@ -37,7 +34,7 @@ export class OnboardController {
       );
       return { success: result };
     } catch (error: any) {
-      throw new InternalServerErrorException('Error onboarding user');
+      this.handleError(error);
     }
   }
 }

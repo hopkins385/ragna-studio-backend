@@ -1,3 +1,4 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
@@ -7,9 +8,7 @@ import {
   Controller,
   Delete,
   Get,
-  InternalServerErrorException,
   Logger,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -24,10 +23,12 @@ import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 import { TextToImageService } from './text-to-image.service';
 
 @Controller('text-to-image')
-export class TextToImageController {
+export class TextToImageController extends BaseController {
   logger = new Logger(TextToImageController.name);
 
-  constructor(private readonly textToImageService: TextToImageService) {}
+  constructor(private readonly textToImageService: TextToImageService) {
+    super();
+  }
 
   @Post('flux-pro')
   async generateFluxProImages(@ReqUser() reqUser: RequestUser, @Body() body: FluxProBody) {
@@ -35,7 +36,7 @@ export class TextToImageController {
       const imageUrls = await this.textToImageService.generateFluxProImages(reqUser.id, body);
       return { imageUrls };
     } catch (error) {
-      throw new InternalServerErrorException('Failed to generate images');
+      this.handleError(error);
     }
   }
 
@@ -45,7 +46,7 @@ export class TextToImageController {
       const imageUrls = await this.textToImageService.generateFluxUltraImages(reqUser.id, body);
       return { imageUrls };
     } catch (error) {
-      throw new InternalServerErrorException('Failed to generate images');
+      this.handleError(error);
     }
   }
 
@@ -57,7 +58,7 @@ export class TextToImageController {
       });
       return { runs };
     } catch (error) {
-      throw new NotFoundException('Folder not found');
+      this.handleError(error);
     }
   }
 
@@ -77,7 +78,7 @@ export class TextToImageController {
       }
       return { folders };
     } catch (error) {
-      throw new NotFoundException('Folders not found');
+      this.handleError(error);
     }
   }
 
@@ -87,8 +88,7 @@ export class TextToImageController {
       const file = await this.textToImageService.downloadImage(param.id);
       return new StreamableFile(file);
     } catch (error: any) {
-      this.logger.error(`Failed to download image: ${error?.message}`);
-      throw new NotFoundException('Image not found');
+      this.handleError(error);
     }
   }
 
@@ -97,67 +97,64 @@ export class TextToImageController {
     @Param() param: FolderIdParam,
     @Query() query: TextToImagePaginatedQuery,
   ) {
-    const folderId = param.folderId;
-
     try {
-      const [runs, meta] = await this.textToImageService.getFolderImagesRunsPaginated(folderId, {
-        showDeleted: query.showHidden,
-        page: query.page,
-      });
+      const [runs, meta] = await this.textToImageService.getFolderImagesRunsPaginated(
+        param.folderId,
+        {
+          showDeleted: query.showHidden,
+          page: query.page,
+        },
+      );
       return { runs, meta };
     } catch (error) {
-      throw new NotFoundException('Folder not found');
+      this.handleError(error);
     }
   }
 
   @Get(':folderId')
   async getFolderImagesRuns(@Param() param: FolderIdParam) {
-    const folderId = param.folderId;
     const showDeleted = false; // TODO: Implement this
 
     try {
-      const runs = await this.textToImageService.getFolderImagesRuns(folderId, {
+      const runs = await this.textToImageService.getFolderImagesRuns(param.folderId, {
         showDeleted,
       });
       return { runs };
     } catch (error) {
-      throw new NotFoundException('Folder not found');
+      this.handleError(error);
     }
   }
 
   @Delete(':runId')
   async deleteRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-
     try {
       const res = await this.textToImageService.softDeleteRun(runId);
       return { success: true, runId };
     } catch (error) {
-      throw new NotFoundException('Run not found');
+      this.handleError(error);
     }
   }
 
   @Patch(':runId/toggle-hide')
   async toggleHideRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-
     try {
       const res = await this.textToImageService.toggleSoftDeleteRun(runId);
       return { success: true, runId };
     } catch (error) {
-      throw new NotFoundException('Run not found');
+      this.handleError(error);
     }
   }
 
   @Patch(':runId/undelete')
   async unDeleteRun(@Param() param: RunIdParam) {
     const runId = param.runId;
-
     try {
       const res = await this.textToImageService.unDeleteRun(runId);
       return { success: true, runId };
     } catch (error) {
-      throw new NotFoundException('Run not found');
+      this.handleError(error);
     }
   }
 }

@@ -1,14 +1,17 @@
-import { Controller, Post, Body, InternalServerErrorException } from '@nestjs/common';
-import { NerService } from './ner.service';
+import { BaseController } from '@/common/controllers/base.controller';
 import { NerExtractBody } from '@/modules/ner/dto/ner-exctract-body.dto';
 import { NerExtractResult } from '@/modules/ner/interfaces/ner-extract-result.interface';
+import { Body, Controller, Post } from '@nestjs/common';
+import { NerService } from './ner.service';
 
 /**
  * Controller for Named Entity Recognition (NER).
  */
 @Controller('ner')
-export class NerController {
-  constructor(private readonly nerService: NerService) {}
+export class NerController extends BaseController {
+  constructor(private readonly nerService: NerService) {
+    super();
+  }
 
   @Post('extract')
   async extractEntities(@Body() body: NerExtractBody): Promise<NerExtractResult> {
@@ -19,7 +22,7 @@ export class NerController {
       });
       return response;
     } catch (error: unknown) {
-      throw new InternalServerErrorException('Failed to extract entities');
+      this.handleError(error);
     }
   }
 }
