@@ -22,7 +22,7 @@ export class BaseController {
     // Handle the error based on its type or properties
     if (error instanceof HttpException) {
       // Handle HttpException
-      this.logger.debug(`HttpException: ${error.message}`, error.stack);
+      this.logger.debug(error.stack);
       throw error;
     } else if (error instanceof Error) {
       // Handle generic Error

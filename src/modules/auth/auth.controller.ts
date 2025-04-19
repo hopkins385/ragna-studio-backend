@@ -1,3 +1,4 @@
+import { BaseController } from '@/common/controllers/base.controller';
 import { Public } from '@/common/decorators/public.decorator';
 import { AuthUser } from '@/modules/auth/decorators/auth-user.decorator';
 import { ResetPasswordBody } from '@/modules/auth/dto/reset-password-body.dto';
@@ -12,11 +13,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
-  Logger,
   Param,
   Post,
-  UnauthorizedException,
   UnprocessableEntityException,
   UseGuards,
 } from '@nestjs/common';
@@ -31,14 +29,14 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RefreshJwtGuard } from './guards/refresh-jwt-auth.guard';
 
 @Controller('auth')
-export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
+export class AuthController extends BaseController {
   constructor(
     private readonly authService: AuthService,
     private readonly googleService: AuthGoogleService,
     private readonly sessionService: SessionService,
-  ) {}
+  ) {
+    super();
+  }
 
   @Throttle({ default: { limit: 5, ttl: 60 * 1000 } })
   @Public()
@@ -54,12 +52,9 @@ export class AuthController {
         id: authUser.id,
         sessionId: session.id,
       });
-      if (!tokens) {
-        throw new Error('Failed to generate tokens');
-      }
       return tokens;
     } catch (error: unknown) {
-      throw new UnauthorizedException();
+      this.handleError(error);
     }
   }
 
@@ -72,18 +67,9 @@ export class AuthController {
         userId: reqUser.id,
         sessionId: reqUser.sessionId,
       });
-
-      if (!tokens) {
-        throw new Error('Failed to generate tokens');
-      }
-
-      // refresh session
-      await this.sessionService.refreshSession({ sessionId: reqUser.sessionId });
-
       return tokens;
-      //
     } catch (error) {
-      throw new UnauthorizedException();
+      this.handleError(error);
     }
   }
 
@@ -95,20 +81,21 @@ export class AuthController {
         token: body.token,
         password: body.password,
       });
-      if (!result) {
-        throw new Error('Failed to reset password');
-      }
       return { success: true };
     } catch (error) {
-      throw new UnauthorizedException();
+      this.handleError(error);
     }
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Session() session: SessionData) {
-    const result = await this.sessionService.deleteSession(session.id);
-    return { message: 'Successfully logged out' };
+    try {
+      const result = await this.sessionService.deleteSession({ sessionId: session.id });
+      return { success: true };
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   // get current session
@@ -119,15 +106,11 @@ export class AuthController {
         { sessionId: session.id },
         { refresh: true },
       );
-      if (!sessionData) {
-        throw new Error('Session not found');
-      }
-
       return {
         user: sessionData.user,
       };
     } catch (error) {
-      throw new UnauthorizedException();
+      this.handleError(error);
     }
   }
 
@@ -136,13 +119,11 @@ export class AuthController {
   async googleCallback(@Body() body: GoogleAuthCallbackBody) {
     try {
       const response = await this.googleService.getAccessToken(body.code);
-
       const profile = await this.googleService.getProfileByToken(response.tokens.id_token);
-
       const tokens = await this.authService.socialLogin(profile);
       return tokens;
     } catch (error) {
-      throw new UnauthorizedException();
+      this.handleError(error);
     }
   }
 
@@ -189,10 +170,8 @@ export class AuthController {
     try {
       await this.authService.confirmEmail(params);
       return { success: true };
-      //
     } catch (error: any) {
-      this.logger.error(error?.message);
-      throw new InternalServerErrorException('Failed to confirm email');
+      this.handleError(error);
     }
   }
 
@@ -201,10 +180,8 @@ export class AuthController {
     try {
       const token = await this.authService.generateInviteToken();
       return { token };
-      //
     } catch (error: any) {
-      this.logger.error(error?.message);
-      throw new InternalServerErrorException('Failed to generate invite token');
+      this.handleError(error);
     }
   }
 }

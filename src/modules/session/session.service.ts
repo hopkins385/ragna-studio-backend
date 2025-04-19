@@ -1,7 +1,7 @@
 import { isCUID2, randomCUID2 } from '@/common/utils/random-cuid2';
 import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import ms, { StringValue } from 'ms';
 import { DeviceInfo } from './entities/device-info.entity';
@@ -69,15 +69,15 @@ export class SessionService {
   async getSession(
     { sessionId }: { sessionId: SessionId },
     options?: { refresh: boolean },
-  ): Promise<SessionData | null> {
+  ): Promise<SessionData> {
     if (!isCUID2(sessionId)) {
-      return null;
+      throw new UnauthorizedException('Invalid session id');
     }
 
     const sessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
 
     if (!sessionData || !sessionData.user) {
-      return null;
+      throw new UnauthorizedException('Session not found');
     }
 
     if (options?.refresh) {
@@ -124,7 +124,7 @@ export class SessionService {
     return sessionData;
   }
 
-  async deleteSession(sessionId: SessionId): Promise<boolean> {
+  async deleteSession({ sessionId }: { sessionId: SessionId }): Promise<boolean> {
     if (!isCUID2(sessionId)) {
       return false;
     }

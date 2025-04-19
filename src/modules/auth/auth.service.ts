@@ -3,7 +3,7 @@ import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
 import { UserService } from '@/modules/user/user.service';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Queue } from 'bullmq';
@@ -61,12 +61,9 @@ export class AuthService {
     });
   }
 
-  async createTokensForUser(user: {
-    id: string;
-    sessionId: string;
-  }): Promise<TokenResponse | null> {
+  async createTokensForUser(user: { id: string; sessionId: string }): Promise<TokenResponse> {
     if (!user) {
-      throw new Error('User not found');
+      throw new UnauthorizedException('User not found');
     }
 
     const payload: UserPayload = {
@@ -74,21 +71,21 @@ export class AuthService {
       sessionId: user.sessionId,
     };
 
-    try {
-      return await this.generateTokens(payload);
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      return null;
+    const tokens = await this.generateTokens(payload);
+    if (!tokens) {
+      throw new UnauthorizedException('Failed to generate tokens');
     }
+    return tokens;
   }
 
-  async refreshTokens(payload: UserPayload): Promise<TokenResponse | null> {
-    try {
-      return await this.generateTokens(payload);
-    } catch (error: any) {
-      this.logger.error(`Error: ${error?.message}`);
-      return null;
+  async refreshTokens(payload: UserPayload): Promise<TokenResponse> {
+    const tokens = await this.generateTokens(payload);
+    if (!tokens) {
+      throw new UnauthorizedException('Failed to generate tokens');
     }
+    // refresh session
+    await this.sessionService.refreshSession({ sessionId: payload.sessionId });
+    return tokens;
   }
 
   async generateAccessToken(payload: UserPayload): Promise<string> {
@@ -196,11 +193,12 @@ export class AuthService {
   async resetPassword(payload: { token: string; password: string }): Promise<boolean> {
     const { sub } = await this.validateInviteToken({ token: payload.token });
     if (!sub) {
-      throw new Error('Invalid token');
+      throw new UnauthorizedException('Invalid token');
     }
+
     const user = await this.userService.findOne({ userId: sub });
     if (!user) {
-      throw new Error('User not found');
+      throw new UnauthorizedException('User not found');
     }
 
     await this.userService.updateOnlyPassword({ userId: user.id, password: payload.password });
