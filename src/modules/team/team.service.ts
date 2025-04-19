@@ -26,6 +26,51 @@ export class TeamService {
   }
 
   /**
+   * Get team by id
+   * @returns
+   */
+  async getTeam({ userId, teamId }: { userId: string; teamId: string }) {
+    const team = await this.teamRepo.findTeamById(teamId);
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+    // check if user can access team
+    if (!team.users.some((teamUser) => teamUser.userId === userId)) {
+      throw new UnauthorizedException('You are not a member of this team');
+    }
+    return team;
+  }
+
+  /**
+   * Get all teams paginated
+   * @returns
+   */
+  async getAllTeamsPaginated({
+    organisationId,
+    page,
+    limit,
+    searchQuery,
+  }: {
+    organisationId: string;
+    page: number;
+    limit: number;
+    searchQuery?: string;
+  }) {
+    const [teams, meta] = await this.teamRepo.findAllTeamsPaginated({
+      organisationId,
+      page,
+      limit,
+      searchQuery,
+    });
+
+    if (!teams) {
+      throw new NotFoundException('No teams found');
+    }
+
+    return { teams, meta };
+  }
+
+  /**
    * Edit team (currently only name)
    * @param payload.teamId - The ID of the team to edit
    * @param payload.userId - The ID of the user who is editing the team

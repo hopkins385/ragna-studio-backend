@@ -36,6 +36,46 @@ export class TeamRepository {
   }
 
   /**
+   * Find all teams paginated
+   * @param payload.userId - The ID of the user to find teams for
+   * @param payload.page - The page number to retrieve
+   * @param payload.limit - The number of teams per page
+   * @param payload.searchQuery - currently unused
+   * @returns
+   */
+  async findAllTeamsPaginated({
+    organisationId,
+    page,
+    limit,
+    searchQuery,
+  }: {
+    organisationId: string;
+    page: number;
+    limit: number;
+    searchQuery?: string;
+  }) {
+    return this.prisma.team
+      .paginate({
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          organisationId,
+          deletedAt: null,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+      .withPages({
+        page,
+        limit,
+        includePageCount: true,
+      });
+  }
+
+  /**
    * Edit team name
    * @param payload.teamId - The ID of the team to edit
    * @param payload.name - The new name of the team
