@@ -24,22 +24,6 @@ export class MediaController extends BaseController {
     }
   }
 
-  @Post('for')
-  @HttpCode(200)
-  async findAllFor(@Body() body: MediaAbleBody) {
-    try {
-      const medias = await this.mediaService.findAllFor(
-        MediaAbleDto.fromInput({
-          id: body.model.id,
-          type: body.model.type,
-        }),
-      );
-      return { medias };
-    } catch (error: unknown) {
-      this.handleError(error);
-    }
-  }
-
   @Post('for/paginate')
   @HttpCode(200)
   async paginateFindAllFor(
