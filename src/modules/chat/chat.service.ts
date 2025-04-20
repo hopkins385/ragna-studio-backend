@@ -561,19 +561,6 @@ export class ChatService {
     return lastMessage;
   }
 
-  getVisionMessages(vis: VisionImageUrlContent[] | null | undefined) {
-    if (!vis) {
-      return [];
-    }
-    return vis.map((v) => {
-      if (!v.url) throw new Error('VisionImageUrlContent url is required');
-      return {
-        type: 'image',
-        image: new URL(v.url),
-      };
-    });
-  }
-
   formatChatMessages(messages: CreateChatStreamBody['messages'] | null | undefined): CoreMessage[] {
     if (!messages) {
       return [];
@@ -600,9 +587,9 @@ export class ChatService {
       (c): c is { type: ChatMessageType; text: string } => c.type === ChatMessageType.TEXT,
     );
 
-    // if (!textContent?.text) {
-    //   throw new Error('Text content is required for text messages');
-    // }
+    if (!textContent?.text) {
+      throw new Error('Text content is required for text messages');
+    }
 
     return {
       role: message.role.toString() as any,
@@ -665,38 +652,16 @@ export class ChatService {
     };
   }
 
-  /*async getContextAwareSystemPrompt(payload: {
-    assistantId: string;
-    lastMessageContent: string;
-    assistantSystemPrompt: string;
-  }) {
-    const timestamp = '\n\n' + 'Timestamp now(): ' + new Date().toISOString();
-
-    const collections = await this.collectionService.findAllWithRecordsFor(
-      CollectionAbleDto.fromInput({
-        id: payload.assistantId,
-        type: 'assistant',
-      }),
-    );
-
-    if (collections.length < 1) {
-      return payload.assistantSystemPrompt + timestamp;
+  getVisionMessages(vis: VisionImageUrlContent[] | null | undefined) {
+    if (!vis) {
+      return [];
     }
-
-    const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
-    const res = await this.embeddingService.searchDocsByQuery({
-      query: payload.lastMessageContent,
-      recordIds,
+    return vis.map((v) => {
+      if (!v.url) throw new Error('VisionImageUrlContent url is required');
+      return {
+        type: 'image',
+        image: new URL(v.url),
+      };
     });
-
-    const context = res.map((r) => r?.text || '').join('\n\n');
-
-    return (
-      payload.assistantSystemPrompt +
-      '\n\n<context>' +
-      context +
-      '</context>' +
-      timestamp
-    );
-  }*/
+  }
 }
