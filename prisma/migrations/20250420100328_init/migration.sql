@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "Status" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED');
+
+-- CreateEnum
 CREATE TYPE "chat_messages_role_enum" AS ENUM ('user', 'assistant', 'system', 'tool');
 
 -- CreateEnum
@@ -10,6 +13,8 @@ CREATE TABLE "users" (
     "device_id" TEXT,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "data" JSONB,
+    "total_credits" INTEGER NOT NULL DEFAULT 0,
     "image" TEXT,
     "first_name" TEXT,
     "last_name" TEXT,
@@ -79,9 +84,14 @@ CREATE TABLE "accounts" (
 -- CreateTable
 CREATE TABLE "sessions" (
     "id" TEXT NOT NULL,
-    "session_token" TEXT NOT NULL,
+    "session_token" TEXT,
     "user_id" TEXT NOT NULL,
+    "session_id" TEXT NOT NULL,
     "expires" TIMESTAMP(3) NOT NULL,
+    "ip_address" TEXT,
+    "device_info" JSONB,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
 );
@@ -130,6 +140,35 @@ CREATE TABLE "team_users" (
 );
 
 -- CreateTable
+CREATE TABLE "projects" (
+    "id" TEXT NOT NULL,
+    "team_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "status" TEXT DEFAULT 'active',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "projects_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "projectables" (
+    "id" TEXT NOT NULL,
+    "project_id" TEXT NOT NULL,
+    "projectable_type" SMALLINT NOT NULL,
+    "projectable_id" TEXT NOT NULL,
+    "role" TEXT,
+    "order_column" SMALLINT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "projectables_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "chats" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
@@ -148,8 +187,8 @@ CREATE TABLE "chat_messages" (
     "chat_id" TEXT NOT NULL,
     "type" TEXT,
     "role" "chat_messages_role_enum" NOT NULL,
-    "content" TEXT NOT NULL,
-    "vision_content" JSON,
+    "content" JSONB NOT NULL,
+    "vision_content" JSONB,
     "token_count" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -170,7 +209,7 @@ CREATE TABLE "assistants" (
     "is_shared" BOOLEAN NOT NULL DEFAULT false,
     "has_knowledge_base" BOOLEAN DEFAULT false,
     "has_workflow" BOOLEAN DEFAULT false,
-    "settings" JSON,
+    "settings" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -186,6 +225,7 @@ CREATE TABLE "tools" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "icon_name" TEXT,
+    "order_column" SMALLINT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -206,14 +246,32 @@ CREATE TABLE "assistant_tools" (
 );
 
 -- CreateTable
+CREATE TABLE "assistant_tool_calls" (
+    "id" TEXT NOT NULL,
+    "assistant_id" TEXT NOT NULL,
+    "tool_id" TEXT NOT NULL,
+    "input" JSONB,
+    "output" JSONB,
+    "status" "Status" NOT NULL DEFAULT 'PENDING',
+    "context" JSONB,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "assistant_tool_calls_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "assistant_templates" (
     "id" TEXT NOT NULL,
     "llm_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "system_prompt" TEXT NOT NULL,
-    "system_prompt_token_count" INTEGER NOT NULL,
-    "config" JSON,
+    "assistant_title" TEXT NOT NULL DEFAULT '',
+    "assistant_description" TEXT NOT NULL DEFAULT '',
+    "assistant_tool_ids" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "assistant_system_prompt" JSONB NOT NULL,
+    "config" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -224,9 +282,10 @@ CREATE TABLE "assistant_templates" (
 -- CreateTable
 CREATE TABLE "assistant_template_categories" (
     "id" TEXT NOT NULL,
+    "parent_id" TEXT,
     "name" TEXT NOT NULL,
-    "description" TEXT,
-    "config" JSON,
+    "description" TEXT NOT NULL,
+    "config" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -255,8 +314,8 @@ CREATE TABLE "llms" (
     "description" TEXT NOT NULL,
     "hidden" BOOLEAN NOT NULL DEFAULT false,
     "free" BOOLEAN NOT NULL DEFAULT false,
-    "capabilities" JSON,
-    "infos" JSON,
+    "capabilities" JSONB,
+    "infos" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -265,7 +324,23 @@ CREATE TABLE "llms" (
 );
 
 -- CreateTable
-CREATE TABLE "credits" (
+CREATE TABLE "llm_prices" (
+    "id" TEXT NOT NULL,
+    "model_id" TEXT NOT NULL,
+    "input_token_price" INTEGER NOT NULL,
+    "output_token_price" INTEGER NOT NULL,
+    "currency" TEXT NOT NULL,
+    "effective_date" TIMESTAMP(3) NOT NULL,
+    "expiration_date" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "llm_prices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "credit_usages" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "amount" INTEGER NOT NULL,
@@ -273,19 +348,31 @@ CREATE TABLE "credits" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "credits_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "credit_usages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "credit_purchases" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "cost" DECIMAL(65,30) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "credit_purchases_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "token_usages" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
-    "llm_provider" TEXT NOT NULL,
-    "llm_model" TEXT NOT NULL,
+    "model_id" TEXT NOT NULL,
     "prompt_tokens" INTEGER NOT NULL,
     "completion_tokens" INTEGER NOT NULL,
+    "reasoning_tokens" INTEGER,
     "total_tokens" INTEGER NOT NULL,
-    "cost" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -536,6 +623,42 @@ CREATE TABLE "text_to_images" (
     CONSTRAINT "text_to_images_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "translations" (
+    "id" TEXT NOT NULL,
+    "language_id" TEXT NOT NULL,
+    "field" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "translations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "translation_ables" (
+    "id" TEXT NOT NULL,
+    "translation_id" TEXT NOT NULL,
+    "model_type" SMALLINT NOT NULL,
+    "model_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "translation_ables_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "languages" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "languages_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -564,6 +687,15 @@ CREATE UNIQUE INDEX "accounts_provider_provider_account_id_key" ON "accounts"("p
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "sessions_session_id_key" ON "sessions"("session_id");
+
+-- CreateIndex
+CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
+
+-- CreateIndex
+CREATE INDEX "sessions_session_token_idx" ON "sessions"("session_token");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "verificationtokens_identifier_token_key" ON "verificationtokens"("identifier", "token");
 
 -- CreateIndex
@@ -571,6 +703,12 @@ CREATE INDEX "teams_organisation_id_name_index" ON "teams"("organisation_id", "n
 
 -- CreateIndex
 CREATE INDEX "team_users_team_id_user_id_index" ON "team_users"("team_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "projects_team_id_name_index" ON "projects"("team_id", "name");
+
+-- CreateIndex
+CREATE INDEX "projectables_index" ON "projectables"("project_id", "projectable_type", "projectable_id");
 
 -- CreateIndex
 CREATE INDEX "chats_user_id_assistant_id_index" ON "chats"("user_id", "assistant_id");
@@ -588,16 +726,16 @@ CREATE UNIQUE INDEX "tools_function_id_key" ON "tools"("function_id");
 CREATE INDEX "assistant_tools_assistant_id_tool_id_index" ON "assistant_tools"("assistant_id", "tool_id");
 
 -- CreateIndex
+CREATE INDEX "assistant_tool_calls_assistant_id_tool_id_index" ON "assistant_tool_calls"("assistant_id", "tool_id");
+
+-- CreateIndex
 CREATE INDEX "llms_api_name_idx" ON "llms"("api_name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "credits_user_id_key" ON "credits"("user_id");
+CREATE UNIQUE INDEX "credit_usages_user_id_key" ON "credit_usages"("user_id");
 
 -- CreateIndex
-CREATE INDEX "credits_user_id_idx" ON "credits"("user_id");
-
--- CreateIndex
-CREATE INDEX "token_usages_user_id_llm_provider_llm_model_index" ON "token_usages"("user_id", "llm_provider", "llm_model");
+CREATE INDEX "credit_usages_user_id_idx" ON "credit_usages"("user_id");
 
 -- CreateIndex
 CREATE INDEX "medias_team_id_name_index" ON "medias"("team_id", "name");
@@ -663,6 +801,12 @@ ALTER TABLE "team_users" ADD CONSTRAINT "team_users_team_id_fkey" FOREIGN KEY ("
 ALTER TABLE "team_users" ADD CONSTRAINT "team_users_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "projects" ADD CONSTRAINT "projects_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "projectables" ADD CONSTRAINT "projectables_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "chats" ADD CONSTRAINT "chats_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -684,7 +828,16 @@ ALTER TABLE "assistant_tools" ADD CONSTRAINT "assistant_tools_assistant_id_fkey"
 ALTER TABLE "assistant_tools" ADD CONSTRAINT "assistant_tools_tool_id_fkey" FOREIGN KEY ("tool_id") REFERENCES "tools"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "assistant_tool_calls" ADD CONSTRAINT "assistant_tool_calls_assistant_id_fkey" FOREIGN KEY ("assistant_id") REFERENCES "assistants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "assistant_tool_calls" ADD CONSTRAINT "assistant_tool_calls_tool_id_fkey" FOREIGN KEY ("tool_id") REFERENCES "tools"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "assistant_templates" ADD CONSTRAINT "assistant_templates_llm_id_fkey" FOREIGN KEY ("llm_id") REFERENCES "llms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "assistant_template_categories" ADD CONSTRAINT "assistant_template_categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "assistant_template_categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "assistant_template_category_items" ADD CONSTRAINT "assistant_template_category_items_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "assistant_template_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -693,10 +846,19 @@ ALTER TABLE "assistant_template_category_items" ADD CONSTRAINT "assistant_templa
 ALTER TABLE "assistant_template_category_items" ADD CONSTRAINT "assistant_template_category_items_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "assistant_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "credits" ADD CONSTRAINT "credits_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "llm_prices" ADD CONSTRAINT "llm_prices_model_id_fkey" FOREIGN KEY ("model_id") REFERENCES "llms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "credit_usages" ADD CONSTRAINT "credit_usages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "credit_purchases" ADD CONSTRAINT "credit_purchases_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "token_usages" ADD CONSTRAINT "token_usages_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "token_usages" ADD CONSTRAINT "token_usages_model_id_fkey" FOREIGN KEY ("model_id") REFERENCES "llms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "medias" ADD CONSTRAINT "medias_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -757,3 +919,9 @@ ALTER TABLE "text_to_image_runs" ADD CONSTRAINT "text_to_image_runs_folder_id_fk
 
 -- AddForeignKey
 ALTER TABLE "text_to_images" ADD CONSTRAINT "text_to_images_run_id_fkey" FOREIGN KEY ("run_id") REFERENCES "text_to_image_runs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "translations" ADD CONSTRAINT "translations_language_id_fkey" FOREIGN KEY ("language_id") REFERENCES "languages"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "translation_ables" ADD CONSTRAINT "translation_ables_translation_id_fkey" FOREIGN KEY ("translation_id") REFERENCES "translations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

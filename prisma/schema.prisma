@@ -28,6 +28,7 @@ model User {
   deviceId        String?   @map("device_id")
   email           String    @unique
   name            String
+  data            Json?     @db.JsonB
   totalCredits    Int       @default(0) @map("total_credits")
   image           String?
   firstName       String?   @map("first_name")
@@ -127,7 +128,7 @@ model Session {
   sessionId    String   @unique @map("session_id")
   expires      DateTime
   ipAddress    String?  @map("ip_address")
-  deviceInfo   Json?    @map("device_info") @db.Json /// [DeviceInfoType]
+  deviceInfo   Json?    @map("device_info") @db.JsonB /// [DeviceInfoType]
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -258,8 +259,8 @@ model ChatMessage {
   chatId        String                  @map("chat_id")
   type          String?
   role          chat_messages_role_enum @map("role")
-  content       Json                    @db.Json
-  visionContent Json?                   @map("vision_content") @db.Json
+  content       Json                    @db.JsonB
+  visionContent Json?                   @map("vision_content") @db.JsonB
   tokenCount    Int                     @map("token_count")
   createdAt     DateTime                @default(now()) @map("created_at")
   updatedAt     DateTime                @updatedAt @map("updated_at")
@@ -282,7 +283,7 @@ model Assistant {
   isShared               Boolean   @default(false) @map("is_shared")
   hasKnowledgeBase       Boolean?  @default(false) @map("has_knowledge_base")
   hasWorkflow            Boolean?  @default(false) @map("has_workflow")
-  settings               Json?     @map("settings") @db.Json
+  settings               Json?     @map("settings") @db.JsonB
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
   deletedAt              DateTime? @map("deleted_at")
@@ -336,10 +337,10 @@ model AssistantToolCall {
   id          String    @id @default(cuid())
   assistantId String    @map("assistant_id")
   toolId      String    @map("tool_id")
-  input       Json?     @map("input") @db.Json
-  output      Json?     @map("output") @db.Json
+  input       Json?     @map("input") @db.JsonB
+  output      Json?     @map("output") @db.JsonB
   status      Status    @default(PENDING) // pending, completed, failed
-  context     Json?     @map("context") @db.Json // Stores context info like {type: "chat", id: "xxx"} or {type: "workflow_step", id: "xxx"}
+  context     Json?     @map("context") @db.JsonB // Stores context info like {type: "chat", id: "xxx"} or {type: "workflow_step", id: "xxx"}
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
@@ -359,8 +360,8 @@ model AssistantTemplate {
   assistantTitle        String    @default("") @map("assistant_title")
   assistantDescription  String    @default("") @map("assistant_description")
   assistantToolIds      String[]  @default([]) @map("assistant_tool_ids")
-  assistantSystemPrompt Json      @map("assistant_system_prompt") @db.Json /// [TemplateSystemPromptType]
-  config                Json?     @map("config") @db.Json /// [TemplateConfigType]
+  assistantSystemPrompt Json      @map("assistant_system_prompt") @db.JsonB /// [TemplateSystemPromptType]
+  config                Json?     @map("config") @db.JsonB /// [TemplateConfigType]
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
@@ -377,7 +378,7 @@ model AssistantTemplateCategory {
   parentId    String?   @map("parent_id")
   name        String
   description String
-  config      Json?     @map("config") @db.Json
+  config      Json?     @map("config") @db.JsonB
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
@@ -415,8 +416,8 @@ model LargeLangModel {
   description  String
   hidden       Boolean   @default(false)
   free         Boolean   @default(false)
-  capabilities Json?     @map("capabilities") @db.Json
-  infos        Json?     @map("infos") @db.Json
+  capabilities Json?     @map("capabilities") @db.JsonB
+  infos        Json?     @map("infos") @db.JsonB
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
