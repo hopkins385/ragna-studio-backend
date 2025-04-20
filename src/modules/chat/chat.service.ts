@@ -579,32 +579,20 @@ export class ChatService {
       return [];
     }
 
-    return (
-      messages
-        // .filter((message) => {
-        //   // Filter out messages that are not of the specified types
-        //   return (
-        //     message.type === ChatMessageType.TEXT ||
-        //     message.type === ChatMessageType.TOOL_RESULT ||
-        //     message.type === ChatMessageType.TOOL_CALL ||
-        //     message.type === ChatMessageType.IMAGE
-        //   );
-        // })
-        .map((message) => {
-          switch (message.type) {
-            case ChatMessageType.TEXT:
-              return this.formatTextMessage(message);
-            case ChatMessageType.TOOL_CALL:
-              return this.formatToolCallMessage(message);
-            case ChatMessageType.TOOL_RESULT:
-              return this.formatToolResultMessage(message);
-            case ChatMessageType.IMAGE:
-              return this.formatImageMessage(message);
-            default:
-              throw new Error(`Unsupported message type: ${message.type}`);
-          }
-        })
-    );
+    return messages.map((message) => {
+      switch (message.type) {
+        case ChatMessageType.TEXT:
+          return this.formatTextMessage(message);
+        case ChatMessageType.TOOL_CALL:
+          return this.formatToolCallMessage(message);
+        case ChatMessageType.TOOL_RESULT:
+          return this.formatToolResultMessage(message);
+        case ChatMessageType.IMAGE:
+          return this.formatImageMessage(message);
+        default:
+          throw new Error(`Unsupported message type: ${message.type}`);
+      }
+    });
   }
 
   formatTextMessage(message: any): CoreUserMessage {
