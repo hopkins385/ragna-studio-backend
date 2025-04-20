@@ -460,37 +460,6 @@ export class ChatService {
     });
   }
 
-  /*
-  public async getContextAwareSystemPrompt(payload: {
-    assistantId: string;
-    lastMessageContent: string;
-    assistantSystemPrompt: string;
-  }) {
-    const collections = await this.collectionService.findAllWithRecordsFor(
-      CollectionAbleDto.fromInput({
-        id: payload.assistantId,
-        type: 'assistant',
-      }),
-    );
-
-    if (collections.length < 1) {
-      return payload.assistantSystemPrompt;
-    }
-
-    const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
-    const res = await this.embeddingService.searchDocsByQuery({
-      query: payload.lastMessageContent,
-      recordIds,
-    });
-
-    const context = res.map((r) => r?.text || '').join('\n\n');
-
-    return (
-      payload.assistantSystemPrompt + '\n\n<context>' + context + '</context>'
-    );
-  }
-  */
-
   // POLICIES
 
   canCreateChatPolicy(user: RequestUser, assistant: any): boolean {
