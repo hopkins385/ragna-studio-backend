@@ -1,10 +1,10 @@
+import { CreateMediaAbleDto } from '@/modules/media-able/dto/create-media-able.dto';
+import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
+import { MediaAbleService } from '@/modules/media-able/media-able.service';
+import { StorageService } from '@/modules/storage/storage.service';
 import { Injectable } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { MediaRepository } from './repositories/media.repository';
-import { StorageService } from '@/modules/storage/storage.service';
-import { MediaAbleService } from '@/modules/media-able/media-able.service';
-import { CreateMediaAbleDto } from '@/modules/media-able/dto/create-media-able.dto';
-import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
 
 @Injectable()
 export class MediaService {
@@ -68,8 +68,22 @@ export class MediaService {
     });
   }
 
-  async paginateFindAllFor(model: MediaAbleDto, page: number, limit: number = 10) {
-    return this.mediaRepo.prisma.media
+  async findAllMediaFor({
+    mediaModel,
+    userMediaModel,
+    page,
+    limit = 10,
+  }: {
+    mediaModel: MediaAbleDto;
+    userMediaModel: MediaAbleDto;
+    page: number;
+    limit: number;
+  }) {
+    // ensure models are not the same
+    if (mediaModel.id === userMediaModel.id && mediaModel.type === userMediaModel.type) {
+      throw new Error('Model and user model cannot be the same');
+    }
+    const [medias, meta] = await this.mediaRepo.prisma.media
       .paginate({
         select: {
           id: true,
@@ -79,11 +93,23 @@ export class MediaService {
         where: {
           mediaAbles: {
             some: {
-              mediaAbleId: model.id,
-              mediaAbleType: model.type,
+              // Apply conditions to the related mediaAbles records
+              OR: [
+                {
+                  mediaAbleId: mediaModel.id,
+                  mediaAbleType: mediaModel.type,
+                },
+                // Check for the userModel's id and type together
+                {
+                  mediaAbleId: userMediaModel.id,
+                  mediaAbleType: userMediaModel.type,
+                },
+              ],
+              // This condition must also be met by the mediaAbles record found via 'some'
               deletedAt: null,
             },
           },
+          // This condition applies to the main Media record
           deletedAt: null,
         },
       })
@@ -92,6 +118,8 @@ export class MediaService {
         page,
         includePageCount: true,
       });
+
+    return { medias, meta };
   }
 
   async softDelete(mediaId: string) {

@@ -3,6 +3,8 @@ import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { MediaAbleBody } from '@/modules/media-able/dto/media-able-body.dto';
 import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
+import { ReqUser } from '@/modules/user/decorators/user.decorator';
+import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { MediaService } from './media.service';
 
@@ -40,18 +42,28 @@ export class MediaController extends BaseController {
 
   @Post('for/paginate')
   @HttpCode(200)
-  async paginateFindAllFor(@Body() body: MediaAbleBody, @Query() query: PaginateQuery) {
+  async paginateFindAllFor(
+    @Query() query: PaginateQuery,
+    @Body() body: MediaAbleBody,
+    @ReqUser() reqUser: RequestUser,
+  ) {
     const mediaAbleDto = MediaAbleDto.fromInput({
       id: body.model.id,
       type: body.model.type,
     });
 
+    const userMediaAbleDto = MediaAbleDto.fromInput({
+      id: reqUser.id,
+      type: 'user',
+    });
+
     try {
-      const [medias, meta] = await this.mediaService.paginateFindAllFor(
-        mediaAbleDto,
-        query.page,
-        query.limit,
-      );
+      const { medias, meta } = await this.mediaService.findAllMediaFor({
+        mediaModel: mediaAbleDto,
+        userMediaModel: userMediaAbleDto,
+        page: query.page,
+        limit: query.limit,
+      });
       return { medias, meta };
     } catch (error: unknown) {
       this.handleError(error);
