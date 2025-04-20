@@ -155,7 +155,10 @@ export class UserService {
       emailVerifiedAt: user.emailVerifiedAt,
       onboardedAt: user.onboardedAt,
       lastLoginAt: user.lastLoginAt,
-      roles: user.roles.map((r) => r.role.name),
+      roles: user.roles.map((r) => ({
+        id: r.role.id,
+        name: r.role.name,
+      })),
       activeTeamId: user.teams[0].team.id, // TODO: change to activeTeamId
       teams: user.teams.map((t) => ({
         id: t.team.id,

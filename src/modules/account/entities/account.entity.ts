@@ -8,6 +8,11 @@ interface Team {
   name: string;
 }
 
+interface Role {
+  id: string;
+  name: string;
+}
+
 export class UserAccountEntity {
   readonly hasOnboarded: boolean;
   readonly hasEmailVerified: boolean;
@@ -19,7 +24,7 @@ export class UserAccountEntity {
     readonly lastName: string,
     readonly email: string,
     readonly image: string,
-    readonly roles: string[],
+    readonly roles: Role[],
     readonly activeTeamId: string,
     readonly teams: Team[],
     readonly organisation: Organisation,
@@ -39,7 +44,7 @@ export class UserAccountEntity {
     email: string;
     image: string;
     activeTeamId: string;
-    roles: string[];
+    roles: Role[];
     teams: Team[];
     organisation: Organisation;
     lastLoginAt: Date;

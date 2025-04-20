@@ -9,7 +9,6 @@ import { UpdateAccountPasswordBody } from './dto/update-account-password-body.dt
 
 @Controller('account')
 export class AccountController extends BaseController {
-  //
   constructor(private readonly userService: UserService) {
     super();
   }
