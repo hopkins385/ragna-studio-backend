@@ -579,156 +579,102 @@ export class ChatService {
       return [];
     }
 
-    return messages
-      .filter((message) => {
-        // Filter out messages that are not of type TEXT
-        return (
-          message.type === ChatMessageType.TEXT ||
-          message.type === ChatMessageType.TOOL_RESULT ||
-          message.type === ChatMessageType.TOOL_CALL
-        );
-      })
-      .map((message) => {
-        // Handle text messages
-        if (message.type === ChatMessageType.TEXT) {
-          const textContent = message.content.find(
-            (c): c is { type: ChatMessageType; text: string } => c.type === ChatMessageType.TEXT,
-          );
+    return (
+      messages
+        // .filter((message) => {
+        //   // Filter out messages that are not of the specified types
+        //   return (
+        //     message.type === ChatMessageType.TEXT ||
+        //     message.type === ChatMessageType.TOOL_RESULT ||
+        //     message.type === ChatMessageType.TOOL_CALL ||
+        //     message.type === ChatMessageType.IMAGE
+        //   );
+        // })
+        .map((message) => {
+          switch (message.type) {
+            case ChatMessageType.TEXT:
+              return this.formatTextMessage(message);
+            case ChatMessageType.TOOL_CALL:
+              return this.formatToolCallMessage(message);
+            case ChatMessageType.TOOL_RESULT:
+              return this.formatToolResultMessage(message);
+            case ChatMessageType.IMAGE:
+              return this.formatImageMessage(message);
+            default:
+              throw new Error(`Unsupported message type: ${message.type}`);
+          }
+        })
+    );
+  }
 
-          // if (!textContent?.text) {
-          //   throw new Error('Text content is required for text messages');
-          // }
+  formatTextMessage(message: any): CoreUserMessage {
+    const textContent = message.content.find(
+      (c): c is { type: ChatMessageType; text: string } => c.type === ChatMessageType.TEXT,
+    );
 
+    // if (!textContent?.text) {
+    //   throw new Error('Text content is required for text messages');
+    // }
+
+    return {
+      role: message.role.toString() as any,
+      content: textContent.text,
+    } satisfies CoreUserMessage | CoreAssistantMessage;
+  }
+
+  formatToolCallMessage(message: any): CoreMessage {
+    return {
+      role: 'assistant',
+      content: message.content.map((c) => {
+        if (c.type === 'tool-call') {
           return {
-            role: message.role.toString() as any,
-            content: textContent.text,
-          } satisfies CoreUserMessage | CoreAssistantMessage;
+            type: 'tool-call',
+            // @ts-ignore
+            toolCallId: c.toolCallId,
+            // @ts-ignore
+            toolName: c.toolName,
+            // @ts-ignore
+            args: c.args,
+          } satisfies ToolCallPart;
         }
+      }),
+    };
+  }
 
-        // Handle tool calls
-        if (message.type === ChatMessageType.TOOL_CALL) {
+  formatToolResultMessage(message: any): CoreMessage {
+    return {
+      role: 'tool',
+      content: message.content.map((c) => {
+        if (c.type === 'tool-result') {
           return {
-            role: 'assistant',
-            content: message.content.map((c) => {
-              if (c.type === 'tool-call') {
-                return {
-                  type: 'tool-call',
-                  // @ts-ignore
-                  toolCallId: c.toolCallId,
-                  // @ts-ignore
-                  toolName: c.toolName,
-                  // @ts-ignore
-                  args: c.args,
-                } satisfies ToolCallPart;
-              }
-            }),
-          };
+            type: 'tool-result',
+            // @ts-ignore
+            toolCallId: c.toolCallId,
+            // @ts-ignore
+            toolName: c.toolName,
+            // @ts-ignore
+            // args: c.args,
+            // @ts-ignore
+            result: c.result,
+          } satisfies ToolResultPart;
         }
+      }),
+    };
+  }
 
-        // Handle tool results
-        if (message.type === ChatMessageType.TOOL_RESULT) {
-          return {
-            role: 'tool',
-            content: message.content.map((c) => {
-              if (c.type === 'tool-result') {
-                return {
-                  type: 'tool-result',
-                  // @ts-ignore
-                  toolCallId: c.toolCallId,
-                  // @ts-ignore
-                  toolName: c.toolName,
-                  // @ts-ignore
-                  // args: c.args,
-                  // @ts-ignore
-                  result: c.result,
-                } satisfies ToolResultPart;
-              }
-            }),
-          };
-        }
-      });
+  formatImageMessage(message: any): CoreMessage {
+    const textContent = message.content.find((c) => c.type === 'text');
+    if (!textContent) {
+      throw new Error('Text content is required for image messages');
+    }
 
-    /*if (message.type === ChatMessageType.IMAGE && message.visionContent) {
-        const textContent = message.content.find(c => c.type === 'text');
-        if (!textContent) {
-          throw new Error('Text content is required for image messages');
-        }
-
-        return {
-          role: message.role.toString(),
-          content: [
-            { type: 'text', text: textContent!.text },
-            ...this.getVisionMessages(message.visionContent),
-          ],
-        };
-      }
-
-      throw new Error(`Unsupported message type: ${message.type}`);
-      */
-
-    /*
-    return messages.map((message) => {
-      // Handle image type messages with vision content
-      if (message.type === 'image' && message.visionContent) {
-        const textContent = message.content.find(c => c.type === 'text');
-        if (!textContent) {
-          throw new Error('Text content is required for image messages');
-        }
-        
-        return {
-          role: message.role.toString(),
-          content: [
-            { type: 'text', text: textContent.text },
-            ...this.getVisionMessages(message.visionContent)
-          ],
-        };
-      }
-  
-      // Handle tool calls and results
-      if (message.content.some(c => c.type === 'tool-call' || c.type === 'tool-result')) {
-        return {
-          role: message.role.toString(),
-          content: message.content.map(c => {
-            switch (c.type) {
-              case 'tool-call':
-                return {
-                  type: 'tool-call',
-                  toolCallId: c.toolCallId,
-                  toolName: c.toolName,
-                  args: c.args
-                };
-              case 'tool-result':
-                return {
-                  type: 'tool-result',
-                  toolCallId: c.toolCallId,
-                  toolName: c.toolName,
-                  args: c.args,
-                  result: c.result
-                };
-              case 'text':
-                return {
-                  type: 'text',
-                  text: c.text
-                };
-              default:
-                throw new Error(`Unsupported content type: ${c.type}`);
-            }
-          })
-        };
-      }
-  
-      // Handle simple text messages
-      const textContent = message.content.find(c => c.type === 'text');
-      if (!textContent) {
-        throw new Error('Text content is required');
-      }
-  
-      return {
-        role: message.role.toString(),
-        content: textContent.text,
-      };
-    });
-    */
+    return {
+      role: message.role.toString(),
+      content: [
+        { type: 'text', text: textContent!.text },
+        ...(this.getVisionMessages(message.visionContent) as any),
+      ],
+    };
   }
 
   /*async getContextAwareSystemPrompt(payload: {
