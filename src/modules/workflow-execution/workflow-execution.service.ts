@@ -5,6 +5,11 @@ import { FlowJob, FlowProducer, JobsOptions } from 'bullmq';
 import { AssistantJobDto } from '../assistant-job/dto/assistant-job.dto';
 import { WorkflowStepWithRelations } from '../workflow-step/interfaces/workflow-step.interface';
 
+const defaultJobOpts: JobsOptions = {
+  removeOnComplete: true,
+  removeOnFail: { count: 50 },
+};
+
 @Injectable()
 export class WorkflowExecutionService {
   private readonly logger = new Logger(WorkflowExecutionService.name);
@@ -29,11 +34,6 @@ export class WorkflowExecutionService {
     const startStepIndex = stepsCount - 1;
     const rowCount = payload.workflowSteps[0].document?.documentItems.length || 0;
     const rows = [];
-
-    const defaultJobOpts = {
-      removeOnComplete: true,
-      removeOnFail: true,
-    } as JobsOptions;
 
     function jobChild(stepIndex: number, rowIndex: number): any {
       const { assistant, document, name, inputSteps } = payload.workflowSteps[stepIndex];
@@ -107,8 +107,8 @@ export class WorkflowExecutionService {
         name: 'workflow-job-row',
         queueName: 'workflow-row-completed',
         data: workflowCompletionData,
-        opts: defaultJobOpts,
         children: [jobChild(startStepIndex, i)],
+        opts: defaultJobOpts,
       };
       rows.push(job);
     }
@@ -149,12 +149,6 @@ export class WorkflowExecutionService {
 
     // Use a Map for faster lookup of input steps if needed often (though only needed once per row here)
     const stepsById = new Map(payload.allWorkflowSteps.map((s) => [s.id, s]));
-
-    const defaultJobOpts: JobsOptions = {
-      // Explicitly type the object
-      removeOnComplete: { count: 1000 },
-      removeOnFail: { count: 5000 },
-    };
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const documentItem = document.documentItems[rowIndex]; // Already checked document exists

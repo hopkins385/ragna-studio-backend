@@ -1,9 +1,10 @@
-import { TokenUsageModule } from './../token-usage/token-usage.module';
 import { Module } from '@nestjs/common';
-import { AssistantJobService } from './assistant-job.service';
-import { DocumentItemModule } from '../document-item/document-item.module';
 import { AssistantToolFunctionModule } from '../assistant-tool-function/assistant-tool-function.module';
+import { DocumentItemModule } from '../document-item/document-item.module';
+import { TokenUsageModule } from './../token-usage/token-usage.module';
+import { AssistantJobService } from './assistant-job.service';
 import {
+  AnthropicClaudeSonnet20250219Processor,
   AnthropicClaudeSonnetLatestProcessor,
   AnthropicClaudeSonnetProcessor,
 } from './processors/anthropic.processor';
@@ -22,6 +23,7 @@ import {
     // processors
     AnthropicClaudeSonnetProcessor,
     AnthropicClaudeSonnetLatestProcessor,
+    AnthropicClaudeSonnet20250219Processor,
     MistralLargeProcessor,
     OpenaiGpt4oProcessor,
     OpenaiGpt4oMiniProcessor,
