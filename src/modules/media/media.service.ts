@@ -2,12 +2,14 @@ import { CreateMediaAbleDto } from '@/modules/media-able/dto/create-media-able.d
 import { MediaAbleDto } from '@/modules/media-able/dto/media-able.dto';
 import { MediaAbleService } from '@/modules/media-able/media-able.service';
 import { StorageService } from '@/modules/storage/storage.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { MediaRepository } from './repositories/media.repository';
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     private readonly mediaRepo: MediaRepository,
     private readonly mediaAbleService: MediaAbleService,
@@ -55,6 +57,9 @@ export class MediaService {
         id: true,
         name: true,
         fileSize: true,
+        filePath: true,
+        fileMime: true,
+        fileName: true,
       },
       where: {
         mediaAbles: {
@@ -66,6 +71,65 @@ export class MediaService {
         deletedAt: null,
       },
     });
+  }
+
+  async findManyByMediaAbles({ mediaModels }: { mediaModels: MediaAbleDto[] }) {
+    // Construct the OR conditions for the where clause
+    const orConditions = mediaModels
+      .map((model) => ({
+        mediaAbleId: model.id,
+        mediaAbleType: model.type,
+      }))
+      .filter(Boolean);
+
+    this.logger.debug('orConditions', orConditions);
+
+    //     // filter out any duplicates
+
+    // Fetch all media associated with any of the provided models in a single query
+    const medias = await this.mediaRepo.prisma.media.findMany({
+      select: {
+        id: true,
+        name: true,
+        fileSize: true,
+        filePath: true,
+        fileMime: true,
+        fileName: true,
+        // Include mediaAbles to potentially map results back if needed,
+        // or adjust the logic based on the desired return structure.
+        // If you need to return results grouped by the input model like before,
+        // further processing after fetching would be required.
+        // mediaAbles: {
+        //   select: {
+        //     mediaAbleId: true,
+        //     mediaAbleType: true,
+        //   },
+        //   where: {
+        //     OR: orConditions,
+        //   },
+        // },
+      },
+      where: {
+        mediaAbles: {
+          some: {
+            OR: orConditions,
+          },
+        },
+        deletedAt: null,
+      },
+    });
+
+    this.logger.debug('medias', medias);
+
+    // Return the fetched media
+    return medias.map((media) => ({
+      id: media.id,
+      name: media.name,
+      fileSize: media.fileSize,
+      filePath: media.filePath,
+      fileMime: media.fileMime,
+      fileName: media.fileName,
+    }));
   }
 
   async findAllMediaFor({

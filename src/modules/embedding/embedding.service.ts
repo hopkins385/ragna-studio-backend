@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AxiosInstance } from 'axios';
+import { HTTP_CLIENT } from '../http-client/constants';
 import {
   IEmbedFilePayload,
   RagDocument,
   SearchResultDocument,
 } from './interfaces/emedding.interface';
-import { ConfigService } from '@nestjs/config';
-import { AxiosInstance } from 'axios';
-import { HTTP_CLIENT } from '../http-client/constants';
 
 type EmbedFileResponse = RagDocument[];
 type SearchVectorResponse = SearchResultDocument[];
@@ -37,29 +37,23 @@ export class EmbeddingService {
       this.logger.debug(
         `Embedding file with payload: ${JSON.stringify(payload)} and server url: ${this.embedFileUrl}`,
       );
-      const response = await this.httpClient.post<EmbedFileResponse>(
-        this.embedFileUrl,
-        payload,
-      );
+      const response = await this.httpClient.post<EmbedFileResponse>(this.embedFileUrl, payload);
       return response.data;
       //
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Failed to embed file');
+      throw error;
     }
   }
 
-  async deleteEmbeddings(payload: {
-    mediaId: string;
-    recordIds: string[];
-  }): Promise<void> {
+  async deleteEmbeddings(payload: { mediaId: string; recordIds: string[] }): Promise<void> {
     try {
       const response = await this.httpClient.delete(this.embedFileUrl, {
         data: payload,
       });
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Failed to delete embeddings');
+      throw error;
     }
   }
 
@@ -75,7 +69,7 @@ export class EmbeddingService {
       return response.data;
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
-      throw new Error('Failed to search documents');
+      throw error;
     }
   }
 }

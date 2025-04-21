@@ -1,16 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ToolProvider } from '../types/tool-provider';
-import { z } from 'zod';
+import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { CollectionAbleDto } from '@/modules/collection-able/dto/collection-able.dto';
 import { CollectionService } from '@/modules/collection/collection.service';
 import { EmbeddingService } from '@/modules/embedding/embedding.service';
-import { CollectionAbleDto } from '@/modules/collection-able/dto/collection-able.dto';
+import { MediaService } from '@/modules/media/media.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { z } from 'zod';
 import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
-import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
-import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
+import { ToolProvider } from '../types/tool-provider';
 
-interface KnowledgeToolResponse {
+interface KnowledgeToolResult {
   content: string;
+  metadata?: {
+    media: {
+      id: string | null;
+      name: string | null;
+      mimeType: string | null;
+    };
+  };
 }
+
+type KnowledgeToolResponse = KnowledgeToolResult[];
 
 const knowledgeSchema = z.object({
   searchQuery: z
@@ -30,6 +39,7 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
     private readonly chatEventEmitter: ChatEventEmitter,
     private readonly collectionService: CollectionService,
     private readonly embeddingService: EmbeddingService,
+    private readonly mediaService: MediaService,
   ) {
     super({
       name: 'knowledge',
@@ -65,25 +75,43 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
 
       if (collections.length < 1) {
         this.logger.error('No collections found');
-        return { content: '' };
+        return [{ content: '' }];
       }
 
       const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
 
-      const res = await this.embeddingService.searchDocsByQuery({
+      const searchResults = await this.embeddingService.searchDocsByQuery({
         query: args.searchQuery,
         recordIds,
       });
 
-      const mergedDocTexts = res.map((r) => r?.text || '').join('\n\n');
+      // this.logger.debug('searchResults', searchResults);
 
-      this.logger.debug(`Retrieved similar documents`, { mergedDocTexts });
+      const medias = await Promise.all(
+        searchResults.map((r) => this.mediaService.findFirst(r.mediaId)),
+      );
 
-      return { content: mergedDocTexts };
+      const documents = searchResults.map((r) => {
+        const media = medias.find((m) => m.id === r.mediaId);
+        return {
+          content: r.text,
+          metadata: {
+            media: {
+              id: media?.id || null,
+              name: media?.name || null,
+              mimeType: media?.fileMime || null,
+            },
+          },
+        };
+      });
+
+      // this.logger.debug(documents);
+
+      return documents;
       //
     } catch (error) {
       this.logger.error(`Failed to retrieve similar documents: ${error}`);
-      return { content: '' };
+      return [{ content: '' }];
     }
   }
 }

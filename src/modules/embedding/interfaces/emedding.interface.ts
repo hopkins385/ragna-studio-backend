@@ -12,6 +12,7 @@ export interface SearchResultDocument {
   mediaId: string;
   recordId: string;
   text: string;
+  score: number;
 }
 
 export interface RagDocument {

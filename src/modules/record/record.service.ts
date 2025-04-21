@@ -1,9 +1,9 @@
-import type { Media } from '@prisma/client';
+import { EmbeddingService } from '@/modules/embedding/embedding.service';
+import { MediaService } from '@/modules/media/media.service';
 import { Injectable } from '@nestjs/common';
+import type { Media } from '@prisma/client';
 import { CreateRecordDto, FindRecordsDto } from './dto/create-record.dto';
 import { RecordRepository } from './repositories/record.repository';
-import { MediaService } from '@/modules/media/media.service';
-import { EmbeddingService } from '@/modules/embedding/embedding.service';
 
 /**
  * Service responsible for handling record related operations
@@ -102,6 +102,61 @@ export class RecordService {
     return this.embeddingService.deleteEmbeddings(payload);
   }
 
+  async findAll(payload: FindRecordsDto) {
+    return this.recordRepo.prisma.record.findMany({
+      select: {
+        id: true,
+        createdAt: true,
+        media: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      where: {
+        collection: {
+          id: payload.collectionId,
+          teamId: payload.teamId,
+        },
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findAllPaginated(payload: FindRecordsDto, page: number = 1, limit = 10) {
+    return this.recordRepo.prisma.record
+      .paginate({
+        select: {
+          id: true,
+          createdAt: true,
+          media: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          chunks: {
+            select: {
+              id: true,
+            },
+          },
+        },
+        where: {
+          collection: {
+            id: payload.collectionId,
+            teamId: payload.teamId,
+          },
+          deletedAt: null,
+        },
+      })
+      .withPages({
+        limit,
+        page,
+        includePageCount: true,
+      });
+  }
+
   async #embedMedia(media: Media, payload: CreateRecordDto) {
     const { filePath, fileMime } = media;
     const cleanedFilePath = filePath.replace(process.cwd(), '');
@@ -144,64 +199,5 @@ export class RecordService {
       });
       throw e;
     }
-  }
-
-  async findAll(payload: FindRecordsDto) {
-    return this.recordRepo.prisma.record.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        media: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      where: {
-        collection: {
-          id: payload.collectionId,
-          teamId: payload.teamId,
-        },
-        deletedAt: null,
-      },
-    });
-  }
-
-  async findAllPaginated(
-    payload: FindRecordsDto,
-    page: number = 1,
-    limit = 10,
-  ) {
-    return this.recordRepo.prisma.record
-      .paginate({
-        select: {
-          id: true,
-          createdAt: true,
-          media: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          chunks: {
-            select: {
-              id: true,
-            },
-          },
-        },
-        where: {
-          collection: {
-            id: payload.collectionId,
-            teamId: payload.teamId,
-          },
-          deletedAt: null,
-        },
-      })
-      .withPages({
-        limit,
-        page,
-        includePageCount: true,
-      });
   }
 }
