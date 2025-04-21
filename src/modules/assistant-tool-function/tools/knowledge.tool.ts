@@ -9,12 +9,11 @@ import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.
 import { ToolProvider } from '../types/tool-provider';
 
 interface KnowledgeToolResult {
-  content: string;
+  text: string;
   metadata?: {
     media: {
       id: string | null;
       name: string | null;
-      mimeType: string | null;
     };
   };
 }
@@ -75,7 +74,7 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
 
       if (collections.length < 1) {
         this.logger.error('No collections found');
-        return [{ content: '' }];
+        return [{ text: '' }];
       }
 
       const recordIds = collections.map((c) => c.records.map((r) => r.id)).flat();
@@ -94,12 +93,11 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
       const knowledgeToolResults = searchResults.map((r) => {
         const media = medias.find((m) => m.id === r.mediaId);
         return {
-          content: r.text,
+          text: r.text,
           metadata: {
             media: {
               id: media?.id || null,
               name: media?.name || null,
-              mimeType: media?.fileMime || null,
             },
           },
         };
@@ -111,7 +109,7 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
       //
     } catch (error) {
       this.logger.error(`Failed to retrieve similar documents: ${error}`);
-      return [{ content: '' }];
+      return [{ text: '' }];
     }
   }
 }
