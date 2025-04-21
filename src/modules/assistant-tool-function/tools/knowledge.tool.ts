@@ -91,7 +91,7 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
         searchResults.map((r) => this.mediaService.findFirst(r.mediaId)),
       );
 
-      const documents = searchResults.map((r) => {
+      const knowledgeToolResults = searchResults.map((r) => {
         const media = medias.find((m) => m.id === r.mediaId);
         return {
           content: r.text,
@@ -105,9 +105,9 @@ export class KnowledgeTool extends ToolProvider<KnowledgeToolArgs, KnowledgeTool
         };
       });
 
-      // this.logger.debug(documents);
+      // this.logger.debug(knowledgeToolResults);
 
-      return documents;
+      return knowledgeToolResults;
       //
     } catch (error) {
       this.logger.error(`Failed to retrieve similar documents: ${error}`);
