@@ -37,7 +37,7 @@ export class PromptWizardService {
 
     modelFactory.setConfig({
       provider: ProviderType.OPENAI,
-      model: 'gpt-4.1',
+      model: 'o3',
     });
 
     let userContent = basicPromptImprovementTemplate
@@ -64,7 +64,7 @@ export class PromptWizardService {
     return text;
   }
 
-  private async refinePromptAgent(payload: { input: string }) {
+  private async finalzingPromptAgent(payload: { inputPrompt: string; critique: string }) {
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({
@@ -72,9 +72,9 @@ export class PromptWizardService {
       model: 'gpt-4.1-mini',
     });
 
-    let userContent = basicPromptImprovementTemplate
-      .replace('{inputPrompt}', payload.input)
-      .replace('{critique}', 'We can do better');
+    let userContent = finalzingPromptTemplate
+      .replace('{inputPrompt}', payload.inputPrompt)
+      .replace('{critique}', payload.critique);
 
     // add current time to the user content
     const currentTime = new Date().toLocaleTimeString();
@@ -96,7 +96,7 @@ export class PromptWizardService {
     return text;
   }
 
-  private async finalzingPromptAgent(payload: { inputPrompt: string; critique: string }) {
+  private async refinePromptAgent(payload: { input: string }) {
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({
@@ -104,9 +104,9 @@ export class PromptWizardService {
       model: 'gpt-4.1-mini',
     });
 
-    let userContent = finalzingPromptTemplate
-      .replace('{inputPrompt}', payload.inputPrompt)
-      .replace('{critique}', payload.critique);
+    let userContent = basicPromptImprovementTemplate
+      .replace('{inputPrompt}', payload.input)
+      .replace('{critique}', 'We can do better');
 
     // add current time to the user content
     const currentTime = new Date().toLocaleTimeString();
