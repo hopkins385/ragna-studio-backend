@@ -68,19 +68,31 @@ export class SessionService {
     return sessionData;
   }
 
-  async getSessionUserData({ userId }: { userId: string }) {
-    const fullUser = await this.userService.findOne({ userId });
+  /**
+   * Retrieves the session user data from the database using the userId.
+   * @param payload.userId - The user ID to retrieve the session data for.
+   * @throws UnauthorizedException if the user ID is invalid or the user is not found.
+   * @returns
+   */
+  async getSessionUserData({ userId }: { userId: string }): Promise<SessionUserEntity> {
+    try {
+      const fullUser = await this.userService.findOne({ userId });
 
-    const sessionUser = new SessionUserEntity({
-      id: fullUser.id,
-      organisationId: fullUser.organisationId,
-      activeTeamId: fullUser.teams?.[0]?.team.id || null,
-      onboardedAt: fullUser.onboardedAt,
-      roles: fullUser.roles,
-      teams: fullUser.teams.map((t) => t.team.id),
-    });
+      const sessionUser = new SessionUserEntity({
+        id: fullUser.id,
+        organisationId: fullUser.organisationId,
+        activeTeamId: fullUser.teams?.[0]?.team.id || null,
+        onboardedAt: fullUser.onboardedAt,
+        roles: fullUser.roles,
+        teams: fullUser.teams.map((t) => t.team.id),
+      });
 
-    return sessionUser;
+      return sessionUser;
+    } catch (error: unknown) {
+      const errStack = error instanceof Error ? error?.stack : undefined;
+      this.logger.error('Error retrieving session user data', errStack);
+      throw new UnauthorizedException('Failed to retrieve session user data');
+    }
   }
 
   async createSessionByUserId({ userId }: { userId: string }): Promise<SessionData> {
@@ -101,6 +113,13 @@ export class SessionService {
     return sessionData;
   }
 
+  /**
+   * Retrieves the session data from the cache using the sessionId.
+   * @param payload.sessionId - The session ID to retrieve.
+   * @param options.extend - (optional) If true, the session expiration time will be reset which will extend the session.
+   * @throws UnauthorizedException if the session ID is invalid or the session is not found.
+   * @returns
+   */
   async getSession(
     { sessionId }: { sessionId: SessionId },
     options?: { extend: boolean },
@@ -128,38 +147,13 @@ export class SessionService {
     };
   }
 
-  async refreshSession({
-    sessionId,
-    sessionData,
-  }: {
-    sessionId: SessionId;
-    sessionData?: any;
-  }): Promise<SessionId | null> {
-    throw new Error('Not implemented');
-    if (!sessionId || !isCUID2(sessionId)) {
-      return null;
-    }
-    if (!sessionData) {
-      const oldSessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
-      if (!oldSessionData) {
-        return null;
-      }
-      sessionData = oldSessionData;
-    }
-
-    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, this.SESSION_TTL_MS);
-
-    const expires = new Date();
-    expires.setTime(expires.getTime() + this.SESSION_TTL_MS);
-
-    await this.updateLastAccessed({
-      sessionId,
-      expires,
-    });
-
-    return sessionData;
-  }
-
+  /**
+   * Extends the session by updating the session data in the cache and database if sessionData is provided.
+   * If sessionData is not provided, it retrieves the session data from the cache and updates the expiration time.
+   * @param payload.sessionId - The session ID to extend.
+   * @param payload.sessionData - (optional) The session data to update. If not provided, the existing session data will be used.
+   * @returns
+   */
   async extendSession({
     sessionId,
     sessionData,
@@ -193,12 +187,12 @@ export class SessionService {
 
   async refreshSessionByUserId({ userId, sessionId }: { userId: string; sessionId: SessionId }) {
     if (!isCUID2(sessionId)) {
-      return null;
+      throw new UnauthorizedException('Invalid session id');
     }
 
     const sessionUserData = await this.getSessionUserData({ userId });
 
-    return this.refreshSession({
+    return this.extendSession({
       sessionId,
       sessionData: {
         id: sessionId,
@@ -209,8 +203,9 @@ export class SessionService {
 
   async deleteSession({ sessionId }: { sessionId: SessionId }): Promise<boolean> {
     if (!isCUID2(sessionId)) {
-      return false;
+      throw new UnauthorizedException('Invalid session id');
     }
+
     await this.deleteDBSession({ sessionId });
     await this.cacheManager.del(SESSION_PREFIX + sessionId);
     return true;

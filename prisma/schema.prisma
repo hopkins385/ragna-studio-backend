@@ -312,8 +312,8 @@ model Tool {
   updatedAt    DateTime  @updatedAt @map("updated_at")
   deletedAt    DateTime? @map("deleted_at")
 
-  assistants AssistantTool[]
-  toolCalls  AssistantToolCall[]
+  assistantTools AssistantTool[]
+  toolCalls      AssistantToolCall[]
 
   @@map("tools")
 }
@@ -426,9 +426,44 @@ model LargeLangModel {
   assistantTemplates AssistantTemplate[]
   tokenUsages        TokenUsage[]
   llmPrices          LLMPrice[]
+  categoryItems      LargeLangModelCategoryItem[]
 
   @@index([apiName])
   @@map("llms")
+}
+
+model LargeLangModelCategory {
+  id          String    @id @default(cuid())
+  parentId    String?   @map("parent_id")
+  name        String
+  description String
+  config      Json?     @map("config") @db.JsonB
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  categoryItems LargeLangModelCategoryItem[]
+
+  // Self-referential relations
+  parent   LargeLangModelCategory?  @relation("LLMCategoryParentChild", fields: [parentId], references: [id])
+  children LargeLangModelCategory[] @relation("LLMCategoryParentChild")
+
+  @@map("llm_categories")
+}
+
+model LargeLangModelCategoryItem {
+  id         String    @id @default(cuid())
+  llmId      String    @map("llm_id")
+  categoryId String    @map("category_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  llm      LargeLangModel          @relation(fields: [llmId], references: [id])
+  category LargeLangModelCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([llmId, categoryId], name: "llm_categories_llm_id_category_id_index")
+  @@map("llm_category_items")
 }
 
 model LLMPrice {

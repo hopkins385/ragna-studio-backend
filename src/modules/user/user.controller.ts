@@ -11,6 +11,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  InternalServerErrorException,
   NotFoundException,
   Param,
   Patch,
@@ -112,6 +113,7 @@ export class UserController extends BaseController {
   @Delete(':id')
   @Roles(Role.ADMIN)
   async softDeleteUser(@Param() { id }: IdParam, @ReqUser() reqUser: RequestUser) {
+    throw new InternalServerErrorException('Not implemented yet');
     // current logged in user cannot delete themselves
     if (id === reqUser.id) {
       throw new ForbiddenException('You cannot delete yourself');

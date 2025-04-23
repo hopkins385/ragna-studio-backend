@@ -324,6 +324,32 @@ CREATE TABLE "llms" (
 );
 
 -- CreateTable
+CREATE TABLE "llm_categories" (
+    "id" TEXT NOT NULL,
+    "parent_id" TEXT,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "config" JSONB,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "llm_categories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "llm_category_items" (
+    "id" TEXT NOT NULL,
+    "llm_id" TEXT NOT NULL,
+    "category_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "llm_category_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "llm_prices" (
     "id" TEXT NOT NULL,
     "model_id" TEXT NOT NULL,
@@ -732,6 +758,9 @@ CREATE INDEX "assistant_tool_calls_assistant_id_tool_id_index" ON "assistant_too
 CREATE INDEX "llms_api_name_idx" ON "llms"("api_name");
 
 -- CreateIndex
+CREATE INDEX "llm_categories_llm_id_category_id_index" ON "llm_category_items"("llm_id", "category_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "credit_usages_user_id_key" ON "credit_usages"("user_id");
 
 -- CreateIndex
@@ -844,6 +873,15 @@ ALTER TABLE "assistant_template_category_items" ADD CONSTRAINT "assistant_templa
 
 -- AddForeignKey
 ALTER TABLE "assistant_template_category_items" ADD CONSTRAINT "assistant_template_category_items_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "assistant_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_categories" ADD CONSTRAINT "llm_categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "llm_categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_category_items" ADD CONSTRAINT "llm_category_items_llm_id_fkey" FOREIGN KEY ("llm_id") REFERENCES "llms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "llm_category_items" ADD CONSTRAINT "llm_category_items_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "llm_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "llm_prices" ADD CONSTRAINT "llm_prices_model_id_fkey" FOREIGN KEY ("model_id") REFERENCES "llms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
