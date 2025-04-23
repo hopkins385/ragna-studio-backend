@@ -30,6 +30,7 @@ export class OnboardController extends BaseController {
           userName: user.name,
           userEmail: user.email,
           orgName: body.orgName,
+          sessionId: reqUser.sessionId,
         }),
       );
       return { success: result };

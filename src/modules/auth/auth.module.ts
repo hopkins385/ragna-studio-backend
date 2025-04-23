@@ -1,17 +1,16 @@
-import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { PassportModule } from '@nestjs/passport';
-import { LocalStrategy } from './strategies/auth.local.strategy';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { UserModule } from '@/modules/user/user.module';
-import { JwtStrategy } from './strategies/auth.jwt.strategy';
-import { JwtRefreshStrategy } from './strategies/auth.refreshToken.strategy';
-import { AuthGoogleService } from './google/auth-google.service';
-import { SessionService } from '@/modules/session/session.service';
 import { QueueModule } from '@/modules/queue/queue.module';
 import { SessionRepository } from '@/modules/session/repositories/session.repository';
+import { SessionService } from '@/modules/session/session.service';
+import { UserModule } from '@/modules/user/user.module';
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './strategies/auth.jwt.strategy';
+import { LocalStrategy } from './strategies/auth.local.strategy';
+import { JwtRefreshStrategy } from './strategies/auth.refreshToken.strategy';
 
 const jwtFactory = {
   useFactory: (configService: ConfigService) => ({
@@ -36,9 +35,9 @@ const jwtFactory = {
     LocalStrategy,
     JwtStrategy,
     JwtRefreshStrategy,
-    AuthGoogleService,
     SessionRepository,
     SessionService,
+    // AuthGoogleService,
   ],
 })
 export class AuthModule {}

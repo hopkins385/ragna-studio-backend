@@ -1,5 +1,6 @@
 import { isCUID2, randomCUID2 } from '@/common/utils/random-cuid2';
 import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
+import { UserService } from '@/modules/user/user.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -27,6 +28,7 @@ export class SessionService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly userService: UserService,
     private readonly sessionRepo: SessionRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
@@ -66,9 +68,42 @@ export class SessionService {
     return sessionData;
   }
 
+  async getSessionUserData({ userId }: { userId: string }) {
+    const fullUser = await this.userService.findOne({ userId });
+
+    const sessionUser = new SessionUserEntity({
+      id: fullUser.id,
+      organisationId: fullUser.organisationId,
+      activeTeamId: fullUser.teams?.[0]?.team.id || null,
+      onboardedAt: fullUser.onboardedAt,
+      roles: fullUser.roles,
+      teams: fullUser.teams.map((t) => t.team.id),
+    });
+
+    return sessionUser;
+  }
+
+  async createSessionByUserId({ userId }: { userId: string }): Promise<SessionData> {
+    if (!isCUID2(userId)) {
+      throw new UnauthorizedException('Invalid user id');
+    }
+
+    const sessionUserData = await this.getSessionUserData({ userId });
+
+    const sessionData = await this.createSession({
+      payload: {
+        user: sessionUserData,
+      },
+    });
+
+    this.logger.debug(`Created session: sessionId: ${sessionData.id}`);
+
+    return sessionData;
+  }
+
   async getSession(
     { sessionId }: { sessionId: SessionId },
-    options?: { refresh: boolean },
+    options?: { extend: boolean },
   ): Promise<SessionData> {
     if (!isCUID2(sessionId)) {
       throw new UnauthorizedException('Invalid session id');
@@ -80,8 +115,8 @@ export class SessionService {
       throw new UnauthorizedException('Session not found');
     }
 
-    if (options?.refresh) {
-      await this.refreshSession({
+    if (options?.extend) {
+      await this.extendSession({
         sessionId,
         sessionData,
       });
@@ -94,6 +129,38 @@ export class SessionService {
   }
 
   async refreshSession({
+    sessionId,
+    sessionData,
+  }: {
+    sessionId: SessionId;
+    sessionData?: any;
+  }): Promise<SessionId | null> {
+    throw new Error('Not implemented');
+    if (!sessionId || !isCUID2(sessionId)) {
+      return null;
+    }
+    if (!sessionData) {
+      const oldSessionData = await this.cacheManager.get<SessionData>(SESSION_PREFIX + sessionId);
+      if (!oldSessionData) {
+        return null;
+      }
+      sessionData = oldSessionData;
+    }
+
+    await this.cacheManager.set(SESSION_PREFIX + sessionId, sessionData, this.SESSION_TTL_MS);
+
+    const expires = new Date();
+    expires.setTime(expires.getTime() + this.SESSION_TTL_MS);
+
+    await this.updateLastAccessed({
+      sessionId,
+      expires,
+    });
+
+    return sessionData;
+  }
+
+  async extendSession({
     sessionId,
     sessionData,
   }: {
@@ -122,6 +189,22 @@ export class SessionService {
     });
 
     return sessionData;
+  }
+
+  async refreshSessionByUserId({ userId, sessionId }: { userId: string; sessionId: SessionId }) {
+    if (!isCUID2(sessionId)) {
+      return null;
+    }
+
+    const sessionUserData = await this.getSessionUserData({ userId });
+
+    return this.refreshSession({
+      sessionId,
+      sessionData: {
+        id: sessionId,
+        user: sessionUserData,
+      },
+    });
   }
 
   async deleteSession({ sessionId }: { sessionId: SessionId }): Promise<boolean> {

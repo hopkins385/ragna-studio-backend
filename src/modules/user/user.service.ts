@@ -34,6 +34,43 @@ export class UserService {
     });
   }
 
+  async createUserByRegistration({
+    name,
+    email,
+    password,
+    roleName,
+  }: {
+    name: string;
+    email: string;
+    password: string;
+    roleName: 'user' | 'admin';
+  }) {
+    const user = await this.create({
+      name,
+      email,
+      password,
+      roleName,
+    });
+
+    const team = await this.repository.prisma.team.findFirst({
+      where: {
+        name: 'RG-Onboard-Team',
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Onboarding team not found');
+    }
+
+    // assign user to onboarding team
+    await this.repository.prisma.teamUser.create({
+      data: {
+        userId: user.id,
+        teamId: team.id,
+      },
+    });
+  }
+
   async createWithoutPassword({
     name,
     email,

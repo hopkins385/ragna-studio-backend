@@ -1,5 +1,4 @@
 import { AuthService } from '@/modules/auth/auth.service';
-import { SessionUserEntity } from '@/modules/session/entities/session-user.entity';
 import { SessionService } from '@/modules/session/session.service';
 import { UserService } from '@/modules/user/user.service';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
@@ -30,30 +29,18 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
 
       const authUser = await this.authService.validateUser(payload);
       if (!authUser) {
-        throw new Error('User not found');
+        throw new UnauthorizedException('Invalid credentials');
       }
 
-      const fullUser = await this.userService.findOne({ userId: authUser.id });
-
-      const sessionUser = new SessionUserEntity({
-        id: fullUser.id,
-        organisationId: fullUser.organisationId,
-        activeTeamId: fullUser.teams?.[0]?.team.id || null,
-        onboardedAt: fullUser.onboardedAt,
-        roles: fullUser.roles,
-        teams: fullUser.teams.map((t) => t.team.id),
+      const sessionData = await this.sessionService.createSessionByUserId({
+        userId: authUser.id,
       });
-
-      const sessionData = await this.sessionService.createSession({
-        payload: {
-          user: sessionUser,
-        },
-      });
-
-      this.logger.debug(`Created session: sessionId: ${sessionData.id}`);
+      if (!sessionData) {
+        throw new UnauthorizedException('Session creation failed');
+      }
 
       // update last login
-      await this.authService.updateLastLogin({ userId: fullUser.id });
+      await this.authService.updateLastLogin({ userId: authUser.id });
 
       return {
         authUser,

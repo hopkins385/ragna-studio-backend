@@ -1,23 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateOnboardDto } from './dto/create-onboard.dto';
-import { UpdateOnboardDto } from './dto/update-onboard.dto';
-import { OnboardRepository } from './repositories/onboard.repository';
-import { OnboardUserDto } from './dto/onboard-user.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { OnboardingCompletedDto } from './events/onboarding.event';
-import { OnboardingEvent } from './enums/onboarding-event.enum';
 import { CreatesNewUserAction } from '../user/actions/createsNewUserAction';
+import { SessionService } from './../session/session.service';
+import { OnboardUserDto } from './dto/onboard-user.dto';
+import { OnboardingEvent } from './enums/onboarding-event.enum';
+import { OnboardingCompletedDto } from './events/onboarding.event';
+import { OnboardRepository } from './repositories/onboard.repository';
 
 @Injectable()
 export class OnboardService {
   private readonly logger = new Logger(OnboardService.name);
 
   constructor(
+    private readonly sessionService: SessionService,
     private readonly onboardRepo: OnboardRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async onboardUser({ userId, userName, userEmail, orgName }: OnboardUserDto) {
+  async onboardUser({ userId, userName, userEmail, orgName, sessionId }: OnboardUserDto) {
     const action = new CreatesNewUserAction(this.onboardRepo.prisma);
     try {
       // Run the pipeline
@@ -26,6 +26,9 @@ export class OnboardService {
         userName,
         orgName,
       });
+
+      // refresh session by userId
+      await this.sessionService.refreshSessionByUserId({ sessionId, userId });
 
       // Emit the completed event
       this.eventEmitter.emit(

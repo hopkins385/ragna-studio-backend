@@ -1,6 +1,6 @@
-import type { LargeLangModel } from '@prisma/client';
-import { ExtendedPrismaClient } from '@/modules/database/prisma.extension';
 import { Pipe } from '@/common/utils/pipe/pipeline';
+import { ExtendedPrismaClient } from '@/modules/database/prisma.extension';
+import type { LargeLangModel } from '@prisma/client';
 
 interface NewOrganizationDto {
   userId: string;
@@ -68,13 +68,7 @@ export class CreatesNewUserAction {
     return { userId: user.id, orgName: pay.orgName };
   }
 
-  async createOrganization({
-    userId,
-    orgName,
-  }: {
-    userId: string;
-    orgName: string;
-  }) {
+  async createOrganization({ userId, orgName }: { userId: string; orgName: string }) {
     const org = await this.prisma.organisation.create({
       data: {
         name: orgName,
@@ -96,6 +90,13 @@ export class CreatesNewUserAction {
       },
     });
 
+    // remove the user from all teams
+    await this.prisma.teamUser.deleteMany({
+      where: {
+        userId,
+      },
+    });
+
     // Add the user to the team
     await this.prisma.teamUser.create({
       data: {
@@ -109,13 +110,7 @@ export class CreatesNewUserAction {
     return { teamId: team.id, userId };
   }
 
-  async assignAdminRoleToUser({
-    userId,
-    teamId,
-  }: {
-    userId: string;
-    teamId: string;
-  }) {
+  async assignAdminRoleToUser({ userId, teamId }: { userId: string; teamId: string }) {
     // get the admin role
     const adminRole = await this.prisma.role.findFirst({
       where: { name: 'admin' },
@@ -123,6 +118,18 @@ export class CreatesNewUserAction {
 
     if (!adminRole) {
       throw new Error('Admin role not found');
+    }
+
+    // check if the user already has the role
+    const existingRole = await this.prisma.userRole.findFirst({
+      where: {
+        userId,
+        roleId: adminRole.id,
+      },
+    });
+
+    if (existingRole) {
+      return { teamId, userId };
     }
 
     // assign the admin role to the user
@@ -142,12 +149,12 @@ export class CreatesNewUserAction {
     const claude = await this.prisma.largeLangModel.findFirst({
       where: {
         provider: 'anthropic',
-        apiName: { startsWith: 'claude-3-5' },
+        apiName: { startsWith: 'claude-3-7' },
       },
     });
 
     if (!claude) {
-      console.error('claude-3-5 not found');
+      console.error('claude-3-7 not found');
 
       const model = await this.prisma.largeLangModel.findMany({
         where: {
@@ -219,13 +226,7 @@ export class CreatesNewUserAction {
     return { userId, teamId, assistantId: assistant.id };
   }
 
-  async updateUserOnboardingStatus({
-    userId,
-    teamId,
-  }: {
-    userId: string;
-    teamId: string;
-  }) {
+  async updateUserOnboardingStatus({ userId, teamId }: { userId: string; teamId: string }) {
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: { onboardedAt: new Date() },
@@ -237,8 +238,7 @@ export class CreatesNewUserAction {
     const maxRetries = 3;
     const pipeLine = Pipe.create(maxRetries, async (p) => {
       p.addStep(async ({ userId, userName, orgName }: PipelinePayload) => {
-        if (!userId || !userName || !orgName)
-          throw new Error('Missing required fields');
+        if (!userId || !userName || !orgName) throw new Error('Missing required fields');
         const name = userName.split(' ');
         return this.updateUserName({
           userId,
@@ -248,8 +248,7 @@ export class CreatesNewUserAction {
         });
       });
       p.addStep(async ({ userId, orgName }: PipelineStepResult) => {
-        if (!userId || !orgName)
-          throw new Error('Missing required fields: userId or orgName');
+        if (!userId || !orgName) throw new Error('Missing required fields: userId or orgName');
         return this.createOrganization({ userId, orgName });
       });
       p.addStep(async ({ userId, organisationId }: PipelineStepResult) => {
@@ -262,18 +261,15 @@ export class CreatesNewUserAction {
         });
       });
       p.addStep(async ({ userId, teamId }: PipelineStepResult) => {
-        if (!userId || !teamId)
-          throw new Error('Missing required fields: userId or teamId');
+        if (!userId || !teamId) throw new Error('Missing required fields: userId or teamId');
         return this.assignAdminRoleToUser({ userId, teamId });
       });
       p.addStep(async ({ userId, teamId }: PipelineStepResult) => {
-        if (!userId || !teamId)
-          throw new Error('Missing required fields: userId or teamId');
+        if (!userId || !teamId) throw new Error('Missing required fields: userId or teamId');
         return this.updateUserOnboardingStatus({ userId, teamId });
       });
       p.addStep(async ({ userId, teamId }: PipelineStepResult) => {
-        if (!userId || !teamId)
-          throw new Error('Missing required fields: userId or teamId');
+        if (!userId || !teamId) throw new Error('Missing required fields: userId or teamId');
         return this.createAssistant({ userId, teamId });
       });
     });
@@ -291,8 +287,7 @@ export class CreatesNewUserAction {
     try {
       await pipeLine.run(payload);
     } catch (error: any) {
-      const errorContext =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorContext = error instanceof Error ? error.message : 'Unknown error';
       console.error('Pipeline execution failed:', errorContext);
       throw new Error(`Failed to create new user`);
     }

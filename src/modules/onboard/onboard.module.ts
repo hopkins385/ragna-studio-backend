@@ -1,3 +1,4 @@
+import { SessionModule } from '@/modules/session/session.module';
 import { UserModule } from '@/modules/user/user.module';
 import { Module } from '@nestjs/common';
 import { MailModule } from '../mail/mail.module';
@@ -8,7 +9,7 @@ import { OnboardService } from './onboard.service';
 import { OnboardRepository } from './repositories/onboard.repository';
 
 @Module({
-  imports: [SlackModule, MailModule, UserModule],
+  imports: [SlackModule, MailModule, UserModule, SessionModule],
   controllers: [OnboardController],
   providers: [OnboardRepository, OnboardService, OnboardingListeners],
 })

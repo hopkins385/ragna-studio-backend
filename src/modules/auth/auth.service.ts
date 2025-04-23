@@ -3,7 +3,7 @@ import { AuthUserEntity } from '@/modules/auth/entities/auth-user.entity';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
 import { UserService } from '@/modules/user/user.service';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Queue } from 'bullmq';
@@ -83,8 +83,8 @@ export class AuthService {
     if (!tokens) {
       throw new UnauthorizedException('Failed to generate tokens');
     }
-    // refresh session
-    await this.sessionService.refreshSession({ sessionId: payload.sessionId });
+    // extend session
+    await this.sessionService.extendSession({ sessionId: payload.sessionId });
     return tokens;
   }
 
@@ -166,16 +166,22 @@ export class AuthService {
     });
   }
 
-  async register(payload: { email: string; name: string; password: string }) {
+  async register(payload: {
+    email: string;
+    name: string;
+    password: string;
+    roleName?: 'user' | 'admin';
+  }) {
     const existingUser = await this.userService.findByEmail(payload.email);
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new BadRequestException('User already exists');
     }
 
-    const newUser = await this.userService.create({
+    const newUser = await this.userService.createUserByRegistration({
       email: payload.email,
       name: payload.name,
       password: payload.password,
+      roleName: 'admin',
     });
 
     /*const token = await this.createEmailVerificationToken({ sub: newUser.id });

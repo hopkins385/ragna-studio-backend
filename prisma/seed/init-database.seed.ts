@@ -2,10 +2,10 @@
  * ! Executing this script will delete all data in your database and seed it with 10 organisation.
  * ! Make sure to adjust the script to your needs.
  */
-import { createInterface } from 'node:readline';
+import { createId } from '@paralleldrive/cuid2';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { createId } from '@paralleldrive/cuid2';
+import { createInterface } from 'node:readline';
 import { prismaSeedClient, type SeedPrismaClient } from './seed.config';
 
 async function seedLLMs(prisma: SeedPrismaClient) {
@@ -37,6 +37,10 @@ async function seedLLMs(prisma: SeedPrismaClient) {
 async function seedRoles(prisma: SeedPrismaClient) {
   const roles = await prisma.role.createMany({
     data: [
+      {
+        id: createId(),
+        name: 'platform_owner',
+      },
       {
         id: createId(),
         name: 'admin',

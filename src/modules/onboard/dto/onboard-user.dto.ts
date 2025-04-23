@@ -3,17 +3,20 @@ export class OnboardUserDto {
   userName: string;
   userEmail: string;
   orgName: string;
+  sessionId: string;
 
   constructor(
     userId: string,
     userName: string,
     userEmail: string,
     orgName: string,
+    sessionId: string,
   ) {
     this.userId = userId;
     this.userName = userName;
     this.userEmail = userEmail;
     this.orgName = orgName;
+    this.sessionId = sessionId;
   }
 
   static fromInput(payload: {
@@ -21,21 +24,14 @@ export class OnboardUserDto {
     userName: string;
     userEmail: string;
     orgName: string;
+    sessionId: string;
   }): OnboardUserDto {
     return new OnboardUserDto(
       payload.userId,
       payload.userName,
       payload.userEmail,
       payload.orgName,
+      payload.sessionId,
     );
-  }
-
-  toJson(): any {
-    return {
-      userId: this.userId,
-      userName: this.userName,
-      userEmail: this.userEmail,
-      orgName: this.orgName,
-    };
   }
 }

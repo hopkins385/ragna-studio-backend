@@ -49,7 +49,14 @@ async function defaultOrganisations(seed: SeedPrismaClient) {
     data: [
       {
         id: createId(),
-        name: 'Admin Organisation',
+        name: 'RG-Onboarding-Org',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        name: 'Platform Owner Organisation',
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -73,7 +80,7 @@ async function defaultTeams(seed: SeedPrismaClient, organisations: any[]) {
       {
         id: createId(),
         organisationId: organisations[0].id,
-        name: "Sven's Team",
+        name: 'RG-Onboard-Team',
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -81,6 +88,14 @@ async function defaultTeams(seed: SeedPrismaClient, organisations: any[]) {
       {
         id: createId(),
         organisationId: organisations[1].id,
+        name: "Sven's Team",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        organisationId: organisations[2].id,
         name: 'Test Team',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -97,19 +112,53 @@ async function teamUser(prisma: SeedPrismaClient, teams: any[], users: any[]) {
     data: [
       {
         id: createId(),
-        teamId: teams[0].id,
-        userId: users[0].id,
+        teamId: teams[1].id, // Sven's Team
+        userId: users[0].id, // platform owner and admin user
         deletedAt: null,
       },
       {
         id: createId(),
-        teamId: teams[1].id,
-        userId: users[1].id,
+        teamId: teams[2].id, // test team
+        userId: users[1].id, // test user
         deletedAt: null,
       },
     ],
   });
   console.log('Assigned users to teams');
+}
+
+async function userRoles(prisma: SeedPrismaClient, adminUser: any, testUser: any) {
+  const roles = await prisma.role.findMany({
+    where: {
+      name: {
+        in: ['platform_owner', 'admin', 'user'],
+      },
+    },
+  });
+
+  await prisma.userRole.createMany({
+    data: [
+      {
+        id: createId(),
+        userId: adminUser.id,
+        roleId: roles.find((role) => role.name === 'platform_owner').id,
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        userId: adminUser.id,
+        roleId: roles.find((role) => role.name === 'admin').id,
+        deletedAt: null,
+      },
+      {
+        id: createId(),
+        userId: testUser.id,
+        roleId: roles.find((role) => role.name === 'user').id,
+        deletedAt: null,
+      },
+    ],
+  });
+  console.log('Assigned roles to users');
 }
 
 async function truncate(prisma: SeedPrismaClient) {
@@ -124,6 +173,7 @@ async function truncate(prisma: SeedPrismaClient) {
 
 async function seedData(prisma: SeedPrismaClient) {
   const users = await defaultUsers(prisma);
+  await userRoles(prisma, users[0], users[1]);
   const organisations = await defaultOrganisations(prisma);
   const teams = await defaultTeams(prisma, organisations);
   await teamUser(prisma, teams, users);

@@ -34,7 +34,7 @@ export class UserController extends BaseController {
 
   @Post()
   @Roles(Role.ADMIN)
-  async create(@Body() createUserBody: CreateUserBody) {
+  async createUser(@Body() createUserBody: CreateUserBody) {
     try {
       return await this.userService.create({
         name: createUserBody.name,
@@ -49,7 +49,7 @@ export class UserController extends BaseController {
 
   @Post('invite')
   @Roles(Role.ADMIN)
-  async invite(@ReqUser() reqUser: RequestUser, @Body() inviteUserBody: InviteUserBody) {
+  async inviteUser(@ReqUser() reqUser: RequestUser, @Body() inviteUserBody: InviteUserBody) {
     try {
       const { inviteToken } = await this.userService.invite({
         name: inviteUserBody.name,
@@ -65,7 +65,7 @@ export class UserController extends BaseController {
 
   @Get()
   @Roles(Role.ADMIN)
-  async findAll(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
+  async findAllUsers(@ReqUser() reqUser: RequestUser, @Query() query: PaginateQuery) {
     try {
       const [users, meta] = await this.userService.findAllPaginated({
         organisationId: reqUser.organisationId,
@@ -80,7 +80,7 @@ export class UserController extends BaseController {
 
   @Get(':id')
   @Roles(Role.ADMIN)
-  async findOne(@ReqUser() reqUser: RequestUser, @Param() { id }: IdParam) {
+  async findUser(@ReqUser() reqUser: RequestUser, @Param() { id }: IdParam) {
     let user: Partial<UserEntity>;
 
     try {
@@ -100,7 +100,7 @@ export class UserController extends BaseController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  async update(@Param() { id }: IdParam, @Body() updateUserBody: UpdateUserBody) {
+  async updateUser(@Param() { id }: IdParam, @Body() updateUserBody: UpdateUserBody) {
     try {
       const user = await this.userService.update(id, updateUserBody);
       return { user };
@@ -111,7 +111,7 @@ export class UserController extends BaseController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  async remove(@Param() { id }: IdParam, @ReqUser() reqUser: RequestUser) {
+  async softDeleteUser(@Param() { id }: IdParam, @ReqUser() reqUser: RequestUser) {
     // current logged in user cannot delete themselves
     if (id === reqUser.id) {
       throw new ForbiddenException('You cannot delete yourself');
