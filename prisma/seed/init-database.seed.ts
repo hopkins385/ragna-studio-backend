@@ -103,6 +103,16 @@ async function seedAssistantTools(prisma: SeedPrismaClient) {
         iconName: 'brain',
         deletedAt: null,
       },
+      {
+        id: createId(),
+        functionId: 6,
+        functionName: 'directions',
+        name: 'directions',
+        description:
+          'Get directions between two or more locations and optional including waypoints',
+        iconName: 'directions',
+        deletedAt: null,
+      },
     ],
   });
   console.log('Seeded tools');

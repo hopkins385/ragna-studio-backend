@@ -1,3 +1,4 @@
+import { DirectionsTool } from '@/modules/assistant-tool-function/tools/directions.tool';
 import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
 import { AssistantToolModule } from '@/modules/assistant-tool/assistant-tool.module';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
@@ -22,6 +23,7 @@ import { WebSearchTool } from './tools/websearch.tool';
     KnowledgeTool,
     EditorCommentTool,
     ThinkTool,
+    DirectionsTool,
     // Services
     AssistantToolFunctionService,
     // Emitters
