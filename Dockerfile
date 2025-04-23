@@ -12,9 +12,10 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY .npmrc ./
 
-# Install dependencies including 'prisma' for the migration
-RUN npm ci
+# Clean install dependencies
+RUN --mount=type=secret,id=npmrc,target=/app/.npmrc npm ci
 
 # Copy source code
 COPY . .

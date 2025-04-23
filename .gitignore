@@ -61,3 +61,5 @@ _backup
 
 # Prisma client
 /prisma/client
+
+.npmrc
