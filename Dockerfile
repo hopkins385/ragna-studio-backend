@@ -25,6 +25,7 @@ RUN npx prisma generate
 
 # Build application
 RUN npm run build
+RUN npm run build:seeds
 
 # 
 # Production stage
