@@ -21,7 +21,6 @@ export const ACCEPTED_FILE_TYPES = Object.freeze({
   JPEG: 'image/jpeg',
 });
 
-export const ACCEPTED_FILE_TYPES_REGEXP = new RegExp(
-  'application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/plain|text/csv|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|image/png|image/jpg|image/jpeg',
-  'i',
-);
+export const ACCEPTED_FILE_TYPES_STRING = Object.values(ACCEPTED_FILE_TYPES).join('|');
+
+export const ACCEPTED_FILE_TYPES_REGEXP = new RegExp(`^(${ACCEPTED_FILE_TYPES_STRING})$`, 'i');
