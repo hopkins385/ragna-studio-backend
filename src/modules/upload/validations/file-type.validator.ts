@@ -34,7 +34,8 @@ export class CustomFileTypeValidator extends FileValidator<FileTypeValidatorOpti
 
       const fileType = await fileTypeFromBuffer(file.buffer);
 
-      return !!fileType && !!this.validationOptions.fileTypes.includes(fileType.mime);
+      const allowedTypes = new Set(this.validationOptions.fileTypes);
+      return !!fileType && allowedTypes.has(fileType.mime);
     } catch {
       return false;
     }
