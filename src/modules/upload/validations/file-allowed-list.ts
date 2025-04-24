@@ -22,5 +22,6 @@ export const ACCEPTED_FILE_TYPES = [
 ];
 
 export const ACCEPTED_FILE_TYPES_REGEXP = new RegExp(
-  ACCEPTED_FILE_TYPES.map((type) => type.replace('/', '\\/')).join('|'),
+  // ACCEPTED_FILE_TYPES.map((type) => type.replace('/', '\\/')).join('|'),
+  ACCEPTED_FILE_TYPES.join('|'),
 );
