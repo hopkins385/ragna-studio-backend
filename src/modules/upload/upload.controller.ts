@@ -1,4 +1,6 @@
 import { BaseController } from '@/common/controllers/base.controller';
+import { ACCEPTED_FILE_TYPES_ARRAY } from '@/modules/upload/validations/file-allowed-list';
+import { CustomFileTypeValidator } from '@/modules/upload/validations/file-type.validator';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
@@ -28,7 +30,7 @@ export class UploadController extends BaseController {
       new ParseFilePipe({
         validators: [
           new FilesCountValidator({ maxCount: 10 }),
-          // new FileTypeValidator({ fileType: ACCEPTED_FILE_TYPES_REGEXP, fallbackToMimetype: true }), // TODO: Fix FileTypeValidator
+          new CustomFileTypeValidator({ fileTypes: ACCEPTED_FILE_TYPES_ARRAY }),
           new MaxFileSizeValidator({ maxSize: 15 * 1000 * 1000 }),
         ],
         errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,

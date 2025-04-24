@@ -21,6 +21,6 @@ export const ACCEPTED_FILE_TYPES = Object.freeze({
   JPEG: 'image/jpeg',
 });
 
+export const ACCEPTED_FILE_TYPES_ARRAY = Object.values(ACCEPTED_FILE_TYPES);
 export const ACCEPTED_FILE_TYPES_STRING = Object.values(ACCEPTED_FILE_TYPES).join('|');
-
 export const ACCEPTED_FILE_TYPES_REGEXP = new RegExp(`^(${ACCEPTED_FILE_TYPES_STRING})$`, 'i');
