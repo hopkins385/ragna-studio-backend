@@ -19,11 +19,7 @@
         "outDir": "dist/bin"
       },
       {
-        "include": "../prisma/migrations",
-        "outDir": "dist/prisma"
-      },
-      {
-        "include": "../prisma/schema.prisma",
+        "include": "../prisma",
         "outDir": "dist/prisma"
       },
       {
