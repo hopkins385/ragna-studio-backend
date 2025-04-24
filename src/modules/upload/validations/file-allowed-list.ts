@@ -1,27 +1,27 @@
-export const ACCEPTED_FILE_TYPES = [
+export const ACCEPTED_FILE_TYPES = Object.freeze({
   // pdf
-  'application/pdf',
+  PDF: 'application/pdf',
   // doc
-  'application/msword',
+  DOC: 'application/msword',
   // docx
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  DOCX: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   // txt
-  'text/plain',
+  TXT: 'text/plain',
   // csv
-  'text/csv',
+  CSV: 'text/csv',
   // xls
-  'application/vnd.ms-excel',
+  XLS: 'application/vnd.ms-excel',
   // xlsx
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  XLSX: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   // png
-  'image/png',
+  PNG: 'image/png',
   // jpg
-  'image/jpg',
+  JPG: 'image/jpg',
   // jpeg
-  'image/jpeg',
-];
+  JPEG: 'image/jpeg',
+});
 
 export const ACCEPTED_FILE_TYPES_REGEXP = new RegExp(
-  // ACCEPTED_FILE_TYPES.map((type) => type.replace('/', '\\/')).join('|'),
-  ACCEPTED_FILE_TYPES.join('|'),
+  'application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/plain|text/csv|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|image/png|image/jpg|image/jpeg',
+  'i',
 );
