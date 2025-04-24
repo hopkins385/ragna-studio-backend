@@ -28,7 +28,7 @@ export class UploadController extends BaseController {
       new ParseFilePipe({
         validators: [
           new FilesCountValidator({ maxCount: 10 }),
-          // new FileTypeValidator({ fileType: ACCEPTED_FILE_TYPES_REGEXP }),
+          // new FileTypeValidator({ fileType: ACCEPTED_FILE_TYPES_REGEXP }), // TODO: Fix fileType validator
           new MaxFileSizeValidator({ maxSize: 15 * 1000 * 1000 }),
         ],
         errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
