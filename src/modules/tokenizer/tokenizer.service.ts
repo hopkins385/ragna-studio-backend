@@ -1,9 +1,9 @@
-import { ConfigService } from '@nestjs/config';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { get_encoding, Tiktoken, TiktokenEncoding } from 'tiktoken';
-import { TokenizerResponse } from './interfaces/tokenizer.res';
+import { ConfigService } from '@nestjs/config';
 import { AxiosInstance } from 'axios';
+import { get_encoding, Tiktoken, TiktokenEncoding } from 'tiktoken';
 import { HTTP_CLIENT } from '../http-client/constants';
+import { TokenizerResponse } from './interfaces/tokenizer.res';
 
 @Injectable()
 export class TokenizerService {
@@ -35,9 +35,7 @@ export class TokenizerService {
       const { tokens, tokenCount, charCount } = response.data;
       return { tokens: new Uint32Array(tokens), tokenCount, charCount };
     } catch (error) {
-      // this.logger.debug(
-      //   'Failed to get tokens from rag server, falling back to local',
-      // );
+      this.logger.warn('Failed to get tokens from rag server, falling back to local');
       try {
         return await this.getTokensLocal(content);
       } catch (error) {
