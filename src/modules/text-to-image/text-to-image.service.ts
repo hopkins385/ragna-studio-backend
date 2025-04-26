@@ -161,7 +161,7 @@ export class TextToImageService {
     folderId: string,
     options: { page: number; showDeleted?: boolean },
   ) {
-    return this.textToImageRepo.prisma.textToImageRun
+    const [runs, meta] = await this.textToImageRepo.prisma.textToImageRun
       .paginate({
         select: {
           id: true,
@@ -175,6 +175,15 @@ export class TextToImageService {
               name: true,
               path: true,
               status: true,
+              conversions: {
+                select: {
+                  id: true,
+                  name: true,
+                  path: true,
+                  mimeType: true,
+                  status: true,
+                },
+              },
             },
             where: {
               deletedAt: null,
@@ -194,6 +203,57 @@ export class TextToImageService {
         page: options.page,
         includePageCount: true,
       });
+
+    /* example response
+        "runs": [
+            {
+            "id": "ftpnn3jn0auvg7d70w4jkm7v",
+            "status": "PENDING",
+            "prompt": "a modern car on the road",
+            "settings": {
+                "provider": "fluxpro"
+            },
+            "deletedAt": null,
+            "images": [
+                {
+                    "id": "it02f29xq1t93raii10t5ms3",
+                    "name": "image-6d1ad3aa-21ec-46d8-98b6-42a686a486c2.jpeg",
+                    "path": "https://images.ragna.io/sy64yc49l5s13z92jkjqf3mt/tti/lnbfa1cphi2ivjbumpxq4qka/image-6d1ad3aa-21ec-46d8-98b6-42a686a486c2.jpeg",
+                    "status": "COMPLETED",
+                    "thumb": {
+                    "webp": "https://images.ragna.io/sy64yc49l5s13z92jkjqf3mt/tti/lnbfa1cphi2ivjbumpxq4qka/image-6d1ad3aa-21ec-46d8-98b6-42a686a486c2.webp",
+                    "avif": "https://images.ragna.io/sy64yc49l5s13z92jkjqf3mt/tti/lnbfa1cphi2ivjbumpxq4qka/image-6d1ad3aa-21ec-46d8-98b6-42a686a486c2.avif"
+                    }
+                }
+            ],
+        },
+    ]
+    */
+
+    const mergedRuns = runs.map((run) => {
+      return {
+        ...run,
+        images: run.images.map((image) => ({
+          id: image.id,
+          name: image.name,
+          path: image.path,
+          status: image.status,
+          thumb: {
+            webp:
+              image.conversions.find((conversion) => conversion.mimeType === 'image/webp')?.path ??
+              null,
+            avif:
+              image.conversions.find((conversion) => conversion.mimeType === 'image/avif')?.path ??
+              null,
+          },
+        })),
+      };
+    });
+
+    return {
+      runs: mergedRuns,
+      meta,
+    };
   }
 
   async getRandomImagesPaginated(options: { page: number }) {
@@ -447,6 +507,7 @@ export class TextToImageService {
     fileExtension: GenImageExtension;
   }): Promise<string> {
     const { genImage, run } = payload.result;
+    const { id: runId } = run;
 
     const fileName = `image-${genImage.id}.${payload.fileExtension}`;
     const bucketFolderPath = `${payload.userId}/tti/${payload.folderId}`;
@@ -467,7 +528,7 @@ export class TextToImageService {
       }
 
       const textToImage = await this.createTextToImage({
-        runId: run.id,
+        runId,
         fileName,
         filePath: newfileUrl,
         mimeType,
@@ -480,10 +541,11 @@ export class TextToImageService {
       await this.imageConversionQueue.add(
         'create-preview-images',
         ImageConversionJobDataDto.fromInput({
+          runId,
+          imageId: textToImage.id,
           filePathOrUrl: genImage.imgUrl,
           bucketPath: bucketFolderPath,
           fileName,
-          fileExtension: payload.fileExtension,
         }),
       );
 
@@ -523,6 +585,8 @@ export class TextToImageService {
     });
   }
 
+  // HELPERS
+
   private castStatus(status: StatusResponse): TextToImageRunStatus {
     switch (status) {
       case StatusResponse.Pending:
@@ -537,5 +601,13 @@ export class TextToImageService {
       default:
         return TextToImageRunStatus.FAILED;
     }
+  }
+
+  private bufferToBase64(buffer: Buffer): string {
+    return buffer.toString('base64');
+  }
+
+  private base64ToBuffer(base64: string): Buffer {
+    return Buffer.from(base64, 'base64');
   }
 }

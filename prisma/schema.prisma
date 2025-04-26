@@ -877,10 +877,29 @@ model TextToImage {
   updatedAt DateTime                 @updatedAt @map("updated_at")
   deletedAt DateTime?                @map("deleted_at")
 
+  conversions TextToImageConversion[]
+
   run TextToImageRun @relation(fields: [runId], references: [id])
 
   @@index([runId])
   @@map("text_to_images")
+}
+
+model TextToImageConversion {
+  id        String                   @id @default(cuid())
+  imageId   String                   @map("image_id")
+  name      String
+  path      String                   @map("path")
+  mimeType  String                   @map("mime_type")
+  status    text_to_image_run_status @default(PENDING)
+  createdAt DateTime                 @default(now()) @map("created_at")
+  updatedAt DateTime                 @updatedAt @map("updated_at")
+  deletedAt DateTime?                @map("deleted_at")
+
+  image TextToImage @relation(fields: [imageId], references: [id])
+
+  @@index([imageId])
+  @@map("text_to_image_conversions")
 }
 
 // Translations

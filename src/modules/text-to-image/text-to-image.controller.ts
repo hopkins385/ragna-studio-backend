@@ -98,7 +98,7 @@ export class TextToImageController extends BaseController {
     @Query() query: TextToImagePaginatedQuery,
   ) {
     try {
-      const [runs, meta] = await this.textToImageService.getFolderImagesRunsPaginated(
+      const { runs, meta } = await this.textToImageService.getFolderImagesRunsPaginated(
         param.folderId,
         {
           showDeleted: query.showHidden,
