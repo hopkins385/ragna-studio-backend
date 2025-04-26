@@ -1,5 +1,4 @@
 import { promiseWithTimeout } from '@/common/utils/promises.util';
-import { DirectionsTool } from '@/modules/assistant-tool-function/tools/directions.tool';
 import { EditorCommentTool } from '@/modules/assistant-tool-function/tools/editor-comment.tool';
 import { KnowledgeTool } from '@/modules/assistant-tool-function/tools/knowledge.tool';
 import { ThinkTool } from '@/modules/assistant-tool-function/tools/think.tool';
@@ -26,7 +25,6 @@ export class AssistantToolFactory {
     private readonly knowledgeTool: KnowledgeTool,
     private readonly editorCommentTool: EditorCommentTool,
     private readonly thinkTool: ThinkTool,
-    private readonly directionsTool: DirectionsTool,
   ) {
     const entries: Array<[number, ToolProvider]> = [
       [1, this.webSearchTool],
@@ -34,7 +32,6 @@ export class AssistantToolFactory {
       [3, this.knowledgeTool],
       [4, this.editorCommentTool],
       [5, this.thinkTool],
-      [6, this.directionsTool],
     ];
 
     // Validate all tools implement ToolProvider interface
