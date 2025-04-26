@@ -33,9 +33,7 @@ export class PromptWizardService {
   }
 
   private async critiquePromptAgent(payload: { input: string }) {
-    const modelFactory = new AiModelFactory(this.configService);
-
-    modelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService).setConfig({
       provider: ProviderType.OPENAI,
       model: 'o3',
     });
@@ -65,9 +63,7 @@ export class PromptWizardService {
   }
 
   private async finalzingPromptAgent(payload: { inputPrompt: string; critique: string }) {
-    const modelFactory = new AiModelFactory(this.configService);
-
-    modelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService).setConfig({
       provider: ProviderType.OPENAI,
       model: 'gpt-4.1-mini',
     });
@@ -97,9 +93,7 @@ export class PromptWizardService {
   }
 
   private async refinePromptAgent(payload: { input: string }) {
-    const modelFactory = new AiModelFactory(this.configService);
-
-    modelFactory.setConfig({
+    const modelFactory = new AiModelFactory(this.configService).setConfig({
       provider: ProviderType.OPENAI,
       model: 'gpt-4.1-mini',
     });

@@ -1,4 +1,5 @@
 import { BaseController } from '@/common/controllers/base.controller';
+import { CreatePromptBody } from '@/modules/prompt-wizard/dto/create-prompt-body.dto';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ReqUser } from '../user/decorators/user.decorator';
@@ -11,7 +12,7 @@ export class PromptWizardController extends BaseController {
   }
 
   @Post('create')
-  async createPrompt(@ReqUser() reqUser: RequestUser, @Body() body: { input: string }) {
+  async createPrompt(@ReqUser() reqUser: RequestUser, @Body() body: CreatePromptBody) {
     try {
       const prompt = await this.promptWizardService.createPrompt({
         input: body.input,
