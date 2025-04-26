@@ -43,6 +43,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { RecordModule } from './modules/record/record.module';
 import { SlackModule } from './modules/slack/slack.module';
 import { SocketModule } from './modules/socket/socket.module';
+import { SpeechToTextModule } from './modules/speech-to-text/speech-to-text.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { TeamModule } from './modules/team/team.module';
@@ -191,6 +192,8 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
     NerModule,
 
     TeamModule,
+
+    SpeechToTextModule,
     // ,
   ],
   controllers: [ChatMessageController],
