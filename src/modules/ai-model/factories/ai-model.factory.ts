@@ -19,7 +19,7 @@ class OpenAIProvider extends AiModelProvider {
   createModel() {
     const openai = createOpenAI({
       compatibility: 'strict',
-      apiKey: this.config.get<string>('OPENAI_API_KEY'),
+      apiKey: this.config.getOrThrow<string>('OPENAI_API_KEY'),
     });
     return openai(this.model, {
       structuredOutputs: this.options.structuredOutputs,
