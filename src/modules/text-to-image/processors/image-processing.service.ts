@@ -8,6 +8,9 @@ export class ImageProcessingService {
   private readonly workerPath = join(process.cwd(), 'bin', 'image-worker');
 
   constructor() {
+    throw new Error(
+      'ImageProcessingService has been deprecated. Use ImageConversionProcessor instead.',
+    );
     this.logger.debug(`Using worker path: ${this.workerPath}`);
   }
 

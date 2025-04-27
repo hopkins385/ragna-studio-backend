@@ -15,10 +15,6 @@
     ],
     "assets": [
       {
-        "include": "../bin",
-        "outDir": "dist/bin"
-      },
-      {
         "include": "../prisma",
         "outDir": "dist/prisma"
       },

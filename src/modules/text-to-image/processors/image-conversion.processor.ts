@@ -7,14 +7,13 @@ import { Inject, Logger } from '@nestjs/common';
 import { AxiosInstance } from 'axios';
 import { Job } from 'bullmq';
 import { readFile } from 'node:fs/promises';
-import { ImageProcessingService } from './image-processing.service';
+import sharp from 'sharp';
 
 @Processor('image-conversion')
 export class ImageConversionProcessor extends WorkerHost {
   private readonly logger = new Logger(ImageConversionProcessor.name);
 
   constructor(
-    private readonly imageProcessingService: ImageProcessingService,
     private readonly storageService: StorageService,
     private readonly textToImageRepo: TextToImageRepository,
     @Inject(HTTP_CLIENT)
@@ -38,7 +37,7 @@ export class ImageConversionProcessor extends WorkerHost {
       fileBuffer = await readFile(filePathOrUrl);
     }
 
-    const { avifBuffer, webpBuffer } = await this.imageProcessingService.processImage(fileBuffer);
+    const { avifBuffer, webpBuffer } = await this.processImage(fileBuffer);
 
     const newBucketPath = `${oldBucketPath}/thumb`;
     // remove file extension (e.g. abc-file.jpg -> abc-file)
@@ -98,6 +97,21 @@ export class ImageConversionProcessor extends WorkerHost {
       responseType: 'arraybuffer',
     });
     return Buffer.from(response.data);
+  }
+
+  private async processImage(fileBuffer: Buffer) {
+    try {
+      const avifBufferPromise = sharp(fileBuffer).resize(300).avif().toBuffer();
+      const webpBufferPromise = sharp(fileBuffer).resize(300).webp().toBuffer();
+
+      const [avifBuffer, webpBuffer] = await Promise.all([avifBufferPromise, webpBufferPromise]);
+
+      return { avifBuffer, webpBuffer };
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error processing image: ${errMsg}`);
+      throw new Error('Image processing failed');
+    }
   }
 
   private async createImageConversionEntry(payload: {
