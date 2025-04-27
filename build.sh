@@ -17,6 +17,14 @@ while getopts "y" opt; do
   esac
 done
 
+# Get Version from package.json
+VERSION=$(jq -r '.version' package.json)
+if [ -z "$VERSION" ]; then
+  echo "Error: Version not found in package.json"
+  exit 1
+fi
+echo "Version: $VERSION"
+
 # Configuration
 IMAGE_NAME="ghcr.io/hopkins385/ragna-studio-backend"
 TAG="latest"
@@ -25,8 +33,7 @@ DOCKERFILE="Dockerfile"
 # Print status
 echo "Building $IMAGE_NAME:$TAG..."
 
-# Build image
-#   --no-cache \
+# Build with cache optimizations and platform specification
 docker build \
   --tag "$IMAGE_NAME:$TAG" \
   --file "$DOCKERFILE" \
@@ -35,6 +42,16 @@ docker build \
   .
 
 echo "Build successful! Image: $IMAGE_NAME:$TAG"
+
+# Build the versioned image
+VERSIONED_IMAGE_NAME="$IMAGE_NAME:$VERSION"
+echo "Building versioned image $VERSIONED_IMAGE_NAME..."
+docker build \
+  --tag "$VERSIONED_IMAGE_NAME" \
+  --file "$DOCKERFILE" \
+  --platform linux/amd64 \
+  .
+echo "Versioned image build successful! Image: $VERSIONED_IMAGE_NAME"
 
 # Handle image push confirmation
 if [[ "$AUTO_CONFIRM" == true ]]; then
@@ -49,7 +66,8 @@ if [[ "$PUSH_CONFIRMATION" =~ ^[Yy]$ ]]; then
   # Push to registry
   echo $CR_PAT | docker login ghcr.io -u hopkins385 --password-stdin
   docker push "$IMAGE_NAME:$TAG"
-  echo "Image successfully pushed to registry."
+  docker push "$VERSIONED_IMAGE_NAME"
+  echo "Pushed $IMAGE_NAME:$TAG and $VERSIONED_IMAGE_NAME to registry."
 else
   echo "Image push canceled."
 fi
