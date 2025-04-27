@@ -29,9 +29,11 @@ export class SpeechToTextService {
         audio: payload.audioFile.buffer,
       });
       return transcript.text;
+      // TODO: track token usage
     } catch (error) {
-      this.logger.error('Error transcribing audio file', error);
-      throw error;
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error transcribing audio file: ${errMsg}`);
+      return '';
     }
   }
 }
