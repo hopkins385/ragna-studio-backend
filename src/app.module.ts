@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AccountModule } from './modules/account/account.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
@@ -76,16 +75,17 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
     // Queue
     QueueModule,
     // Throttler
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: config.get('THROTTLE_TTL', 60 * 1000),
-          limit: config.get('THROTTLE_LIMIT', 100),
-        },
-      ],
-    }),
+    // TODO: enable throttler by uncommenting the following lines
+    // ThrottlerModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => [
+    //     {
+    //       ttl: config.get('THROTTLE_TTL', 60 * 1000),
+    //       limit: config.get('THROTTLE_LIMIT', 100),
+    //     },
+    //   ],
+    // }),
     // Cache
     CacheModule.registerAsync({
       isGlobal: true,
