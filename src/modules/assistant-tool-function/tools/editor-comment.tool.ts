@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ToolProvider } from '../types/tool-provider';
-import { z } from 'zod';
 import {
   ToolContext,
   ToolOptions,
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
+import { Injectable, Logger } from '@nestjs/common';
+import { z } from 'zod';
+import { ToolProvider } from '../types/tool-provider';
 
 const addCommentSchema = z.object({
   from: z.number().describe('Highlight text start position of the comment'),
@@ -38,7 +38,7 @@ export class EditorCommentTool extends ToolProvider<EditorCommentToolArgs, Edito
 
   public async execute(args: EditorCommentToolArgs, context: ToolContext, options?: ToolOptions) {
     // simulate api call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const addCommentArgs = {
       from: args.from,

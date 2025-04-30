@@ -1,14 +1,14 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ToolProvider } from '../types/tool-provider';
-import { ConfigService } from '@nestjs/config';
-import { z } from 'zod';
-import { HTTP_CLIENT } from '@/modules/http-client/constants';
-import { AxiosInstance } from 'axios';
-import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import {
   ToolContext,
   ToolOptions,
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
+import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { HTTP_CLIENT } from '@/modules/http-client/constants';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AxiosInstance } from 'axios';
+import { z } from 'zod';
+import { ToolProvider } from '../types/tool-provider';
 
 interface WebScrapeResponse {
   meta: any | null;
@@ -64,10 +64,10 @@ export class WebScrapeTool extends ToolProvider<WebScrapeArgs, WebScrapeResponse
         throw new Error('Invalid URL protocol - must be HTTPS');
       }
 
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const scrapeUrl = new URL(`${scrapeServerUrl}/scrape`);
       scrapeUrl.searchParams.set('url', websiteURL.toString());
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const response = await this.httpClient.get<WebScrapeResponse>(scrapeUrl.toString());
 

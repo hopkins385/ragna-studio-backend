@@ -1,13 +1,13 @@
-import { AssistantToolService } from './../../assistant-tool/assistant-tool.service';
-import { Injectable, Logger } from '@nestjs/common';
-import { ToolProvider } from '../types/tool-provider';
-import { z } from 'zod';
 import {
   ToolContext,
   ToolOptions,
 } from '@/modules/assistant-tool-function/interfaces/assistant-tool-function.interface';
-import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
 import { CreateToolCallDto } from '@/modules/assistant-tool/dto/create-tool-call.dto';
+import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { Injectable, Logger } from '@nestjs/common';
+import { z } from 'zod';
+import { ToolProvider } from '../types/tool-provider';
+import { AssistantToolService } from './../../assistant-tool/assistant-tool.service';
 
 const thinkToolSchema = z.object({
   thought: z.string().describe('Your thoughts.'),
@@ -42,7 +42,7 @@ export class ThinkTool extends ToolProvider<ThinkToolArgs, ThinkToolCallResponse
       toolInfo: `${args?.thought}`,
     });
     // simulate api call
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Log the tool call
     const toolCallPayload = CreateToolCallDto.fromInput({

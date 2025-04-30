@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ToolProvider } from '../types/tool-provider';
-import { ConfigService } from '@nestjs/config';
-import { z } from 'zod';
-import { BaseResponse as SerpBaseResponse, getJson } from 'serpapi';
-import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
 import { ChatEventEmitter } from '@/modules/chat/events/chat-event.emitter';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { BaseResponse as SerpBaseResponse, getJson } from 'serpapi';
+import { z } from 'zod';
+import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.interface';
+import { ToolProvider } from '../types/tool-provider';
 
 const webSearchSchema = z.object({
   query: z.string().min(3).max(100).describe('The query to search the web for'),
@@ -40,7 +40,7 @@ export class WebSearchTool extends ToolProvider<WebSearchArgs, WebSearchResponse
     });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const response = await getJson({
         engine: 'google',
