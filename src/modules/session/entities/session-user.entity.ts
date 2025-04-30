@@ -1,11 +1,10 @@
 export class SessionUserEntity {
-  readonly id: string;
-  readonly organisationId: string;
-  readonly onboardedAt: Date | null;
-  readonly roles: string[];
-  readonly teams: string[];
-
-  activeTeamId: string;
+  public readonly id: string;
+  public readonly organisationId: string;
+  public readonly onboardedAt: Date | null;
+  public readonly roles: string[];
+  public readonly teams: string[];
+  public activeTeamId: string;
 
   constructor({
     id,

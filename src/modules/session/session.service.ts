@@ -10,13 +10,23 @@ import { SessionRepository } from './repositories/session.repository';
 
 type SessionId = string;
 
-export interface SessionData {
+interface DecryptedSessionAuthData {
+  refreshToken: string;
+  lastLoginIp: string;
+}
+type EncryptedSessionAuthData = string;
+
+export interface FullSessionData {
   id: SessionId;
   user: SessionUserEntity;
+  // auth: EncryptedSessionAuthData;
 }
+
+export type SessionData = Omit<FullSessionData, 'auth'>;
 
 export interface CreateSessionPayload {
   user: SessionUserEntity;
+  // auth: EncryptedSessionAuthData;
 }
 
 const SESSION_PREFIX = 'session:';
@@ -39,9 +49,11 @@ export class SessionService {
   async createSession({ payload }: { payload: CreateSessionPayload }): Promise<SessionData> {
     // create a new session id
     const sessionId = randomCUID2();
-    const sessionData: SessionData = {
+    // SessionData
+    const sessionData: FullSessionData = {
       id: sessionId,
       user: payload.user,
+      // auth: encryptedSessionAuthData,
     };
 
     const deviceInfo: DeviceInfo = {
@@ -105,10 +117,15 @@ export class SessionService {
     const sessionData = await this.createSession({
       payload: {
         user: sessionUserData,
+        // auth: await hashObject({
+        //   refreshToken: randomCUID2(),
+        //   lastLoginIp: 'Unknown',
+        // }),
       },
     });
 
     this.logger.debug(`Created session: sessionId: ${sessionData.id}`);
+    this.logger.debug(`SessionData: ${JSON.stringify(sessionData)}`);
 
     return sessionData;
   }
