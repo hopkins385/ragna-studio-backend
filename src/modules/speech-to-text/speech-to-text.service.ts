@@ -25,7 +25,7 @@ export class SpeechToTextService {
 
     try {
       const transcript = await transcribe({
-        model: this.openai.transcription('whisper-1'),
+        model: this.openai.transcription('whisper-1'), // gpt-4o-mini-transcribe
         audio: payload.audioFile.buffer,
       });
       return transcript.text;

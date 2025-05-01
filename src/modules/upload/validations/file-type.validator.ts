@@ -27,31 +27,8 @@ export class CustomFileTypeValidator extends FileValidator<FileTypeValidatorOpti
       return false;
     }
 
-    if (file.mimetype === 'audio/webm' && allowedTypes.has('audio/webm')) {
-      return true;
-    }
-
     try {
-      // TODO: get rid of eval
-      const { fileTypeFromBuffer } = (await eval(
-        'import ("file-type")',
-      )) as typeof import('file-type');
-
-      const detectedFileType = await fileTypeFromBuffer(file.buffer);
-
-      if (!detectedFileType) {
-        // console.warn(
-        //   `Could not determine file type from buffer for file originally identified as ${file.mimetype}`,
-        // );
-        return false;
-      }
-
-      // console.log(
-      //   `Detected file type: ${detectedFileType.ext} (${detectedFileType.mime})`,
-      //   `Original file type: ${file.mimetype}`,
-      // );
-
-      return !!detectedFileType && allowedTypes.has(detectedFileType.mime);
+      return allowedTypes.has(file.mimetype);
     } catch {
       return false;
     }

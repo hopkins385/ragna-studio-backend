@@ -34,3 +34,15 @@ echo "Running release-it..."
 npx release-it
 
 echo "Release process completed!"
+
+# Ask the use if he wants to execute the build script (build.sh)
+
+read -p "Do you want to execute the build script (build.sh)? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo "Executing build script..."
+  ./build.sh -y
+  echo "Build script executed."
+else
+  echo "Skipping build script execution."
+fi
