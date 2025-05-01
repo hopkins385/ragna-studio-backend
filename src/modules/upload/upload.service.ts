@@ -3,8 +3,6 @@ import { StorageService } from '@/modules/storage/storage.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { UploadFileDto } from './dto/file-upload.dto';
 
-// [fields, files] is a tuple returned by formidable.parse()
-
 interface ParsedForm {
   files: Express.Multer.File[];
 }

@@ -4,6 +4,11 @@
   "reject": [
     "typescript",
     "@aws-sdk/*",
-    "googleapis"
+    "googleapis",
+    "stripe",
+    "prisma",
+    "@prisma/client",
+    "@nestjs/swagger",
+    "bullmq"
   ]
 }
