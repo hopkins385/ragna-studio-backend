@@ -16,16 +16,13 @@ export class SpeechToTextService {
   }
 
   async transcribeAudio(payload: { audioFile: Express.Multer.File }): Promise<string> {
-    if (!payload.audioFile) {
-      throw new Error('No audio file provided');
-    }
-    if (!payload.audioFile.buffer) {
-      throw new Error('Audio file buffer is empty');
+    if (!payload.audioFile || !payload.audioFile.buffer) {
+      throw new Error('Invalid audio file');
     }
 
     try {
       const transcript = await transcribe({
-        model: this.openai.transcription('whisper-1'), // gpt-4o-mini-transcribe
+        model: this.openai.transcription('whisper-1'), // gpt-4o-mini-transcribe, whisper-1
         audio: payload.audioFile.buffer,
       });
       return transcript.text;
