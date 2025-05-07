@@ -1,6 +1,10 @@
 import { createZodDto } from 'nestjs-zod';
-import { googleDriveQuerySchema } from '../schemas/google-drive-query.schema';
+import { z } from 'zod';
 
-export class GoogleDriveSearchQuery extends createZodDto(
-  googleDriveQuerySchema,
-) {}
+const googleDriveQuerySchema = z.object({
+  fileName: z.string().trim().optional(),
+  folderId: z.string().trim().optional(),
+  pageToken: z.string().trim().optional(),
+});
+
+export class GoogleDriveSearchQuery extends createZodDto(googleDriveQuerySchema) {}

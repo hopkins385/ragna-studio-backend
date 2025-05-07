@@ -1,24 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ProviderAuthService } from '../provider-auth/provider-auth.service';
-import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 import { ProviderAuthDto } from '../provider-auth/dto/provider-auth.dto';
 import {
   ProviderAuthName,
   ProviderAuthType,
 } from '../provider-auth/interfaces/provider-auth.interface';
+import { ProviderAuthService } from '../provider-auth/provider-auth.service';
 
 @Injectable()
 export class GoogleDriveService {
   private readonly logger = new Logger(GoogleDriveService.name);
-  private readonly oauth2Client: OAuth2Client;
+  private readonly googleAuthClient: OAuth2Client;
 
   constructor(
     private readonly config: ConfigService,
     private readonly providerAuthService: ProviderAuthService,
   ) {
-    this.oauth2Client = new google.auth.OAuth2(
+    this.googleAuthClient = new google.auth.OAuth2(
       this.config.getOrThrow('GOOGLE_CLIENT_ID'),
       this.config.getOrThrow('GOOGLE_CLIENT_SECRET'),
       this.config.getOrThrow('GOOGLE_DRIVE_REDIRECT_URL'),
@@ -29,7 +29,7 @@ export class GoogleDriveService {
     const scopes = ['https://www.googleapis.com/auth/drive.readonly'];
 
     return new Promise((resolve, reject) => {
-      const url = this.oauth2Client.generateAuthUrl({
+      const url = this.googleAuthClient.generateAuthUrl({
         // 'online' (default) or 'offline' (gets refresh_token)
         access_type: 'offline',
         prompt: 'consent',
@@ -59,11 +59,8 @@ export class GoogleDriveService {
     return !!provider?.accessToken;
   }
 
-  async createAuthTokens(
-    { userId }: { userId: string },
-    { code }: { code: string },
-  ) {
-    const { tokens } = await this.oauth2Client.getToken(code);
+  async createAuthTokens({ userId }: { userId: string }, { code }: { code: string }) {
+    const { tokens } = await this.googleAuthClient.getToken(code);
 
     if (!tokens || !tokens.access_token) {
       throw new Error('Failed to get tokens');
@@ -89,9 +86,9 @@ export class GoogleDriveService {
   async findData(
     { userId }: { userId: string },
     payload: {
-      searchFileName: string;
-      searchFolderId: string;
-      pageToken: string;
+      fileName?: string;
+      folderId?: string;
+      pageToken?: string;
     },
   ) {
     const provider = await this.providerAuthService.findFirst({
@@ -100,58 +97,71 @@ export class GoogleDriveService {
       type: 'googledrive',
     });
 
-    if (!provider || !provider?.accessToken || !provider?.refreshToken) {
+    if (!provider || !provider.accessToken || !provider.refreshToken) {
       throw new Error('Google Drive is not connected');
     }
 
-    this.oauth2Client.on(
-      'tokens',
-      async (tokens) => await this.onTokens(tokens, userId),
-    );
+    this.googleAuthClient.on('tokens', async (tokens) => await this.onTokens({ userId, tokens }));
 
-    this.oauth2Client.setCredentials({
+    this.googleAuthClient.setCredentials({
       access_token: provider.accessToken,
       refresh_token: provider.refreshToken,
     });
 
-    const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+    const googleDrive = google.drive({ version: 'v3', auth: this.googleAuthClient });
 
-    const result = await drive.files.list({
-      q: this.getSearchQuery(payload.searchFileName, payload.searchFolderId),
+    const result = await googleDrive.files.list({
+      q: this.getSearchQuery({ fileName: payload.fileName, folderId: payload.folderId }),
       pageToken: payload.pageToken,
-      orderBy: 'folder, name_natural asc',
+      orderBy: 'folder,name_natural asc',
       pageSize: 20,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size)',
+      fields: 'files(id,name,mimeType,modifiedTime,size,parents),nextPageToken',
       spaces: 'drive',
     });
 
-    this.oauth2Client.removeAllListeners('tokens');
+    if (!result || !result.data) {
+      throw new Error('Failed to get files');
+    }
+
+    if (result.data.files.length === 0) {
+      this.logger.debug('No files found');
+      return {
+        files: [],
+        nextPageToken: null,
+      };
+    }
+
+    this.googleAuthClient.removeAllListeners('tokens');
 
     return result.data;
   }
 
   // helpers
 
-  async onTokens(tokens: any, userId: string) {
-    if (tokens && tokens.access_token) {
-      this.logger.debug('Received new access token');
-      // save the new access token
-      const payload = ProviderAuthDto.fromInput({
+  async onTokens({ tokens, userId }: { tokens: any; userId: string }) {
+    if (!tokens || !tokens?.access_token) {
+      this.logger.error('Called onTokens but object empty');
+      return;
+    }
+    // debug log
+    this.logger.debug('Received new access token');
+    // save the new access token
+    await this.providerAuthService.update(
+      ProviderAuthDto.fromInput({
         providerName: 'google',
         type: 'googledrive',
         userId,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token ?? undefined,
-      });
-      await this.providerAuthService.update(payload);
-    }
+      }),
+    );
   }
 
-  getSearchQuery(fileName: string, folderId: string) {
+  getSearchQuery({ fileName, folderId }: { fileName?: string; folderId?: string }) {
     const query = `mimeType='application/vnd.google-apps.folder' and "root" in parents`;
-    if (fileName !== '') {
+    if (fileName && fileName !== '') {
       return `name contains "${fileName}"`;
-    } else if (folderId !== '') {
+    } else if (folderId && folderId !== '') {
       return `"${folderId}" in parents`;
     } else {
       return query + ' and trashed=false';

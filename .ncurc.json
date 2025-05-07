@@ -4,7 +4,6 @@
   "reject": [
     "typescript",
     "@aws-sdk/*",
-    "googleapis",
     "stripe",
     "prisma",
     "@prisma/client",
