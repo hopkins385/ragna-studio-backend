@@ -10,7 +10,7 @@ import { ToolProvider } from '../types/tool-provider';
 import { AssistantToolService } from './../../assistant-tool/assistant-tool.service';
 
 const thinkToolSchema = z.object({
-  thought: z.string().describe('Your thoughts.'),
+  thought: z.string().min(3).max(100000).describe('Your thoughts.'),
 });
 
 type ThinkToolArgs = z.infer<typeof thinkToolSchema>;

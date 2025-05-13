@@ -24,7 +24,7 @@ const knowledgeSchema = z.object({
   searchQuery: z
     .string()
     .min(3)
-    .max(100)
+    .max(1000)
     .describe('The improved user query to search the knowledge base for'),
 });
 

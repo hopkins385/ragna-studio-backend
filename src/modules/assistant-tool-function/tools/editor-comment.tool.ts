@@ -13,7 +13,7 @@ const addCommentSchema = z.object({
   to: z
     .number()
     .describe('Highlight text end position of the comment which must be greater than from'),
-  commentText: z.string().describe('The text content of the comment'),
+  commentText: z.string().min(3).max(100000).describe('The text content of the comment'),
 });
 
 type EditorCommentToolArgs = z.infer<typeof addCommentSchema>;

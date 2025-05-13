@@ -13,10 +13,10 @@ import { ToolProvider } from '../types/tool-provider';
 interface DirectionsResponse {}
 
 const directionsSchema = z.object({
-  start: z.string().min(1).max(100).describe('The starting location'),
-  destination: z.string().min(1).max(100).describe('The destination location'),
+  start: z.string().min(1).max(1000).describe('The starting location'),
+  destination: z.string().min(1).max(1000).describe('The destination location'),
   waypoints: z
-    .array(z.string().min(1).max(100))
+    .array(z.string().min(1).max(1000))
     .optional()
     .describe('The waypoints to visit along the way'),
 });

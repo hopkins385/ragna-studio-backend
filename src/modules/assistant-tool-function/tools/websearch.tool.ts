@@ -7,7 +7,7 @@ import { ToolContext, ToolOptions } from '../interfaces/assistant-tool-function.
 import { ToolProvider } from '../types/tool-provider';
 
 const webSearchSchema = z.object({
-  query: z.string().min(3).max(100).describe('The query to search the web for'),
+  query: z.string().min(3).max(1000).describe('The query to search the web for'),
 });
 
 type WebSearchArgs = z.infer<typeof webSearchSchema>;
@@ -40,8 +40,6 @@ export class WebSearchTool extends ToolProvider<WebSearchArgs, WebSearchResponse
     });
 
     try {
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const response = await getJson({
         engine: 'google',
         api_key: this.config.getOrThrow<string>('SERP_API_KEY'),
@@ -56,8 +54,6 @@ export class WebSearchTool extends ToolProvider<WebSearchArgs, WebSearchResponse
       delete response.related_questions;
       delete response.pagination;
       delete response.serpapi_pagination;
-
-      // this.logger.debug(`Searched web: `, response);
 
       return response;
       //
