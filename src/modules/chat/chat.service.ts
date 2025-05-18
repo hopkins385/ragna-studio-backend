@@ -61,19 +61,19 @@ export class ChatService {
     });
   }
 
-  public async getRecentForUser(userId: string) {
+  public async getRecentForUser({ userId }: { userId: string }) {
     const chat = await this.chatRepo.prisma.chat.findFirst({
       select: {
         id: true,
         title: true,
-        createdAt: true,
+        updatedAt: true,
       },
       where: {
         userId: userId.toLowerCase(),
         deletedAt: null,
       },
       orderBy: {
-        createdAt: 'desc',
+        updatedAt: 'desc',
       },
     });
 

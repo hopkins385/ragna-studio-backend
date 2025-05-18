@@ -61,7 +61,7 @@ export class ChatController {
   @Get('latest')
   async findLatest(@ReqUser() reqUser: RequestUser) {
     try {
-      const chat = await this.chatService.getRecentForUser(reqUser.id);
+      const chat = await this.chatService.getRecentForUser({ userId: reqUser.id });
       return { chat };
     } catch (error) {
       throw new NotFoundException('Chat not found');
