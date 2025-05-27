@@ -28,6 +28,15 @@ export class TokenizerService {
   async getTokens(
     content: string | undefined | null,
   ): Promise<{ tokens: Uint32Array; tokenCount: number; charCount: number }> {
+    // validation
+    if (!content || !content.length || typeof content !== 'string') {
+      this.logger.warn('TokenizerService getTokens: *content* is empty or not a string', {
+        contentType: typeof content,
+        contentLength: content ? content.length : 0,
+        content: content,
+      });
+      return { tokens: new Uint32Array(0), tokenCount: 0, charCount: 0 };
+    }
     try {
       const response = await this.httpClient.post<TokenizerResponse>(this.url, {
         text: content || undefined,

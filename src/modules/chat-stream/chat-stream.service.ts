@@ -266,7 +266,6 @@ export class ChatStreamService {
       if (abortSignal.aborted) return;
 
       if (chunk.type === 'error') {
-        this.logger.debug('[handleStream] chunk error:', chunk.error);
         throw chunk.error;
       }
 
@@ -409,7 +408,6 @@ export class ChatStreamService {
       if (abortSignal.aborted) return;
 
       if (chunk.type === 'error') {
-        this.logger.debug('[handleToolCalls] chunk error:', chunk.error);
         throw chunk.error;
       }
 
