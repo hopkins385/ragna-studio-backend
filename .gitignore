@@ -63,3 +63,4 @@ _backup
 /prisma/client
 
 .npmrc
+temp/*

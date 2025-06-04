@@ -7,7 +7,7 @@ export type FileTypeValidatorOptions = {
 export interface IFile {
   mimetype: string;
   size: number;
-  buffer?: Buffer;
+  path: string;
 }
 
 export class CustomFileTypeValidator extends FileValidator<FileTypeValidatorOptions, IFile> {
@@ -23,7 +23,7 @@ export class CustomFileTypeValidator extends FileValidator<FileTypeValidatorOpti
     const allowedTypes = new Set(this.validationOptions.fileTypes);
     const isFileValid = !!file && 'mimetype' in file;
 
-    if (!isFileValid || !file.buffer) {
+    if (!isFileValid || !file.path || !file.mimetype) {
       return false;
     }
 

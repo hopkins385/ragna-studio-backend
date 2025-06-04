@@ -1,3 +1,7 @@
+import { randomCUID2 } from '@/common/utils/random-cuid2';
+import { HTTP_CLIENT } from '@/modules/http-client/constants';
+import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
+import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -7,16 +11,12 @@ import {
 import { Upload } from '@aws-sdk/lib-storage';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { AxiosInstance } from 'axios';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { mkdir, readdir, readFile, rmdir, unlink, writeFile } from 'fs/promises';
 import { basename, dirname, join } from 'path';
-import { UploadFileDto } from '@/modules/upload/dto/file-upload.dto';
-import { CreateMediaDto } from '@/modules/media/dto/create-media.dto';
 import { PassThrough } from 'stream';
-import type { AxiosInstance } from 'axios';
-import { randomCUID2 } from '@/common/utils/random-cuid2';
-import { HTTP_CLIENT } from '@/modules/http-client/constants';
 
 type Bucket = 'images';
 type R2Bucket = 'ragna-studio-images';
@@ -71,8 +71,15 @@ export class StorageService {
     const newPath = `${join(this.getBasePath(), payload.userId, fileName)}`;
 
     try {
-      const buffer = payload.file.buffer;
-      await writeFile(newPath, buffer);
+      const originalFilePath = payload.file.path;
+      if (!originalFilePath) {
+        throw new Error('File path is required.');
+      }
+
+      const file = await readFile(originalFilePath);
+
+      // Copy the file to the new path
+      await writeFile(newPath, file);
 
       const createMediaPayload = CreateMediaDto.fromInput({
         teamId: payload.teamId,
@@ -83,6 +90,9 @@ export class StorageService {
         fileSize: payload.file.size,
         model: { id: payload.teamId, type: 'team' }, // TODO: client can decide the model type
       });
+
+      // unlink the file from the local storage
+      await this.deleteFile({ filePath: originalFilePath });
 
       return createMediaPayload;
     } catch (error: any) {
@@ -208,10 +218,12 @@ export class StorageService {
     const bucketUrl = `${url}/${payload.userId}/uploads/${bucket}/${fileName}`;
 
     try {
-      const buffer = payload.file.buffer;
-      if (!buffer || buffer.length < 1) {
-        throw new Error('File buffer is required.');
+      const originalFilePath = payload.file.path;
+      if (!originalFilePath) {
+        throw new Error('File path is required.');
       }
+
+      const buffer = await readFile(originalFilePath);
 
       const putObjectCommand = new PutObjectCommand({
         Bucket,
@@ -236,6 +248,9 @@ export class StorageService {
         fileSize: payload.file.size,
         model: { id: payload.userId, type: 'user' },
       });
+
+      //unlink the file from the local storage
+      await this.deleteFile({ filePath: originalFilePath });
 
       return createMediaPayload;
     } catch (error: any) {
@@ -427,6 +442,7 @@ export class StorageService {
   async deleteFile({ filePath }: { filePath: string }) {
     return unlink(filePath);
   }
+
   getBasePath() {
     return join(process.cwd(), 'uploads');
   }
