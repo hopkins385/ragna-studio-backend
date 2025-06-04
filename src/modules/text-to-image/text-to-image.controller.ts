@@ -1,6 +1,10 @@
 import { BaseController } from '@/common/controllers/base.controller';
 import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
+import { FluxKontextMaxBody } from '@/modules/text-to-image/dto/flux-context-max-inputs.dto';
+import { FluxKontextProBody } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
+import { FluxProBody } from '@/modules/text-to-image/dto/flux-pro-inputs.dto';
+import { FluxUltraBody } from '@/modules/text-to-image/dto/flux-ultra-inputs.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
@@ -16,8 +20,6 @@ import {
   Res,
   StreamableFile,
 } from '@nestjs/common';
-import { FluxProBody } from './dto/flux-pro-body.dto';
-import { FluxUltraBody } from './dto/flux-ultra-body.dto';
 import { FolderIdParam, RunIdParam } from './dto/text-to-image.param.dto';
 import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 import { TextToImageService } from './text-to-image.service';
@@ -33,7 +35,10 @@ export class TextToImageController extends BaseController {
   @Post('flux-pro')
   async generateFluxProImages(@ReqUser() reqUser: RequestUser, @Body() body: FluxProBody) {
     try {
-      const imageUrls = await this.textToImageService.generateFluxProImages(reqUser.id, body);
+      const imageUrls = await this.textToImageService.generateFluxProImages({
+        userId: reqUser.id,
+        payload: body,
+      });
       return { imageUrls };
     } catch (error) {
       this.handleError(error);
@@ -43,7 +48,42 @@ export class TextToImageController extends BaseController {
   @Post('flux-ultra')
   async generateFluxUltraImages(@ReqUser() reqUser: RequestUser, @Body() body: FluxUltraBody) {
     try {
-      const imageUrls = await this.textToImageService.generateFluxUltraImages(reqUser.id, body);
+      const imageUrls = await this.textToImageService.generateFluxUltraImages({
+        userId: reqUser.id,
+        payload: body,
+      });
+      return { imageUrls };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  @Post('flux-kontext-pro')
+  async generateFluxKontextImages(
+    @ReqUser() reqUser: RequestUser,
+    @Body() body: FluxKontextProBody,
+  ) {
+    try {
+      const imageUrls = await this.textToImageService.generateFluxKontextProImages({
+        userId: reqUser.id,
+        payload: body,
+      });
+      return { imageUrls };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  @Post('flux-kontext-max')
+  async generateFluxKontextMaxImages(
+    @ReqUser() reqUser: RequestUser,
+    @Body() body: FluxKontextMaxBody,
+  ) {
+    try {
+      const imageUrls = await this.textToImageService.generateFluxKontextMaxImages({
+        userId: reqUser.id,
+        payload: body,
+      });
       return { imageUrls };
     } catch (error) {
       this.handleError(error);

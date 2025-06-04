@@ -537,7 +537,7 @@ export default async () => {
         ],
         [import('./modules/record/dto/create-record-body.dto'), { CreateRecordBody: {} }],
         [
-          import('./modules/text-to-image/utils/flux-pro-inputs.dto'),
+          import('./modules/text-to-image/dto/flux-pro-inputs.dto'),
           {
             FluxProInputsDto: {
               prompt: { required: true, type: () => String },
@@ -554,7 +554,7 @@ export default async () => {
           },
         ],
         [
-          import('./modules/text-to-image/utils/flux-ultra-inputs.dto'),
+          import('./modules/text-to-image/dto/flux-ultra-inputs.dto'),
           {
             FluxUltraInputsDto: {
               prompt: { required: true, type: () => String },

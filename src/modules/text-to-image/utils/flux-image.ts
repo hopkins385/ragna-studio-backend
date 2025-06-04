@@ -1,26 +1,10 @@
-/*interface GenerationRequest {
-  prompt: string;
-  width?: number; // default: 1024
-  height?: number; // default: 768
-  // Number of steps for the image generation process.
-  steps?: number; // min: 1 max: 50, default: 40
-  // Whether to perform upsampling on the prompt. If active, automatically modifies the prompt for more creative generation.
-  promptUpsampling?: boolean; // default: false
-  // Optional seed for reproducibility.
-  seed?: number; // default: null
-  // Guidance scale for image generation. High guidance scales improve prompt adherence at the cost of reduced realism.
-  guidance?: number; // min: 1.5, max: 5.0, default: 2.5
-  // Tolerance level for input and output moderation. Between 0 and 6, 0 being most strict, 6 being least strict.
-  safetyTolerance?: number; // min: 0, max: 6, default: 2
-  // Interval parameter for guidance control.
-  interval?: number; // min: 1, max: 4, default: 2
-}*/
-
 import { waitFor } from '@/common/utils/waitFor';
+import { FluxKontextMaxInputsDto } from '@/modules/text-to-image/dto/flux-context-max-inputs.dto';
+import { FluxKontextProInputsDto } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FluxProInputsDto } from './flux-pro-inputs.dto';
-import { FluxUltraInputsDto } from './flux-ultra-inputs.dto';
+import { FluxProInputsDto } from '../dto/flux-pro-inputs.dto';
+import { FluxUltraInputsDto } from '../dto/flux-ultra-inputs.dto';
 
 interface ResultResponse {
   id: string;
@@ -57,7 +41,7 @@ export enum StatusResponse {
   Error = 'Error',
 }
 
-type GenerateImageRequest = FluxProInputsDto | FluxUltraInputsDto;
+type GenerateImageRequest = FluxProInputsDto | FluxUltraInputsDto | FluxKontextProInputsDto;
 
 @Injectable()
 export class FluxImageGenerator {
@@ -73,17 +57,7 @@ export class FluxImageGenerator {
     };
   }
 
-  public async generateImage(
-    request: GenerateImageRequest,
-  ): Promise<PollingResult> {
-    if (
-      !(request instanceof FluxProInputsDto) &&
-      !(request instanceof FluxUltraInputsDto)
-    ) {
-      throw new Error(
-        'Invalid request, expected FluxProInputsDto or FluxUltraInputsDto',
-      );
-    }
+  public async generateImage(request: GenerateImageRequest): Promise<PollingResult> {
     try {
       // Step 1: Create the generation request
       const { id } = await this.createRequest(request);
@@ -98,16 +72,25 @@ export class FluxImageGenerator {
     }
   }
 
-  private async createRequest(
-    request: GenerateImageRequest,
-  ): Promise<GenerationResponse> {
-    const fluxPro = request instanceof FluxProInputsDto;
-    const fluxUltra = request instanceof FluxUltraInputsDto;
-    const endpoint = fluxPro
-      ? 'flux-pro-1.1'
-      : fluxUltra
-        ? 'flux-pro-1.1-ultra'
-        : null;
+  private async createRequest(request: GenerateImageRequest): Promise<GenerationResponse> {
+    const isfluxPro = request instanceof FluxProInputsDto;
+    const isfluxUltra = request instanceof FluxUltraInputsDto;
+    const isfluxKontextPro = request instanceof FluxKontextProInputsDto;
+    const isFluxKontextMax = request instanceof FluxKontextMaxInputsDto;
+
+    let endpoint: string | null = null;
+    if (isfluxPro) {
+      endpoint = 'flux-pro-1.1';
+    } else if (isfluxUltra) {
+      endpoint = 'flux-pro-1.1-ultra';
+    } else if (isfluxKontextPro) {
+      endpoint = 'flux-kontext-pro';
+    } else if (isFluxKontextMax) {
+      endpoint = 'flux-kontext-max';
+    } else {
+      this.logger.error('Invalid request type');
+      throw new Error('Invalid request type');
+    }
 
     if (!endpoint) {
       throw new Error('Invalid request');
