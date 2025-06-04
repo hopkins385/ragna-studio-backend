@@ -221,6 +221,7 @@ components:
 
 ````
 */
+import { cuidSchema } from '@/common/schemas/cuid.schema';
 import { baseTextToImageBodySchema } from '@/modules/text-to-image/dto/base-body.dto';
 import { OutputFormat } from '@/modules/text-to-image/enum/image-out-format.enum';
 import { createZodDto } from 'nestjs-zod';
@@ -270,7 +271,8 @@ export class FluxKontextProInputsDto {
 
 // Body Validation Schema
 export const fluxKontextProInputSchema = z.object({
-  inputImage: z.string().nullable().optional(),
+  referenceImageIsMedia: z.boolean().optional(),
+  referenceImageId: cuidSchema.optional(),
 });
 
 const bodySchema = fluxKontextProInputSchema.merge(baseTextToImageBodySchema);

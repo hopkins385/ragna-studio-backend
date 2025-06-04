@@ -222,6 +222,7 @@ components:
 ````
 */
 
+import { cuidSchema } from '@/common/schemas/cuid.schema';
 import { baseTextToImageBodySchema } from '@/modules/text-to-image/dto/base-body.dto';
 import { OutputFormat } from '@/modules/text-to-image/enum/image-out-format.enum';
 import { createZodDto } from 'nestjs-zod';
@@ -271,16 +272,8 @@ export class FluxKontextMaxInputsDto {
 
 // Zod Body Schema for Flux Kontext Max Inputs
 export const fluxKontextMaxInputSchema = z.object({
-  inputImage: z.string().nullable().optional(),
-  seed: z.number().int().nullable().optional(),
-  aspectRatio: z.string().nullable().optional(),
-  outputFormat: z
-    .enum(['jpeg', 'png'])
-    .default('png')
-    .optional()
-    .describe("Output format for the generated image. Can be 'jpeg' or 'png'."),
-  promptUpsampling: z.boolean().default(false).optional(),
-  safetyTolerance: z.number().int().min(0).max(6).default(2).optional(),
+  referenceImageIsMedia: z.boolean().optional(),
+  referenceImageId: cuidSchema.optional(),
 });
 
 const bodySchema = fluxKontextMaxInputSchema.merge(baseTextToImageBodySchema);
