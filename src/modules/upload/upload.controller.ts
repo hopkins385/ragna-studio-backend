@@ -20,10 +20,11 @@ export class UploadController extends BaseController {
     @UploadedFiles(filesValidationPipe) files: FileUploaded[],
   ) {
     try {
-      return await this.uploadService.uploadFiles(
+      const medias = await this.uploadService.uploadFiles(
         { files },
         { userId: reqUser.id, teamId: reqUser.activeTeamId },
       );
+      return { medias };
     } catch (error: unknown) {
       this.handleError(error);
     }
