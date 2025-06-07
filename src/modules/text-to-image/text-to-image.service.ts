@@ -502,7 +502,7 @@ export class TextToImageService {
 
     const genImageDto = FluxKontextMaxInputsDto.fromInput({
       prompt: payload.prompt,
-      input_image: payload.inputImage,
+      input_image: undefined,
       seed: payload.seed,
       aspect_ratio: payload.aspectRatio,
       output_format: payload.outputFormat,
