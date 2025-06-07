@@ -1,5 +1,4 @@
 import { BaseController } from '@/common/controllers/base.controller';
-import { IdParam } from '@/common/dto/cuid-param.dto';
 import { PaginateQuery } from '@/common/dto/paginate.dto';
 import { FluxKontextMaxBody } from '@/modules/text-to-image/dto/flux-context-max-inputs.dto';
 import { FluxKontextProBody } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
@@ -20,7 +19,7 @@ import {
   Res,
   StreamableFile,
 } from '@nestjs/common';
-import { FolderIdParam, RunIdParam } from './dto/text-to-image.param.dto';
+import { FolderIdParam, ImageIdParam, RunIdParam } from './dto/text-to-image.param.dto';
 import { TextToImagePaginatedQuery } from './dto/text-to-image.query.dto';
 import { TextToImageService } from './text-to-image.service';
 
@@ -122,10 +121,23 @@ export class TextToImageController extends BaseController {
     }
   }
 
-  @Get(':id/download')
-  async downloadImage(@Param() param: IdParam, @Res({ passthrough: true }) response: Response) {
+  @Get(':imageId/details')
+  async getImageDetails(@Param() param: ImageIdParam) {
     try {
-      const file = await this.textToImageService.downloadImage(param.id);
+      const image = await this.textToImageService.getImageById(param.imageId);
+      return { image };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  @Get(':imageId/download')
+  async downloadImage(
+    @Param() param: ImageIdParam,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    try {
+      const file = await this.textToImageService.downloadImage(param.imageId);
       return new StreamableFile(file);
     } catch (error: any) {
       this.handleError(error);

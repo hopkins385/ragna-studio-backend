@@ -82,10 +82,6 @@ export class MediaService {
       }))
       .filter(Boolean);
 
-    this.logger.debug('orConditions', orConditions);
-
-    //     // filter out any duplicates
-
     // Fetch all media associated with any of the provided models in a single query
     const medias = await this.mediaRepo.prisma.media.findMany({
       select: {
@@ -118,8 +114,6 @@ export class MediaService {
         deletedAt: null,
       },
     });
-
-    this.logger.debug('medias', medias);
 
     // Return the fetched media
     return medias.map((media) => ({

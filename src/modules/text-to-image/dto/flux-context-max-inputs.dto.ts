@@ -272,8 +272,8 @@ export class FluxKontextMaxInputsDto {
 
 // Zod Body Schema for Flux Kontext Max Inputs
 export const fluxKontextMaxInputSchema = z.object({
-  referenceImageIsMedia: z.boolean().optional(),
   referenceImageId: cuidSchema.optional(),
+  referenceImageIsUpload: z.boolean().default(false).optional(),
 });
 
 const bodySchema = fluxKontextMaxInputSchema.merge(baseTextToImageBodySchema);

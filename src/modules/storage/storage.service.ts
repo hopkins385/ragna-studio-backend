@@ -300,12 +300,17 @@ export class StorageService {
   }
 
   async downloadFromBucket(payload: { bucket: Bucket; bucketPath: string }) {
-    const { bucket, bucketPath } = payload;
+    const baseCdnURL = 'https://images.ragna.io';
+    const { bucket } = payload;
     const { bucket: theBucket, url } = this.getBucketSettings(bucket);
+
+    if (payload.bucketPath.startsWith(baseCdnURL)) {
+      payload.bucketPath = payload.bucketPath.replace(`${baseCdnURL}/`, '');
+    }
 
     const getObjectCommand = new GetObjectCommand({
       Bucket: theBucket,
-      Key: bucketPath,
+      Key: payload.bucketPath,
     });
 
     try {
@@ -319,7 +324,7 @@ export class StorageService {
       const buffer = Buffer.concat(chunks);
       return buffer;
     } catch (error) {
-      this.logger.error('Error downloading file from bucket', error);
+      this.logger.error(`Error downloading file from bucket ${payload.bucketPath}`, error);
       throw error;
     }
   }

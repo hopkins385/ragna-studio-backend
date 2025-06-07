@@ -8,9 +8,10 @@ import {
   FluxKontextProInputsDto,
 } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { StorageService } from '../storage/storage.service';
+import { MediaService } from './../media/media.service';
 import { FluxProBody, FluxProInputsDto } from './dto/flux-pro-inputs.dto';
 import { FluxUltraBody, FluxUltraInputsDto } from './dto/flux-ultra-inputs.dto';
 import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
@@ -53,6 +54,7 @@ export class TextToImageService {
     private readonly textToImageRepo: TextToImageRepository,
     private readonly fluxImageGenerator: FluxImageGenerator,
     private readonly storageService: StorageService,
+    private readonly mediaService: MediaService,
     @InjectQueue(QueueName.IMAGE_CONVERSION)
     private readonly imageConversionQueue: Queue,
   ) {}
@@ -142,6 +144,26 @@ export class TextToImageService {
     });
   }
 
+  public async getImageById(imageId: string) {
+    const image = await this.textToImageRepo.prisma.textToImage.findUnique({
+      select: {
+        id: true,
+        name: true,
+        path: true,
+        status: true,
+      },
+      where: {
+        id: imageId,
+      },
+    });
+
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+
+    return image;
+  }
+
   public async downloadImage(imageId: string) {
     const image = await this.textToImageRepo.prisma.textToImage.findUnique({
       select: {
@@ -154,7 +176,7 @@ export class TextToImageService {
     });
 
     if (!image) {
-      throw new Error('Image not found');
+      throw new NotFoundException('Image not found');
     }
 
     // image path example: https://images.ragna.io/re293wl5kyslbum92agwwcid/tti/l1aymowaaoggvezcte34l2ws/image-e3349e0f-9ddb-40fa-8bd0-0eeed0813d69.jpeg
@@ -430,17 +452,31 @@ export class TextToImageService {
   }: {
     userId: string;
     payload: FluxKontextProBody;
-  }): Promise<string[]> {
+  }) {
     const imgCount = payload.imgCount ?? 1;
+    let imageBuffer: Buffer | null = null;
+
+    if (payload.referenceImageId && !payload.referenceImageIsUpload) {
+      // image is generated
+      imageBuffer = await this.downloadImage(payload.referenceImageId);
+    } else if (payload.referenceImageId && payload.referenceImageIsUpload) {
+      // image is uploaded
+      const media = await this.mediaService.findFirst(payload.referenceImageId);
+      if (!media) {
+        throw new NotFoundException('Media not found');
+      }
+      imageBuffer = await this.storageService.downloadFromBucket({
+        bucket: 'images',
+        bucketPath: media.filePath,
+      });
+    }
 
     const genImageDto = FluxKontextProInputsDto.fromInput({
       prompt: payload.prompt,
-      input_image: payload.inputImage,
+      input_image: imageBuffer ? this.bufferToBase64(imageBuffer) : undefined,
       seed: payload.seed,
       aspect_ratio: payload.aspectRatio,
       output_format: payload.outputFormat,
-      // webhook_url: payload.webhookUrl,
-      // webhook_secret: payload.webhookSecret,
       prompt_upsampling: payload.promptUpsampling,
       safety_tolerance: payload.safetyTolerance,
     });
@@ -470,8 +506,6 @@ export class TextToImageService {
       seed: payload.seed,
       aspect_ratio: payload.aspectRatio,
       output_format: payload.outputFormat,
-      // webhook_url: payload.webhookUrl,
-      // webhook_secret: payload.webhookSecret,
       prompt_upsampling: payload.promptUpsampling,
       safety_tolerance: payload.safetyTolerance,
     });

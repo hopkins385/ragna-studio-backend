@@ -271,8 +271,8 @@ export class FluxKontextProInputsDto {
 
 // Body Validation Schema
 export const fluxKontextProInputSchema = z.object({
-  referenceImageIsMedia: z.boolean().optional(),
   referenceImageId: cuidSchema.optional(),
+  referenceImageIsUpload: z.boolean().default(false).optional(),
 });
 
 const bodySchema = fluxKontextProInputSchema.merge(baseTextToImageBodySchema);

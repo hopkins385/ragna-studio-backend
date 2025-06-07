@@ -99,7 +99,7 @@ export class FluxImageGenerator {
     const url = new URL(`${this.baseUrl}/${endpoint}`);
     const body = JSON.stringify(request);
 
-    this.logger.debug(`Creating request to ${url} with body:`, body);
+    this.logger.debug(`Creating request to ${url}`);
 
     const response = await fetch(url, {
       method: 'POST',
