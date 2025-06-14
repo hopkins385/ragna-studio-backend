@@ -1,8 +1,8 @@
-import { z } from 'zod';
-import { chatMessageSchema } from '../schemas/chat-message.schema';
 import { createZodDto } from 'nestjs-zod';
-import { ChatMessageType } from '../enums/chat-message.enum';
+import { z } from 'zod';
 import { ChatMessageRole } from '../enums/chat-message-role.enum';
+import { ChatMessageType } from '../enums/chat-message.enum';
+import { chatMessageSchema } from '../schemas/chat-message.schema';
 
 export interface ChatMessageToolCall {
   type: 'tool-call';

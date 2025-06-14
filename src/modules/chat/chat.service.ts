@@ -303,12 +303,13 @@ export class ChatService {
   }
 
   public async createMessage(payload: CreateChatMessageDto) {
-    if (!payload.message) {
-      throw new Error('Message is required');
-    }
+    // check if message content is provided and is not empty
+    const { error, tokenCount } = await this.createChatMessagePreconditions(payload);
 
-    const messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
-    this.logger.debug(`[Create Message] Token count: ${messageTokenCount}`);
+    if (error) {
+      this.logger.debug(`Skipping message creation: ${error}`);
+      return null;
+    }
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -320,7 +321,7 @@ export class ChatService {
             role: payload.message.role,
             content: payload.message.content,
             visionContent: payload.message.visionContent,
-            tokenCount: messageTokenCount,
+            tokenCount,
           },
         }),
         // update chat updated at
@@ -341,9 +342,13 @@ export class ChatService {
   }
 
   public async createMessageAndReduceCredit(payload: CreateChatMessageDto) {
-    //
-    const messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
-    this.logger.debug(`[Create Msg and Reduce Credit] Token count: ${messageTokenCount}`);
+    // check if message content is provided and is not empty
+    const { error, tokenCount } = await this.createChatMessagePreconditions(payload);
+
+    if (error) {
+      this.logger.debug(`Skipping message creation: ${error}`);
+      return null;
+    }
 
     try {
       const res = await this.chatRepo.prisma.$transaction([
@@ -355,7 +360,7 @@ export class ChatService {
             role: payload.message.role,
             content: payload.message.content,
             visionContent: payload.message.visionContent,
-            tokenCount: messageTokenCount,
+            tokenCount,
           },
         }),
         // TODO: enable reducing credit
@@ -499,6 +504,33 @@ export class ChatService {
   }
 
   // UTILITIES
+
+  private async createChatMessagePreconditions(
+    payload: CreateChatMessageDto,
+  ): Promise<{ error?: string; tokenCount: number }> {
+    let messageTokenCount = 0;
+    // check if message content is provided and is not empty
+    if (!payload.message || !payload.message.content || payload.message.content.length === 0) {
+      this.logger.debug('Message content is empty, skipping message creation');
+      return { error: 'Message content is empty', tokenCount: 0 };
+    }
+
+    try {
+      messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error calculating token count: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      return { error: 'Error calculating token count', tokenCount: 0 };
+    }
+
+    if (messageTokenCount <= 0) {
+      this.logger.debug('Message token count is zero or negative, skipping message creation');
+      return { error: 'Message token count is zero or negative', tokenCount: 0 };
+    }
+
+    return { error: null, tokenCount: messageTokenCount };
+  }
 
   getHistory(chat: any, totalAvailableTokens: number, requestedCompletionTokens: number) {
     if (!chat || !chat.messages) {

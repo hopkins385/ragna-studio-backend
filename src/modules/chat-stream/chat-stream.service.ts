@@ -2,12 +2,16 @@ import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
 import { CreateChatMessageDto } from '@/modules/chat-message/dto/create-chat-message.dto';
 import { ChatMessageRole } from '@/modules/chat-message/enums/chat-message-role.enum';
 import { ChatMessageType } from '@/modules/chat-message/enums/chat-message.enum';
+import {
+  LanguageModelUsageType,
+  StreamContext,
+} from '@/modules/chat-stream/interfaces/stream-context.interface';
 import { ChatService } from '@/modules/chat/chat.service';
 import { ChatEntity } from '@/modules/chat/entities/chat.entity';
 import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CoreMessage, LanguageModelUsage, LanguageModelV1, streamText, StreamTextResult } from 'ai';
+import { CoreMessage, LanguageModelUsage, streamText, StreamTextResult } from 'ai';
 import fastJson from 'fast-json-stringify';
 import { Readable, Transform } from 'node:stream';
 import { AssistantToolFunctionService } from '../assistant-tool-function/assistant-tool-function.service';
@@ -16,20 +20,6 @@ import { FirstUserMessageEventDto } from '../chat/events/first-user-message.even
 import { TokenUsageEventDto } from '../token-usage/events/token-usage-event.dto';
 import { TokenUsageEventEmitter } from './../token-usage/events/token-usage-event.emitter';
 import { CreateChatStreamDto } from './dto/create-chat-stream.dto';
-
-type LanguageModelUsageType = 'text' | 'tool';
-
-interface StreamContext {
-  model: LanguageModelV1;
-  chat: ChatEntity;
-  isCancelled: boolean;
-  chunks: string[];
-  toolCallRecursion: number;
-  usages: {
-    type: LanguageModelUsageType;
-    tokens: LanguageModelUsage;
-  }[];
-}
 
 export interface ToolInfoData {
   toolName: string;
