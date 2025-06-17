@@ -1,19 +1,14 @@
-import { AssistantRepository } from './repositories/assistant.repository';
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { CreateAssistantDto } from './dto/create-assistant.dto';
-import { UpdateAssistantDto } from './dto/update-assistant.dto';
-import { FindAssistantDto } from './dto/find-assistant.dto';
-import { FindAllAssistantsDto } from './dto/find-all-assistant.dto';
-import { DeleteAssistantDto } from './dto/delete-assistant.dto';
+import { BaseService } from '@/common/service/base.service';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { AssistantToolService } from '../assistant-tool/assistant-tool.service';
 import { defaultSystemPrompt } from './constants/default-system-prompt.constant';
+import { CreateAssistantDto } from './dto/create-assistant.dto';
+import { DeleteAssistantDto } from './dto/delete-assistant.dto';
+import { FindAllAssistantsDto } from './dto/find-all-assistant.dto';
+import { FindAssistantDto } from './dto/find-assistant.dto';
+import { UpdateAssistantDto } from './dto/update-assistant.dto';
 import { AssistantNotFoundException } from './exceptions/assistant-not-found.exception';
-import { BaseService } from '@/common/service/base.service';
+import { AssistantRepository } from './repositories/assistant.repository';
 
 interface CreateAssistantFromTemplatePayload {
   teamId: string;
@@ -45,7 +40,6 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async create(payload: CreateAssistantDto) {
-    // Database call
     try {
       const assistant = await this.repository.createAssistant(payload);
       return assistant;
@@ -55,10 +49,8 @@ export class AssistantService extends BaseService<any> {
   }
 
   public async createFromTemplate(payload: CreateAssistantFromTemplatePayload) {
-    // Database call
     try {
-      const assistant =
-        await this.repository.createAssistantFromTemplate(payload);
+      const assistant = await this.repository.createAssistantFromTemplate(payload);
       return assistant;
     } catch (error) {
       this.handleError(error);
@@ -79,13 +71,7 @@ export class AssistantService extends BaseService<any> {
     }
   }
 
-  public async getMany({
-    teamId,
-    assistantIds,
-  }: {
-    teamId: string;
-    assistantIds: string[];
-  }) {
+  public async getMany({ teamId, assistantIds }: { teamId: string; assistantIds: string[] }) {
     try {
       const assistants = await this.repository.getManyAssistants({
         teamId,
@@ -134,12 +120,7 @@ export class AssistantService extends BaseService<any> {
     }
   }
 
-  public async findAll({
-    teamId,
-    page,
-    limit,
-    searchQuery,
-  }: FindAllAssistantsDto): Promise<{
+  public async findAll({ teamId, page, limit, searchQuery }: FindAllAssistantsDto): Promise<{
     assistants: any[];
     meta: any;
   }> {
@@ -213,12 +194,11 @@ export class AssistantService extends BaseService<any> {
         throw new AssistantNotFoundException(assistantId);
       }
 
-      const updatedAssistant =
-        await this.repository.updateAssistantHasKnowledgeBase({
-          teamId,
-          assistantId,
-          hasKnowledgeBase,
-        });
+      const updatedAssistant = await this.repository.updateAssistantHasKnowledgeBase({
+        teamId,
+        assistantId,
+        hasKnowledgeBase,
+      });
       return updatedAssistant;
     } catch (error) {
       this.handleError(error);

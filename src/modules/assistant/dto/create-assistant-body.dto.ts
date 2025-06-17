@@ -5,7 +5,7 @@ import { z } from 'zod';
 const createAssistantSchema = z.object({
   llmId: cuidSchema,
   title: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
+  description: z.string().max(255).default('').optional(),
   systemPrompt: z.string().min(1),
   isShared: z.boolean().default(false).optional(),
   tools: z.array(cuidSchema),
