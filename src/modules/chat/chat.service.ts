@@ -524,7 +524,7 @@ export class ChatService {
       return { error: 'Error calculating token count', tokenCount: 0 };
     }
 
-    if (messageTokenCount <= 0) {
+    if (payload.message.type === ChatMessageType.TEXT && messageTokenCount <= 0) {
       this.logger.debug('Message token count is zero or negative, skipping message creation');
       return { error: 'Message token count is zero or negative', tokenCount: 0 };
     }
