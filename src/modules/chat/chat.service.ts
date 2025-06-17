@@ -507,26 +507,29 @@ export class ChatService {
 
   private async createChatMessagePreconditions(
     payload: CreateChatMessageDto,
-  ): Promise<{ error?: string; tokenCount: number }> {
+  ): Promise<{ error?: Error; tokenCount: number }> {
     let messageTokenCount = 0;
     // check if message content is provided and is not empty
-    if (!payload.message || !payload.message.content || payload.message.content.length === 0) {
-      this.logger.debug('Message content is empty, skipping message creation');
-      return { error: 'Message content is empty', tokenCount: 0 };
+    if (!payload.message || !payload.message.content) {
+      this.logger.error('Message content missing, skipping message creation');
+      const error = new Error('Message content is missing');
+      return { error, tokenCount: 0 };
     }
 
     try {
       messageTokenCount = await this.getTokenCountForMessageContent(payload.message.content);
-    } catch (error: unknown) {
+    } catch (err: unknown) {
       this.logger.error(
-        `Error calculating token count: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Error calculating token count: ${err instanceof Error ? err.message : 'Unknown error'}`,
       );
-      return { error: 'Error calculating token count', tokenCount: 0 };
+      const error = new Error('Error calculating token count');
+      return { error, tokenCount: 0 };
     }
 
     if (payload.message.type === ChatMessageType.TEXT && messageTokenCount <= 0) {
       this.logger.debug('Message token count is zero or negative, skipping message creation');
-      return { error: 'Message token count is zero or negative', tokenCount: 0 };
+      const error = new Error('Message token count is zero or negative');
+      return { error, tokenCount: 0 };
     }
 
     return { error: null, tokenCount: messageTokenCount };
