@@ -697,6 +697,7 @@ export class TextToImageService {
 
     try {
       if (genImage.imgBuffer && !genImage.imgUrl && genImage.imgBuffer.length > 0) {
+        // if image buffer
         const { filePath } = await this.storageService.uploadBufferToBucket('images', {
           bucketPath: bucketFolderPath,
           fileName,
@@ -705,6 +706,7 @@ export class TextToImageService {
         });
         fileUrl = filePath;
       } else if (genImage.imgUrl && !genImage.imgBuffer && genImage.imgUrl.length > 0) {
+        // if image URL
         const { storagefileUrl } = await this.storageService.uploadToBucketByUrl({
           fileName,
           fileMimeType: mimeType,
