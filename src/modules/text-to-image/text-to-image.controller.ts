@@ -4,6 +4,7 @@ import { FluxKontextMaxBody } from '@/modules/text-to-image/dto/flux-context-max
 import { FluxKontextProBody } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
 import { FluxProBody } from '@/modules/text-to-image/dto/flux-pro-inputs.dto';
 import { FluxUltraBody } from '@/modules/text-to-image/dto/flux-ultra-inputs.dto';
+import { GoogleImageGenBody } from '@/modules/text-to-image/dto/google-imagegen-body.dto';
 import { ReqUser } from '@/modules/user/decorators/user.decorator';
 import { RequestUser } from '@/modules/user/entities/request-user.entity';
 import {
@@ -80,6 +81,19 @@ export class TextToImageController extends BaseController {
   ) {
     try {
       const imageUrls = await this.textToImageService.generateFluxKontextMaxImages({
+        userId: reqUser.id,
+        payload: body,
+      });
+      return { imageUrls };
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  @Post('google-imagegen')
+  async generateGoogleImage(@ReqUser() reqUser: RequestUser, @Body() body: GoogleImageGenBody) {
+    try {
+      const imageUrls = await this.textToImageService.generateGoogleImagegenImages({
         userId: reqUser.id,
         payload: body,
       });

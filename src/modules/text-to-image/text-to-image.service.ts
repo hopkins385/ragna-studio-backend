@@ -7,6 +7,10 @@ import {
   FluxKontextProBody,
   FluxKontextProInputsDto,
 } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
+import { GoogleImageInputsDto } from '@/modules/text-to-image/dto/google-image-inputs.dto';
+import { GoogleImageGenBody } from '@/modules/text-to-image/dto/google-imagegen-body.dto';
+import { PollingResult } from '@/modules/text-to-image/interfaces/polling-result.interface';
+import { GoogleImageGenerator } from '@/modules/text-to-image/utils/google-image';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Queue } from 'bullmq';
@@ -18,25 +22,29 @@ import { ImageConversionJobDataDto } from './dto/image-conversion-job-data.dto';
 import { TextToImageRepository } from './repositories/text-to-image.repository';
 import { FluxImageGenerator, StatusResponse } from './utils/flux-image';
 
-enum TextToImageRunStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  MODERATED = 'MODERATED',
-  FAILED = 'FAILED',
+const TextToImageRunStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  MODERATED: 'MODERATED',
+  FAILED: 'FAILED',
+} as const;
+type TextToImageRunStatus = (typeof TextToImageRunStatus)[keyof typeof TextToImageRunStatus];
+
+interface RunSettings {
+  provider: string;
 }
 
 interface Run {
   id: string;
+  settings: RunSettings;
 }
 
 interface GenImageResult {
   run: Run;
-  genImage: {
-    id: string;
-    imgUrl: string | null;
-    status: StatusResponse;
-  };
+  genImage: PollingResult;
 }
+
+type RunProvider = 'fluxpro' | 'fluxultra' | 'fluxkontextpro' | 'fluxkontextmax' | 'googleimagegen';
 
 type GenImageExtension = 'jpeg' | 'png';
 
@@ -44,7 +52,8 @@ type GenerateImagesPayload =
   | FluxProInputsDto
   | FluxUltraInputsDto
   | FluxKontextProInputsDto
-  | FluxKontextMaxInputsDto;
+  | FluxKontextMaxInputsDto
+  | GoogleImageInputsDto;
 
 @Injectable()
 export class TextToImageService {
@@ -53,6 +62,7 @@ export class TextToImageService {
   constructor(
     private readonly textToImageRepo: TextToImageRepository,
     private readonly fluxImageGenerator: FluxImageGenerator,
+    private readonly googleImageGenerator: GoogleImageGenerator,
     private readonly storageService: StorageService,
     private readonly mediaService: MediaService,
     @InjectQueue(QueueName.IMAGE_CONVERSION)
@@ -387,6 +397,10 @@ export class TextToImageService {
     return this.softDeleteRun(runId);
   }
 
+  //
+  // Generates images for a specific run and processes the results
+  //
+
   public async generateFluxProImages({
     userId,
     payload,
@@ -520,9 +534,38 @@ export class TextToImageService {
     }
   }
 
+  public async generateGoogleImagegenImages({
+    userId,
+    payload,
+  }: {
+    userId: string;
+    payload: GoogleImageGenBody;
+  }): Promise<string[]> {
+    const imgCount = payload.imgCount ?? 1;
+
+    const genImageDto = GoogleImageInputsDto.fromInput({
+      prompt: payload.prompt,
+      aspectRatio: payload.aspectRatio,
+    });
+
+    try {
+      const run = await this.createSingleRun('googleimagegen', payload);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      return this.processImageResults(userId, genImageResults, payload);
+    } catch (error: any) {
+      this.logger.error(`Error: ${error?.message}`);
+      throw new Error('Failed to generate images');
+    }
+  }
+
   private async createSingleRun(
-    provider: 'fluxpro' | 'fluxultra' | 'fluxkontextpro' | 'fluxkontextmax',
-    payload: FluxProBody | FluxUltraBody | FluxKontextProBody | FluxKontextMaxBody,
+    provider: RunProvider,
+    payload:
+      | FluxProBody
+      | FluxUltraBody
+      | FluxKontextProBody
+      | FluxKontextMaxBody
+      | GoogleImageGenBody,
   ): Promise<Run> {
     if (!provider) {
       throw new Error('Invalid request');
@@ -545,7 +588,7 @@ export class TextToImageService {
   private async createRun(payload: {
     folderId: string;
     prompt: string;
-    settings: any;
+    settings: RunSettings;
   }): Promise<Run> {
     const run = await this.textToImageRepo.prisma.textToImageRun.create({
       data: {
@@ -558,6 +601,7 @@ export class TextToImageService {
 
     return {
       id: run.id,
+      settings: run.settings as RunSettings,
     };
   }
 
@@ -575,11 +619,30 @@ export class TextToImageService {
     run: Run,
     payload: GenerateImagesPayload,
   ): Promise<GenImageResult> {
+    let pollResult: PollingResult | null = null;
+
     try {
-      const genImage = await this.fluxImageGenerator.generateImage(payload);
+      switch (run.settings.provider) {
+        case 'googleimagegen':
+          pollResult = await this.googleImageGenerator.generateImage(payload);
+          break;
+        case 'fluxpro':
+        case 'fluxultra':
+        case 'fluxkontextpro':
+        case 'fluxkontextmax':
+          pollResult = await this.fluxImageGenerator.generateImage(payload as any);
+          break;
+        default:
+          throw new Error(`Unsupported provider: ${run.settings.provider}`);
+      }
+
+      if (!pollResult || !pollResult.id) {
+        throw new Error('Invalid polling result');
+      }
+
       return {
         run,
-        genImage,
+        genImage: pollResult,
       };
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -603,6 +666,8 @@ export class TextToImageService {
     results: GenImageResult[],
     payload: FluxProBody,
   ): Promise<string[]> {
+    this.logger.debug(`Processing ${results.length} image results for user ${userId}`, payload);
+    // return;
     return Promise.all(
       results.map((result) =>
         this.processSingleImageResult({
@@ -628,10 +693,18 @@ export class TextToImageService {
     const bucketFolderPath = `${payload.userId}/tti/${payload.folderId}`;
     const mimeType = this.storageService.getMimeType(payload.fileExtension);
 
-    let newfileUrl: string = '';
+    let fileUrl: string | null = null;
 
     try {
-      if (genImage.imgUrl) {
+      if (genImage.imgBuffer && !genImage.imgUrl && genImage.imgBuffer.length > 0) {
+        const { filePath } = await this.storageService.uploadBufferToBucket('images', {
+          bucketPath: bucketFolderPath,
+          fileName,
+          fileBuffer: genImage.imgBuffer,
+          fileExtension: payload.fileExtension,
+        });
+        fileUrl = filePath;
+      } else if (genImage.imgUrl && !genImage.imgBuffer && genImage.imgUrl.length > 0) {
         const { storagefileUrl } = await this.storageService.uploadToBucketByUrl({
           fileName,
           fileMimeType: mimeType,
@@ -639,13 +712,16 @@ export class TextToImageService {
           bucketFolder: bucketFolderPath,
           bucket: 'images',
         });
-        newfileUrl = storagefileUrl;
+        fileUrl = storagefileUrl;
+      } else {
+        this.logger.error(`Image URL or Buffer is missing for run ${run.id}`);
+        throw new Error('Image URL or Buffer is missing');
       }
 
       const textToImage = await this.createTextToImage({
         runId,
         fileName,
-        filePath: newfileUrl,
+        filePath: fileUrl,
         mimeType,
         status: this.castStatus(genImage.status),
       });

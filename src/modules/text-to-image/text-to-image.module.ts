@@ -1,5 +1,6 @@
 import { MediaModule } from '@/modules/media/media.module';
 import { QueueName } from '@/modules/queue/enums/queue-name.enum';
+import { GoogleImageGenerator } from '@/modules/text-to-image/utils/google-image';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ImageConversionProcessor } from './processors/image-conversion.processor';
@@ -20,6 +21,7 @@ import { FluxImageGenerator } from './utils/flux-image';
     TextToImageRepository,
     TextToImageService,
     FluxImageGenerator,
+    GoogleImageGenerator,
     // StorageService, <-- already provided by MediaModule
     /* Processors */
     ImageConversionProcessor,

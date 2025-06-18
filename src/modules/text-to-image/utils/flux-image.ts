@@ -1,6 +1,7 @@
 import { waitFor } from '@/common/utils/waitFor';
 import { FluxKontextMaxInputsDto } from '@/modules/text-to-image/dto/flux-context-max-inputs.dto';
 import { FluxKontextProInputsDto } from '@/modules/text-to-image/dto/flux-context-pro-inputs.dto';
+import { PollingResult } from '@/modules/text-to-image/interfaces/polling-result.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FluxProInputsDto } from '../dto/flux-pro-inputs.dto';
@@ -26,12 +27,6 @@ interface HTTPValidationError {
   }>;
 }
 
-interface PollingResult {
-  id: string;
-  imgUrl: string | null;
-  status: StatusResponse;
-}
-
 export enum StatusResponse {
   TaskNotFound = 'Task not found',
   Pending = 'Pending',
@@ -41,7 +36,11 @@ export enum StatusResponse {
   Error = 'Error',
 }
 
-type GenerateImageRequest = FluxProInputsDto | FluxUltraInputsDto | FluxKontextProInputsDto;
+type GenerateFluxImageRequest =
+  | FluxProInputsDto
+  | FluxUltraInputsDto
+  | FluxKontextProInputsDto
+  | FluxKontextMaxInputsDto;
 
 @Injectable()
 export class FluxImageGenerator {
@@ -57,7 +56,7 @@ export class FluxImageGenerator {
     };
   }
 
-  public async generateImage(request: GenerateImageRequest): Promise<PollingResult> {
+  public async generateImage(request: GenerateFluxImageRequest): Promise<PollingResult> {
     try {
       // Step 1: Create the generation request
       const { id } = await this.createRequest(request);
@@ -72,7 +71,7 @@ export class FluxImageGenerator {
     }
   }
 
-  private async createRequest(request: GenerateImageRequest): Promise<GenerationResponse> {
+  private async createRequest(request: GenerateFluxImageRequest): Promise<GenerationResponse> {
     const isfluxPro = request instanceof FluxProInputsDto;
     const isfluxUltra = request instanceof FluxUltraInputsDto;
     const isfluxKontextPro = request instanceof FluxKontextProInputsDto;
