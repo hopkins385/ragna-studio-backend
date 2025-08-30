@@ -1,10 +1,10 @@
 {
   "name": "ragna-studio-backend",
   "version": "0.34.3",
-  "description": "Ragna Studio Backend",
+  "description": "Open-source AI-powered backend with RAG, NER, and multi-provider AI integrations",
   "author": "Sven Stadhouders",
-  "private": true,
-  "license": "other",
+  "private": false,
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "build:seeds": "tsc -p prisma/tsconfig.prisma.json",
