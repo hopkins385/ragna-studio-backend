@@ -240,3 +240,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Database ORM by [Prisma](https://www.prisma.io/)
 - AI integrations powered by [Vercel AI SDK](https://sdk.vercel.ai/)
 - And many other amazing open-source projects
+
+---
+
+<div align="center">
+  <p>Built with ❤️ and Apprechiation by Sven Stadhouders</p>
+  <p>
+    <a href="https://ragna-engineering.de">Website</a> •
+    <a href="#">Documentation (tbd)</a> •
+    <a href="https://github.com/hopkins385/ragna-studio-frontend">GitHub</a>
+  </p>
+</div>
