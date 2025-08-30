@@ -129,7 +129,7 @@ docker-compose -f docker-compose.dev.yml up -d
 This backend is part of the complete RAGNA Studio platform:
 
 - **[RAGNA Studio Backend](https://github.com/hopkins385/ragna-studio-backend)** (this repository) - AI-powered API backend
-- **[RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend)** - Modern React-based user interface
+- **[RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend)** - Modern Vue-based user interface
 - **[RAGNA SDK](https://github.com/hopkins385/ragna-sdk)** - TypeScript SDK for easy integration with RAGNA Studio APIs
 
 For the full experience, you'll want to set up both the backend and frontend repositories. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
