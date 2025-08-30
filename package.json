@@ -1,7 +1,7 @@
 {
   "name": "ragna-studio-backend",
   "version": "0.35.0",
-  "description": "Open-source AI-powered backend with RAG, NER, and multi-provider AI integrations",
+  "description": "RAGNA Studio Backend",
   "author": "Sven Stadhouders",
   "private": false,
   "license": "MIT",
