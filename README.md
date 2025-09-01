@@ -4,11 +4,24 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
 
-> **⚠️ DISCLAIMER: This project is not intended for production use. It is provided as-is for educational, research, and development purposes only. Use at your own risk.**
-
 RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS, featuring Retrieval-Augmented Generation (RAG), Named Entity Recognition (NER), and multi-provider AI integrations. This project provides a robust foundation for building AI applications with document processing, chat interfaces, and intelligent assistants.
 
-🔗 **Looking for the frontend?** Check out the companion [RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend) repository for the complete user interface.
+## ⚠️ Important Notes
+
+- **Not Production Ready**: This software is provided for educational and development purposes
+- **API Keys Required**: You'll need API keys from AI providers to use AI features
+- **Resource Intensive**: AI operations require significant computational resources
+- **Data Privacy**: Be mindful of data privacy when processing documents and conversations
+
+## 🏗️ RAGNA Studio Ecosystem
+
+This backend is part of the complete RAGNA Studio platform:
+
+- **[RAGNA Studio Backend](https://github.com/hopkins385/ragna-studio-backend)** (this repository) - AI-powered API backend
+- **[RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend)** - Modern Vue3-based user interface
+- **[RAGNA SDK](https://github.com/hopkins385/ragna-sdk)** - TypeScript SDK for easy integration into your own software
+
+For the full experience, you'll want to set up both the backend and frontend repositories. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
 
 ## 🌟 Features
 
@@ -57,8 +70,8 @@ RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS,
 
 - **Node.js** 22+ and npm/yarn
 - **Docker & Docker Compose** (recommended for development)
-- **PostgreSQL** 13+ (if not using Docker)
-- **Redis** 6+ (if not using Docker)
+- **PostgreSQL** 17+ (if not using Docker)
+- **Redis** 7+ (if not using Docker)
 - **Minimum 8GB RAM** (for AI model operations)
 
 ### Installation
@@ -104,8 +117,6 @@ RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS,
    npm run dev
    ```
 
-The API will be available at `http://localhost:3000` with auto-generated documentation at `http://localhost:3000/api`.
-
 ### Docker Development
 
 For a complete development environment with all services:
@@ -120,35 +131,9 @@ docker-compose -f docker-compose.dev.yml up -d
 
 ## 📖 Documentation
 
-- **API Documentation**: Available at `/api` when running the server
+- **API Documentation**: Available at `/swagger` when running the server (dev-only)
 - **Database Schema**: Check `prisma/schema.prisma` for the complete data model
 - **Environment Variables**: See `.env.example` for all configuration options
-
-## 🏗️ RAGNA Studio Ecosystem
-
-This backend is part of the complete RAGNA Studio platform:
-
-- **[RAGNA Studio Backend](https://github.com/hopkins385/ragna-studio-backend)** (this repository) - AI-powered API backend
-- **[RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend)** - Modern React-based user interface
-- **[RAGNA SDK](https://github.com/hopkins385/ragna-sdk)** - TypeScript SDK for easy integration with RAGNA Studio APIs
-
-For the full experience, you'll want to set up both the backend and frontend repositories. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
-
-## 🧪 Testing
-
-```bash
-# Run unit tests
-npm run test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run end-to-end tests
-npm run test:e2e
-
-# Generate coverage report
-npm run test:cov
-```
 
 ## 🛠️ Development
 
@@ -171,68 +156,17 @@ prisma/
 
 - **Auth**: User authentication and authorization
 - **Chat**: Real-time chat functionality with AI assistants
-- **Documents**: Document upload, processing, and management
 - **AI Models**: Integration with various AI providers
 - **Assistants**: Configurable AI assistants with tools
 - **Collections**: Document collections and knowledge bases
-
-### Scripts
-
-```bash
-npm run build        # Build the application
-npm run dev          # Start development server
-npm run start:prod   # Start production server
-npm run lint         # Run ESLint
-npm run format       # Format code with Prettier
-npm run migrate      # Run database migrations
-npm run seed:init    # Seed database with initial data
-```
-
-## 🔧 Configuration
-
-Key environment variables:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:pass@localhost:5432/ragna"
-
-# Redis
-REDIS_URL="redis://localhost:6379"
-
-# JWT
-JWT_SECRET="your-secret-key"
-
-# AI Providers
-OPENAI_API_KEY="your-openai-key"
-ANTHROPIC_API_KEY="your-anthropic-key"
-GOOGLE_API_KEY="your-google-key"
-
-# File Storage
-AWS_S3_BUCKET="your-s3-bucket"
-AWS_ACCESS_KEY_ID="your-access-key"
-AWS_SECRET_ACCESS_KEY="your-secret-key"
-```
 
 ## 🤝 Contributing
 
 We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Important Notes
-
-- **Not Production Ready**: This software is provided for educational and development purposes
-- **API Keys Required**: You'll need API keys from AI providers to use AI features
-- **Resource Intensive**: AI operations require significant computational resources
-- **Data Privacy**: Be mindful of data privacy when processing documents and conversations
 
 ## 🙏 Acknowledgments
 
@@ -247,7 +181,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   <p>Built with ❤️ and Apprechiation by Sven Stadhouders</p>
   <p>
     <a href="https://ragna-engineering.de">Website</a> •
-    <a href="#">Documentation (tbd)</a> •
     <a href="https://github.com/hopkins385/ragna-studio-frontend">GitHub</a>
   </p>
 </div>
