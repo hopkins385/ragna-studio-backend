@@ -12,7 +12,6 @@ RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS,
 - **Not Production Ready**: This software is provided for educational and development purposes
 - **API Keys Required**: You'll need API keys from AI providers to use AI features
 - **Resource Intensive**: AI operations require significant computational resources
-- **Data Privacy**: Be mindful of data privacy when processing documents and conversations
 
 ## 🏗️ RAGNA Studio Ecosystem
 
