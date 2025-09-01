@@ -178,7 +178,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <p>Built with ❤️ and Apprechiation by Sven Stadhouders</p>
+  <p>Built with ❤️ and Appreciation by Sven Stadhouders</p>
   <p>
     <a href="https://ragna-engineering.de">Website</a> •
     <a href="https://github.com/hopkins385/ragna-studio-frontend">GitHub</a>
