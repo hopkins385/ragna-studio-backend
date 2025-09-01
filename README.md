@@ -8,6 +8,7 @@ RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS,
 
 ## ⚠️ Important Notes
 
+- **Not a Turnkey Solution**: This API Server is part of a larger ecosystem and requires additional microservices to function fully
 - **Not Production Ready**: This software is provided for educational and development purposes
 - **API Keys Required**: You'll need API keys from AI providers to use AI features
 - **Resource Intensive**: AI operations require significant computational resources
@@ -17,11 +18,18 @@ RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS,
 
 This backend is part of the complete RAGNA Studio platform:
 
-- **[RAGNA Studio Backend](https://github.com/hopkins385/ragna-studio-backend)** (this repository) - AI-powered API backend
+- **[RAGNA Studio Backend](https://github.com/hopkins385/ragna-studio-backend)** (this repository) - NestJs API backend
 - **[RAGNA Studio Frontend](https://github.com/hopkins385/ragna-studio-frontend)** - Modern Vue3-based user interface
 - **[RAGNA SDK](https://github.com/hopkins385/ragna-sdk)** - TypeScript SDK for easy integration into your own software
 
-For the full experience, you'll want to set up both the backend and frontend repositories. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
+### Microservices
+
+- **RAG Server**: Handles document parsing and embedding generation
+- **NER Server**: Performs Named Entity Recognition on text data
+- **WebSocket Gateway**: Manages real-time communication for chat features
+- **WebScraper Server**: Fetches and processes web content
+
+For the full experience, you'll want to set up both the backend, the frontend and all the microservices. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
 
 ## 🌟 Features
 
