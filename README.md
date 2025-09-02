@@ -25,8 +25,8 @@ This backend is part of the complete RAGNA Studio platform:
 
 - **[RAG Server](https://github.com/hopkins385/rag-server-ts)**: Handles document parsing and embedding generation
 - **[NER Server](https://github.com/hopkins385/ragna-transformer-server)**: Performs Named Entity Recognition on text data
-- **WebSocket Gateway**: Manages real-time communication for chat features
-- **WebScraper Server**: Fetches and processes web content
+- **[WebSocket Gateway](https://github.com/hopkins385/ragna-websocket-server)**: Manages real-time communication for chat features
+- **[WebScraper Server](https://github.com/hopkins385/scrape-server-ts)**: Fetches and processes web content
 
 For the full experience, you'll want to set up both the backend, the frontend and all the microservices. The SDK provides a convenient way to integrate RAGNA Studio's AI capabilities into your own applications with type-safe API calls and built-in error handling.
 
