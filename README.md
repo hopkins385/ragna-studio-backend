@@ -23,8 +23,8 @@ This backend is part of the complete RAGNA Studio platform:
 
 ### Microservices
 
-- **RAG Server**: Handles document parsing and embedding generation
-- **NER Server**: Performs Named Entity Recognition on text data
+- **[RAG Server](https://github.com/hopkins385/rag-server-ts)**: Handles document parsing and embedding generation
+- **[NER Server](https://github.com/hopkins385/ragna-transformer-server)**: Performs Named Entity Recognition on text data
 - **WebSocket Gateway**: Manages real-time communication for chat features
 - **WebScraper Server**: Fetches and processes web content
 
