@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
 
-RAGNA Studio Backend is an open-source AI-powered API backend built with NestJS, featuring Retrieval-Augmented Generation (RAG), Named Entity Recognition (NER), and multi-provider AI integrations. This project provides a robust foundation for building AI applications with document processing, chat interfaces, and intelligent assistants.
+RAGNA Studio Backend is an open-source API backend built with NestJS, featuring Retrieval-Augmented Generation (RAG), Named Entity Recognition (NER), multi-provider AI integrations, multi-agent capabilities and much more (see frontend for full feature list). This project provides a robust foundation for building AI applications with document processing, chat interfaces, and intelligent assistants.
 
 ## ⚠️ Important Notes
 
