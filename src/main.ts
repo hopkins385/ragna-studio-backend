@@ -29,8 +29,8 @@ async function bootstrap() {
     }),
   );
 
-  app.use(json({ limit: '300kb' }));
-  app.use(urlencoded({ limit: '300kb', extended: true }));
+  app.use(json({ limit: '1500kb' }));
+  app.use(urlencoded({ limit: '1500kb', extended: true }));
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 

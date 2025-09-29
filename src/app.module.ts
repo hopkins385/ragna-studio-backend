@@ -8,7 +8,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AccountModule } from './modules/account/account.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
-import { AssistantJobModule } from './modules/assistant-job/assistant-job.module';
 import { AssistantTeamModule } from './modules/assistant-team/assistant-team.module';
 import { AssistantTemplateModule } from './modules/assistant-template/assistant-template.module';
 import { AssistantToolModule } from './modules/assistant-tool/assistant-tool.module';
@@ -16,7 +15,6 @@ import { AssistantModule } from './modules/assistant/assistant.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { CacheManagerModule } from './modules/cache-manager/cache-manager.module';
-import { ChatMessageController } from './modules/chat-message/chat-message.controller';
 import { ChatMessageModule } from './modules/chat-message/chat-message.module';
 import { ChatStreamModule } from './modules/chat-stream/chat-stream.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -52,9 +50,6 @@ import { TokenizerModule } from './modules/tokenizer/tokenizer.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UserFavoriteModule } from './modules/user-favorite/user-favorite.module';
 import { UserModule } from './modules/user/user.module';
-import { WorkflowExecutionModule } from './modules/workflow-execution/workflow-execution.module';
-import { WorkflowStepModule } from './modules/workflow-step/workflow-step.module';
-import { WorkflowModule } from './modules/workflow/workflow.module';
 
 @Module({
   imports: [
@@ -157,9 +152,11 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
 
     TextToImageModule,
 
-    WorkflowModule,
+    // WorkflowModule,
 
-    WorkflowStepModule,
+    // WorkflowStepModule,
+
+    // WorkflowExecutionModule,
 
     DocumentModule,
 
@@ -167,9 +164,7 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
 
     OnboardModule,
 
-    WorkflowExecutionModule,
-
-    AssistantJobModule,
+    // AssistantJobModule,
 
     GoogleDriveModule,
 
@@ -196,7 +191,6 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
     SpeechToTextModule,
     // ,
   ],
-  controllers: [ChatMessageController],
   providers: [
     {
       provide: APP_PIPE,
