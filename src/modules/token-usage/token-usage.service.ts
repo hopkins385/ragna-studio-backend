@@ -29,6 +29,14 @@ const llmPricing: Map<string, ModelPricingMap> = new Map([
     'anthropic',
     new Map([
       [
+        'claude-sonnet-4-5',
+        {
+          inputTokenPrice: 300,
+          outputTokenPrice: 1500,
+          currency: 'USD',
+        },
+      ],
+      [
         'claude-sonnet-4',
         {
           inputTokenPrice: 300,
