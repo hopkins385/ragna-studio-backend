@@ -1,15 +1,15 @@
+import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
+import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
+import { ChatService } from '@/modules/chat/chat.service';
+import { ChatEvent } from '@/modules/chat/enums/chat-event.enum';
+import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
+import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
+import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
 import { SocketService } from '@/modules/socket/socket.service';
 import { Injectable } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { ChatToolCallEventDto } from '@/modules/chat/events/chat-tool-call.event';
-import { ChatEvent } from '@/modules/chat/enums/chat-event.enum';
-import { ChatService } from '@/modules/chat/chat.service';
-import { CoreMessage, generateText } from 'ai';
-import { AiModelFactory } from '@/modules/ai-model/factories/ai-model.factory';
-import { ProviderType } from '@/modules/ai-model/enums/provider.enum';
-import { FirstUserMessageEventDto } from '@/modules/chat/events/first-user-message.event';
 import { ConfigService } from '@nestjs/config';
-import { EditorCommandEventDto } from '@/modules/chat/events/editor-command.event';
+import { OnEvent } from '@nestjs/event-emitter';
+import { CoreMessage, generateText } from 'ai';
 
 @Injectable()
 export class ChatEventListener {
@@ -71,8 +71,8 @@ export class ChatEventListener {
     const modelFactory = new AiModelFactory(this.configService);
 
     modelFactory.setConfig({
-      provider: ProviderType.OPENAI,
-      model: 'gpt-4o-mini',
+      provider: ProviderType.ANTHROPIC,
+      model: 'claude-haiku-4-5-20251001',
     });
 
     try {
