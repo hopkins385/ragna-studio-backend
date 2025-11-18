@@ -410,7 +410,7 @@ export class TextToImageService {
   }): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
-    const genImageDto = FluxProInputsDto.fromInput({
+    const fluxProImageDto = FluxProInputsDto.fromInput({
       prompt: payload.prompt,
       output_format: payload.outputFormat,
       width: payload.width,
@@ -422,7 +422,7 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxpro', payload);
-      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, fluxProImageDto);
       return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -439,7 +439,7 @@ export class TextToImageService {
   }): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
-    const genImageDto = FluxUltraInputsDto.fromInput({
+    const fluxUltraImageDto = FluxUltraInputsDto.fromInput({
       prompt: payload.prompt,
       seed: payload.seed,
       aspect_ratio: payload.aspectRatio,
@@ -452,7 +452,7 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxultra', payload);
-      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, fluxUltraImageDto);
       return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -485,7 +485,7 @@ export class TextToImageService {
       });
     }
 
-    const genImageDto = FluxKontextProInputsDto.fromInput({
+    const fluxKonProImageDto = FluxKontextProInputsDto.fromInput({
       prompt: payload.prompt,
       input_image: imageBuffer ? this.bufferToBase64(imageBuffer) : undefined,
       seed: payload.seed,
@@ -497,7 +497,7 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxkontextpro', payload);
-      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, fluxKonProImageDto);
       return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -514,7 +514,7 @@ export class TextToImageService {
   }): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
-    const genImageDto = FluxKontextMaxInputsDto.fromInput({
+    const fluxKonMaxImageDto = FluxKontextMaxInputsDto.fromInput({
       prompt: payload.prompt,
       input_image: undefined,
       seed: payload.seed,
@@ -526,7 +526,7 @@ export class TextToImageService {
 
     try {
       const run = await this.createSingleRun('fluxkontextmax', payload);
-      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, fluxKonMaxImageDto);
       return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -543,14 +543,15 @@ export class TextToImageService {
   }): Promise<string[]> {
     const imgCount = payload.imgCount ?? 1;
 
-    const genImageDto = GoogleImageInputsDto.fromInput({
+    const googleImageDto = GoogleImageInputsDto.fromInput({
       prompt: payload.prompt,
       aspectRatio: payload.aspectRatio,
+      numImages: imgCount,
     });
 
     try {
       const run = await this.createSingleRun('googleimagegen', payload);
-      const genImageResults = await this.generateImagesForRun(run, imgCount, genImageDto);
+      const genImageResults = await this.generateImagesForRun(run, imgCount, googleImageDto);
       return this.processImageResults(userId, genImageResults, payload);
     } catch (error: any) {
       this.logger.error(`Error: ${error?.message}`);
@@ -610,6 +611,33 @@ export class TextToImageService {
     imageCount: number,
     payload: GenerateImagesPayload,
   ): Promise<GenImageResult[]> {
+    // Google image generator returns all images in one call
+    if (run.settings.provider === 'googleimagegen') {
+      try {
+        const pollResults = await this.googleImageGenerator.generateImage(payload);
+        return pollResults.map((pollResult) => ({
+          run,
+          genImage: pollResult,
+        }));
+      } catch (error: any) {
+        this.logger.error(`Error generating Google images: ${error?.message}`);
+        await this.updateRunStatus({
+          runId: run.id,
+          status: TextToImageRunStatus.FAILED,
+        });
+        // Return array of failed results matching the requested count
+        return Array.from({ length: imageCount }, () => ({
+          run,
+          genImage: {
+            id: '',
+            imgUrl: null,
+            status: StatusResponse.Error,
+          },
+        }));
+      }
+    }
+
+    // For other providers (Flux), generate images one at a time
     return Promise.all(
       Array.from({ length: imageCount }, () => this.generateSingleImage(run, payload)),
     );
@@ -623,15 +651,15 @@ export class TextToImageService {
 
     try {
       switch (run.settings.provider) {
-        case 'googleimagegen':
-          pollResult = await this.googleImageGenerator.generateImage(payload);
-          break;
         case 'fluxpro':
         case 'fluxultra':
         case 'fluxkontextpro':
         case 'fluxkontextmax':
           pollResult = await this.fluxImageGenerator.generateImage(payload as any);
           break;
+        case 'googleimagegen':
+          // Google images are handled in generateImagesForRun, this should not be called
+          throw new Error('Google image generation should not use generateSingleImage');
         default:
           throw new Error(`Unsupported provider: ${run.settings.provider}`);
       }

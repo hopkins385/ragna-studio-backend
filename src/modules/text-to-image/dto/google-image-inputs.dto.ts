@@ -16,7 +16,7 @@ export class GoogleImageInputsDto {
     this.aspectRatio = aspectRatio;
     this.negativePrompt = negativePrompt;
     this.numImages = numImages || 1; // Default to 1 image if not specified
-    this.modelName = modelName || 'imagen-3.0-generate-002'; // Default model
+    this.modelName = modelName || 'imagen-4.0-generate-001'; //'imagen-4.0-ultra-generate-001' //'; // Default model
   }
 
   static fromInput(obj: Partial<GoogleImageInputsDto>): GoogleImageInputsDto {

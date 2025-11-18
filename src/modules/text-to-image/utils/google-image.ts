@@ -29,40 +29,46 @@ export class GoogleImageGenerator {
   }
 
   /**
-   * Generates an image using the Google Vertex AI Image Generation API.
+   * Generates images using the Google Vertex AI Image Generation API.
    * @param payload {GoogleImageInputsDto} - The input parameters for image generation.
-   * @returns A promise that resolves to a PollingResult containing the generated image URL and status.
+   * @returns A promise that resolves to an array of PollingResult containing the generated images and status.
    */
-  public async generateImage(payload: GoogleImageInputsDto): Promise<PollingResult> {
+  public async generateImage(payload: GoogleImageInputsDto): Promise<PollingResult[]> {
     const { prompt, negativePrompt, aspectRatio, numImages, modelName } = payload;
 
+    const vertexProviderOptions: GoogleVertexImageProviderOptions = {
+      addWatermark: false,
+      negativePrompt,
+      // personGeneration: 'allow_all',
+      // safetySetting: 'block_none',
+    };
+
     try {
-      const { image: generatedFile } = await generateVertexImage({
+      const { images } = await generateVertexImage({
         model: this.vertex.image(modelName, {
-          maxImagesPerCall: numImages,
+          maxImagesPerCall: 4, // Set maximum images per call, default is 4
         }),
         prompt,
         aspectRatio,
+        n: numImages, // Request multiple images
         maxRetries: 3,
         providerOptions: {
-          vertex: {
-            addWatermark: false,
-            // personGeneration: 'allow_all',
-            // safetySetting: 'block_none',
-            negativePrompt,
-          } satisfies GoogleVertexImageProviderOptions,
+          vertex: vertexProviderOptions,
         },
       });
 
-      const id = randomCUID2();
-      const buffer = Buffer.from(generatedFile.base64, 'base64');
+      // Map each generated image to a PollingResult
+      return images.map((generatedFile) => {
+        const id = randomCUID2();
+        const buffer = Buffer.from(generatedFile.base64, 'base64');
 
-      return {
-        id,
-        imgUrl: null,
-        imgBuffer: buffer,
-        status: StatusResponse.Ready,
-      };
+        return {
+          id,
+          imgUrl: null,
+          imgBuffer: buffer,
+          status: StatusResponse.Ready,
+        };
+      });
     } catch (error) {
       console.error('Error generating image:', error);
       throw new Error(`Failed to generate image`);

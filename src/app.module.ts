@@ -1,3 +1,7 @@
+import { AssistantJobModule } from '@/modules/assistant-job/assistant-job.module';
+import { WorkflowExecutionModule } from '@/modules/workflow-execution/workflow-execution.module';
+import { WorkflowStepModule } from '@/modules/workflow-step/workflow-step.module';
+import { WorkflowModule } from '@/modules/workflow/workflow.module';
 import { createKeyv } from '@keyv/redis';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
@@ -152,11 +156,11 @@ import { UserModule } from './modules/user/user.module';
 
     TextToImageModule,
 
-    // WorkflowModule,
+    WorkflowModule,
 
-    // WorkflowStepModule,
+    WorkflowStepModule,
 
-    // WorkflowExecutionModule,
+    WorkflowExecutionModule,
 
     DocumentModule,
 
@@ -164,7 +168,7 @@ import { UserModule } from './modules/user/user.module';
 
     OnboardModule,
 
-    // AssistantJobModule,
+    AssistantJobModule,
 
     GoogleDriveModule,
 

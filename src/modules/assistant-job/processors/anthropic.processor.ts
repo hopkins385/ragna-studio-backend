@@ -10,3 +10,6 @@ export const AnthropicClaudeSonnetLatestProcessor: new (...args: any[]) => Proce
 
 export const AnthropicClaudeSonnet20250219Processor: new (...args: any[]) => ProcessorFactory =
   createProcessor(LLM_MODEL.SONNET_20250219, AssistantBaseProcessor);
+
+export const AnthropicClaudeSonnet45Processor: new (...args: any[]) => ProcessorFactory =
+  createProcessor(LLM_MODEL.SONNET_4_5_20250929, AssistantBaseProcessor);
