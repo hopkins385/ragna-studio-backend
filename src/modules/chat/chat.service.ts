@@ -149,6 +149,8 @@ export class ChatService {
             content: true,
             visionContent: true,
             tokenCount: true,
+            updatedAt: true,
+            createdAt: true,
           },
           orderBy: {
             updatedAt: 'asc',
