@@ -4,7 +4,7 @@
   "description": "RAGNA Studio Backend",
   "author": "Sven Stadhouders",
   "private": false,
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "scripts": {
     "build": "nest build",
     "build:seeds": "tsc -p prisma/tsconfig.prisma.json",
